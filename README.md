@@ -1,2 +1,2 @@
 # MyINSAT-Events
-INSAT Event Manager, Nest.JS &amp; Angular platform
+INSAT Event Manager, built with Nest.JS &amp; Angular 
