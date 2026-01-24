@@ -1,0 +1,13 @@
+<div class="club-list">
+  <div *ngIf="clubs.length > 0; else noClubs" class="clubs-grid">
+    <div class="club-card" *ngFor="let club of clubs">
+      <div class="club-logo-wrapper">
+        <img [src]="club.logoUrl" alt="Club logo" class="club-logo" />
+      </div>
+      <span class="club-name">{{ club.name }}</span>
+    </div>
+  </div>
+  <ng-template #noClubs>
+    <p class="empty">No clubs followed yet.</p>
+  </ng-template>
+</div>

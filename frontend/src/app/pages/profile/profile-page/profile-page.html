@@ -1,0 +1,33 @@
+<section class="profile-page" [@staggerCards]>
+  <div class="profile-header-wrapper glass-card animate-card" [@fadeInUp]>
+    <app-profile-header [profile]="profile"></app-profile-header>
+  </div>
+
+  <div class="profile-content-grid">
+    <div class="profile-events">
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <h2 class="section-title">
+          <span class="icon">📅</span>
+          Upcoming Events
+        </h2>
+        <app-event-section [events]="upcomingEvents"></app-event-section>
+      </div>
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <h2 class="section-title">
+          <span class="icon">📜</span>
+          Past Events
+        </h2>
+        <app-event-section [events]="pastEvents"></app-event-section>
+      </div>
+    </div>
+    <div class="profile-clubs">
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <h2 class="section-title">
+          <span class="icon">⭐</span>
+          Followed Clubs
+        </h2>
+        <app-club-list [clubs]="followedClubs"></app-club-list>
+      </div>
+    </div>
+  </div>
+</section>

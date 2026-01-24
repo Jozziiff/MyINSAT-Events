@@ -1,0 +1,109 @@
+.event-section {
+  width: 100%;
+}
+
+.events-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-card {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 1.2rem 1.4rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.event-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.event-card:hover::before {
+  opacity: 1;
+}
+
+.event-card:hover {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.event-title {
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+  transition: color 0.3s ease;
+}
+
+.event-card:hover .event-title {
+  color: var(--color-primary-light);
+}
+
+.event-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.3em 0.9em;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.event-status.upcoming {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.event-status.past {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--color-text-muted);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.event-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-body);
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.calendar-icon {
+  color: var(--color-primary-light);
+  flex-shrink: 0;
+}
+
+.empty {
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 1rem;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
