@@ -1,0 +1,23 @@
+<nav class="navbar">
+  <div class="container navbar-content">
+    <a routerLink="/" class="logo">
+      MyINSAT<span class="highlight">Events</span>
+    </a>
+
+    <div class="desktop-menu">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      <a routerLink="/events" routerLinkActive="active">Events</a>
+      <a routerLink="/clubs" routerLinkActive="active">Clubs</a>
+    </div>
+
+    <div class="auth-buttons">
+      <button class="btn-login" routerLink="/login">Log In</button>
+    </div>
+
+    <button class="mobile-toggle" (click)="toggleMenu()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+</nav>

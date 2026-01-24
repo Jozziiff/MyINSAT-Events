@@ -1,1 +1,195 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * MyINSAT Events - Global Styles
+ *
+ * COLOR PALETTE CUSTOMIZATION:
+ * All colors are defined as CSS variables in :root below.
+ * To change the entire color scheme, simply modify these variables!
+ *
+ * Current Theme: Dark Modern Professional
+ *
+ * Quick Theme Examples:
+ *
+ * OCEAN BLUE THEME:
+ * --color-primary: #0EA5E9;
+ * --color-accent: #06B6D4;
+ * --color-background: #0C1222;
+ *
+ * FOREST GREEN THEME:
+ * --color-primary: #10B981;
+ * --color-accent: #34D399;
+ * --color-background: #0F1F1A;
+ *
+ * SUNSET ORANGE THEME:
+ * --color-primary: #F97316;
+ * --color-accent: #FB923C;
+ * --color-background: #1A0F0A;
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Modern Professional Color Palette - Easy to customize */
+  --color-primary: #6366F1;           /* Indigo - Primary Actions */
+  --color-primary-hover: #4F46E5;     /* Darker Indigo - Hover */
+  --color-primary-light: #818CF8;     /* Light Indigo - Accents */
+  --color-accent: #8B5CF6;            /* Purple - Secondary Accent */
+
+  --color-background: #0F172A;        /* Dark Blue-Gray - Main Background */
+  --color-surface: #1E293B;           /* Lighter Dark - Cards/Surfaces */
+  --color-surface-hover: #273548;     /* Surface Hover State */
+
+  --color-text-primary: #F1F5F9;      /* Almost White - Headings */
+  --color-text-body: #CBD5E1;         /* Light Gray - Body Text */
+  --color-text-muted: #64748B;        /* Muted Gray - Secondary Text */
+
+  --color-border: #334155;            /* Subtle Border */
+  --color-border-light: #475569;      /* Lighter Border for Hover */
+
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* Spacing System */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Sophisticated Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px -5px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus States for Accessibility */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Global Button Styles */
+button {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-base);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-light);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}

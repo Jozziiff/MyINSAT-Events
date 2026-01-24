@@ -1,0 +1,58 @@
+<div class="page-container container" @fadeSlideIn>
+  <header class="page-header">
+    <div class="text-content">
+      <h1>Discover Events</h1>
+      <p>Browse the latest workshops, parties, and gatherings at INSAT.</p>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search events..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        >
+      </div>
+
+      <div class="filter-tabs" style="position:relative;">
+        <button
+          *ngFor="let tab of filterTabs; let i = index"
+          [class.active]="selectedCategory() === tab"
+          (click)="filterEvents(tab)">{{ tab }}</button>
+        <div class="filter-indicator" [ngStyle]="indicatorStyle()"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="events-grid">
+    @for (event of events(); track event.id) {
+      <article class="event-card">
+        <div class="card-image">
+          <div class="category-badge">{{ event.category }}</div>
+        </div>
+
+        <div class="card-content">
+          <div class="header">
+            <h3>{{ event.title }}</h3>
+            <span class="status-pill" [class]="event.status.toLowerCase().replace(' ', '-')">
+              {{ event.status }}
+            </span>
+          </div>
+
+          <p class="club-by">Hosted by <strong>{{ event.club }}</strong></p>
+
+          <div class="details-row">
+            <span>📅 {{ event.date }}</span>
+            <span class="price">{{ event.price }}</span>
+          </div>
+        </div>
+
+        <div class="card-action">
+            <button class="btn-details">View Details</button>
+        </div>
+      </article>
+    }
+  </main>
+</div>
