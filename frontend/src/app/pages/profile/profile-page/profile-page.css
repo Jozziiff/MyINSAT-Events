@@ -1,0 +1,140 @@
+/* Modern Glassy Profile Page */
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  margin: 2rem 0;
+  padding: 2.5rem 1rem 3rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background decoration */
+/* Improved background decoration for better balance and border effect */
+.profile-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  background: radial-gradient(ellipse at 10% 30%, rgba(99,102,241,0.10) 0%, transparent 70%),
+              radial-gradient(ellipse at 90% 70%, rgba(139,92,246,0.10) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  border: 2.5px solid rgba(99,102,241,0.13);
+  pointer-events: none;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* Glassmorphism card effect */
+.glass-card {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.2);
+}
+
+.profile-header-wrapper {
+  width: 100%;
+  max-width: 720px;
+  margin-bottom: 2.5rem;
+  border-radius: var(--radius-lg);
+  padding: 2rem 2.5rem;
+  margin-top: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-content-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 2rem;
+}
+
+.profile-events {
+  flex: 2 1 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+
+}
+
+.profile-clubs {
+  flex: 1 1 340px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-card {
+  border-radius: var(--radius-lg);
+  padding: 1.8rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--color-text-primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.01em;
+}
+
+.section-title .icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@media (max-width: 900px) {
+  .profile-page {
+    padding: 2rem 0.8rem 2.5rem 0.8rem;
+  }
+
+  .profile-content-grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .profile-header-wrapper {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .section-card {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+  }
+}
+.profile-page {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
