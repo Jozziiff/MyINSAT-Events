@@ -1,0 +1,93 @@
+<div class="page-container container" @fadeSlideIn>
+    <header class="page-header">
+        <div class="text-content">
+            <h1>{{ isEditMode() ? 'Edit Event' : 'Create Event' }}</h1>
+            <p>{{ isEditMode() ? 'Update event details' : 'Add a new event for your club' }}</p>
+        </div>
+    </header>
+
+    @if (error()) {
+    <div class="alert alert-error">
+        <span>❌</span>
+        <p>{{ error() }}</p>
+    </div>
+    }
+
+    <div class="form-container">
+        <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="title">Event Title *</label>
+                    <input id="title" type="text" formControlName="title"
+                        placeholder="e.g. AI & Machine Learning Workshop" [class.invalid]="isFieldInvalid('title')">
+                    @if (isFieldInvalid('title')) {
+                    <span class="error-message">{{ getFieldError('title') }}</span>
+                    }
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="description">Description</label>
+                    <textarea id="description" formControlName="description" placeholder="Describe your event..."
+                        rows="4"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="location">Location *</label>
+                    <input id="location" type="text" formControlName="location" placeholder="e.g. Amphi 2, Room B101"
+                        [class.invalid]="isFieldInvalid('location')">
+                    @if (isFieldInvalid('location')) {
+                    <span class="error-message">{{ getFieldError('location') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="startTime">Start Time *</label>
+                    <input id="startTime" type="datetime-local" formControlName="startTime"
+                        [class.invalid]="isFieldInvalid('startTime')">
+                    @if (isFieldInvalid('startTime')) {
+                    <span class="error-message">{{ getFieldError('startTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="endTime">End Time *</label>
+                    <input id="endTime" type="datetime-local" formControlName="endTime"
+                        [class.invalid]="isFieldInvalid('endTime')">
+                    @if (isFieldInvalid('endTime')) {
+                    <span class="error-message">{{ getFieldError('endTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="capacity">Capacity *</label>
+                    <input id="capacity" type="number" formControlName="capacity" placeholder="30" min="1"
+                        [class.invalid]="isFieldInvalid('capacity')">
+                    @if (isFieldInvalid('capacity')) {
+                    <span class="error-message">{{ getFieldError('capacity') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Price (TND)</label>
+                    <input id="price" type="number" formControlName="price" placeholder="0" min="0" step="0.5"
+                        [class.invalid]="isFieldInvalid('price')">
+                    <small>Leave 0 for free events</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" [disabled]="loading() || eventForm.invalid">
+                    @if (loading()) {
+                    <span class="spinner-small"></span>
+                    Saving...
+                    } @else {
+                    {{ isEditMode() ? 'Update Event' : 'Create Event' }}
+                    }
+                </button>
+                <button type="button" class="btn-outline" (click)="cancel()" [disabled]="loading()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

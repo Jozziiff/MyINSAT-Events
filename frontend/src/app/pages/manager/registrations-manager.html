@@ -1,0 +1,121 @@
+<div class="page-container container" @fadeSlideIn>
+    <header class="page-header">
+        <div>
+            <button class="back-button" (click)="goBack()">← Back</button>
+            <h1>Event Registrations</h1>
+            @if (data()) {
+            <p>Manage registrations for <strong>{{ data()!.event.title }}</strong></p>
+            }
+        </div>
+    </header>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading registrations...</p>
+    </div>
+    }
+
+    @if (error()) {
+    <div class="error-state">
+        <p>❌ {{ error() }}</p>
+        <button class="btn-outline" (click)="loadRegistrations()">Retry</button>
+    </div>
+    }
+
+    @if (data() && !loading()) {
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-value">{{ data()!.registrations.length }}</div>
+            <div class="stat-label">Total Registrations</div>
+        </div>
+        <div class="stat-card confirmed">
+            <div class="stat-value">{{ data()!.event.confirmedCount }} / {{ data()!.event.capacity }}</div>
+            <div class="stat-label">Confirmed (Capacity)</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-value">{{ getFilteredRegistrations('PENDING_PAYMENT').length }}</div>
+            <div class="stat-label">Pending Payment</div>
+        </div>
+        <div class="stat-card interested">
+            <div class="stat-value">{{ getFilteredRegistrations('INTERESTED').length }}</div>
+            <div class="stat-label">Interested</div>
+        </div>
+    </div>
+
+    @if (data()!.registrations.length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No registrations yet</h3>
+        <p>Students haven't registered for this event yet</p>
+    </div>
+    } @else {
+    <div class="registrations-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Registered At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (reg of data()!.registrations; track reg.id) {
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">{{ reg.user.fullName.charAt(0) }}</div>
+                            <strong>{{ reg.user.fullName }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="email">{{ reg.user.email }}</span>
+                    </td>
+                    <td>
+                        <span class="status-pill" [class]="getStatusClass(reg.status)">
+                            {{ reg.status.replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="date">{{ formatDate(reg.createdAt) }}</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            @if (reg.status === 'PENDING_PAYMENT') {
+                            <button class="btn-action btn-confirm" (click)="updateStatus(reg, 'CONFIRMED')"
+                                [disabled]="updatingId() === reg.id" title="Confirm Payment">
+                                ✓ Confirm
+                            </button>
+                            <button class="btn-action btn-reject" (click)="updateStatus(reg, 'REJECTED')"
+                                [disabled]="updatingId() === reg.id" title="Reject">
+                                ✕ Reject
+                            </button>
+                            }
+                            @if (reg.status === 'INTERESTED') {
+                            <button class="btn-action btn-pending" (click)="updateStatus(reg, 'PENDING_PAYMENT')"
+                                [disabled]="updatingId() === reg.id" title="Mark as Pending Payment">
+                                💳 Pending
+                            </button>
+                            }
+                            @if (reg.status === 'CONFIRMED') {
+                            <button class="btn-action btn-attended" (click)="updateStatus(reg, 'ATTENDED')"
+                                [disabled]="updatingId() === reg.id" title="Mark as Attended">
+                                ✓ Attended
+                            </button>
+                            <button class="btn-action btn-no-show" (click)="updateStatus(reg, 'NO_SHOW')"
+                                [disabled]="updatingId() === reg.id" title="Mark as No Show">
+                                ✕ No Show
+                            </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+    }
+</div>

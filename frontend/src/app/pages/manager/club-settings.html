@@ -1,0 +1,84 @@
+<div class="page-container container" @fadeSlideIn>
+    <header class="page-header">
+        <button class="btn-back" (click)="goBack()">← Back to Dashboard</button>
+        <h1>Club Settings</h1>
+        <p>Update your club's information and payment details</p>
+    </header>
+
+    @if (successMessage()) {
+    <div class="alert alert-success">
+        <span class="alert-icon">✓</span>
+        <span>{{ successMessage() }}</span>
+    </div>
+    }
+
+    @if (error()) {
+    <div class="alert alert-error">
+        <span class="alert-icon">❌</span>
+        <span>{{ error() }}</span>
+    </div>
+    }
+
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading club settings...</p>
+    </div>
+    } @else {
+    <div class="form-card">
+        <form [formGroup]="clubForm" (ngSubmit)="onSubmit()">
+            <div class="form-section">
+                <h2 class="section-title">Basic Information</h2>
+
+                <div class="form-group">
+                    <label for="name">Club Name *</label>
+                    <input id="name" type="text" formControlName="name" placeholder="Enter club name"
+                        [class.error]="clubForm.get('name')?.invalid && clubForm.get('name')?.touched" />
+                    @if (clubForm.get('name')?.invalid && clubForm.get('name')?.touched) {
+                    <div class="error-message">
+                        @if (clubForm.get('name')?.errors?.['required']) {
+                        <span>Club name is required</span>
+                        }
+                        @if (clubForm.get('name')?.errors?.['minlength']) {
+                        <span>Club name must be at least 3 characters</span>
+                        }
+                    </div>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" formControlName="description" rows="5"
+                        placeholder="Tell students about your club..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">Payment Information</h2>
+                <p class="section-description">Provide payment details for students to pay for events</p>
+
+                <div class="form-group">
+                    <label for="paymentInfo">Payment Details</label>
+                    <textarea id="paymentInfo" formControlName="paymentInfo" rows="4"
+                        placeholder="e.g., Bank: BMI, Account: 1234567890, Name: Club INSAT"></textarea>
+                    <small class="field-hint">
+                        Students will see this information when registering for paid events
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-outline" (click)="goBack()" [disabled]="saving()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-primary" [disabled]="clubForm.invalid || saving()">
+                    @if (saving()) {
+                    <span class="spinner-small"></span>
+                    }
+                    {{ saving() ? 'Saving...' : 'Save Changes' }}
+                </button>
+            </div>
+        </form>
+    </div>
+    }
+</div>
