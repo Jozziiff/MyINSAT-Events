@@ -1,4 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -7,9 +9,15 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { ClubsModule } from './clubs/clubs.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -32,6 +40,8 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     UsersModule,
     EventsModule,
     SubscriptionsModule,
+    ClubsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

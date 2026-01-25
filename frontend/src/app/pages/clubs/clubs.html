@@ -1,36 +1,40 @@
 <div class="page-container container" @fadeSlideIn>
   <header class="page-header">
-    <h1>Our Clubs</h1>
-    <p>Find your family. Join a club that matches your passion.</p>
+    <div class="header-content">
+      <h1>Our Clubs</h1>
+      <p>Find your family. Join a club that matches your passion.</p>
+    </div>
+    <a routerLink="/clubs/new" class="btn-create">+ Create Club</a>
   </header>
 
-  <div class="clubs-grid">
-    <div class="club-card">
-      <div class="cover-photo"></div>
-      <div class="club-info">
-        <div class="logo-circle"></div> <h2>ACM Student Chapter</h2>
-        <p class="description">Dedicated to advancing computing as a science and profession.</p>
-        <div class="stats">
-          <span><strong>120</strong> Members</span>
-          <span><strong>5</strong> Active Events</span>
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading clubs...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-container">
+      <p>{{ error() }}</p>
+      <button class="btn-retry" (click)="ngOnInit()">Try Again</button>
+    </div>
+  } @else {
+    <div class="clubs-list">
+      @for (club of clubs(); track club.id) {
+        <a [routerLink]="['/clubs', club.id]" class="club-item">
+          <div class="club-image">
+            <img [src]="club.logoUrl" [alt]="club.name + ' logo'">
+          </div>
+          <div class="club-info">
+            <h2>{{ club.name }}</h2>
+            <p class="description">{{ club.shortDescription }}</p>
+            <span class="view-details">View Details</span>
+          </div>
+        </a>
+      } @empty {
+        <div class="empty-state">
+          <p>No clubs available yet. Check back soon!</p>
         </div>
-        <button class="btn-follow">Follow +</button>
-      </div>
+      }
     </div>
-
-    <div class="club-card">
-      <div class="cover-photo" style="background: #e0f2fe;"></div>
-      <div class="club-info">
-        <div class="logo-circle" style="background: #0ea5e9;"></div>
-        <h2>Securinets</h2>
-        <p class="description">The hub for Cybersecurity enthusiasts at INSAT.</p>
-        <div class="stats">
-          <span><strong>85</strong> Members</span>
-          <span><strong>2</strong> Active Events</span>
-        </div>
-        <button class="btn-follow">Follow +</button>
-      </div>
-    </div>
-
-    </div>
+  }
 </div>
