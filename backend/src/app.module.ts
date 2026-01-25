@@ -11,6 +11,7 @@ import { EventsModule } from './events/events.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ClubsModule } from './clubs/clubs.module';
 import { UploadModule } from './upload/upload.module';
+import { ManagerModule } from './manager/manager.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UploadModule } from './upload/upload.module';
     UsersModule,
     EventsModule,
     SubscriptionsModule,
+    ManagerModule,
     ClubsModule,
     UploadModule,
   ],

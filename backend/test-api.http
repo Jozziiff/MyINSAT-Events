@@ -1,0 +1,57 @@
+### Test Manager API Endpoints
+### Make sure server is running: npm run start:dev
+
+### 1. Get Managed Club
+GET http://localhost:3000/manager/club
+
+### 2. Get All Events
+GET http://localhost:3000/manager/events
+
+### 3. Create New Event
+POST http://localhost:3000/manager/events
+Content-Type: application/json
+
+{
+  "title": "Test Event API",
+  "description": "Testing from HTTP client",
+  "location": "Room B101",
+  "startTime": "2026-03-15T14:00:00.000Z",
+  "endTime": "2026-03-15T17:00:00.000Z",
+  "capacity": 25,
+  "price": 5
+}
+
+### 4. Update Event (change ID to existing event)
+PUT http://localhost:3000/manager/events/1
+Content-Type: application/json
+
+{
+  "title": "AI & Machine Learning Workshop - UPDATED",
+  "capacity": 60
+}
+
+### 5. Publish Event
+PATCH http://localhost:3000/manager/events/3/publish
+
+### 6. Get Event Registrations
+GET http://localhost:3000/manager/events/1/registrations
+
+### 7. Confirm Registration Payment (change ID to existing registration)
+PATCH http://localhost:3000/manager/registrations/1/status
+Content-Type: application/json
+
+{
+  "status": "CONFIRMED"
+}
+
+### 8. Update Club Profile
+PUT http://localhost:3000/manager/club
+Content-Type: application/json
+
+{
+  "description": "INSAT's premier tech club - UPDATED via API",
+  "paymentInfo": "RIB: 12345 | CCP: 67890 | Updated payment info"
+}
+
+### 9. Delete Event
+DELETE http://localhost:3000/manager/events/2

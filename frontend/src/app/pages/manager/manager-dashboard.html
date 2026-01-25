@@ -1,0 +1,121 @@
+<div class="page-container container" @fadeSlideIn>
+    <header class="page-header">
+        <div class="text-content">
+            <h1>Manager Dashboard</h1>
+            <p>Manage events for <strong>{{ clubName() }}</strong></p>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn-primary" routerLink="/manager/events/new">
+                <span class="btn-icon">+</span>
+                Create Event
+            </button>
+            <button class="btn-outline" routerLink="/manager/club">
+                ⚙️ Club Settings
+            </button>
+        </div>
+    </header>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading events...</p>
+    </div>
+    }
+
+    @if (error()) {
+    <div class="error-state">
+        <p>❌ {{ error() }}</p>
+        <button class="btn-outline" (click)="loadData()">Retry</button>
+    </div>
+    }
+
+    @if (!loading() && !error()) {
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-value">{{ events().length }}</div>
+            <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ publishedCount() }}</div>
+            <div class="stat-label">Published</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ draftCount() }}</div>
+            <div class="stat-label">Drafts</div>
+        </div>
+    </div>
+
+    @if (events().length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h3>No events yet</h3>
+        <p>Create your first event to get started</p>
+        <button class="btn-primary" routerLink="/manager/events/new">Create Event</button>
+    </div>
+    } @else {
+    <div class="events-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Date & Time</th>
+                    <th>Location</th>
+                    <th>Capacity</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (event of events(); track event.id) {
+                <tr>
+                    <td>
+                        <div class="event-title-cell">
+                            <strong>{{ event.title }}</strong>
+                            @if (event.description) {
+                            <span class="event-desc">{{ event.description }}</span>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-cell">
+                            <span class="date">📅 {{ formatDate(event.startTime) }}</span>
+                            <span class="time">🕐 {{ formatTime(event.startTime) }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="location">📍 {{ event.location }}</span>
+                    </td>
+                    <td>
+                        <span class="capacity">{{ event.capacity }} seats</span>
+                    </td>
+                    <td>
+                        <span class="price">{{ event.price ? event.price + ' TND' : 'Free' }}</span>
+                    </td>
+                    <td>
+                        <span class="status-pill" [class]="getStatusClass(event.status)">
+                            {{ event.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            @if (event.status === 'DRAFT') {
+                            <button class="btn-icon" title="Publish" (click)="publishEvent(event)">🚀</button>
+                            }
+                            @if (event.status === 'PUBLISHED') {
+                            <button class="btn-icon" title="View Registrations"
+                                (click)="viewRegistrations(event.id)">👥</button>
+                            }
+                            <button class="btn-icon" title="Edit" (click)="editEvent(event.id)">✏️</button>
+                            <button class="btn-icon btn-danger" title="Delete" (click)="deleteEvent(event)">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+    }
+</div>
