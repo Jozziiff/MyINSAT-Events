@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
@@ -38,6 +39,7 @@ import { ManagerModule } from './manager/manager.module';
       inject: [ConfigService],
 
     }),
+    AuthModule,
     UsersModule,
     EventsModule,
     SubscriptionsModule,
