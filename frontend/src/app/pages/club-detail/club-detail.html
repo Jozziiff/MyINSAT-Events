@@ -1,0 +1,104 @@
+@if (loading()) {
+  <div class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading club details...</p>
+  </div>
+} @else if (error()) {
+  <div class="error-container container">
+    <h2>Oops!</h2>
+    <p>{{ error() }}</p>
+    <a routerLink="/clubs" class="btn-back">Back to Clubs</a>
+  </div>
+} @else if (club(); as clubData) {
+  <div class="club-detail-page">
+    <!-- Hero Section with Cover Image (no animation on wrapper) -->
+    <header class="club-hero" [style.backgroundImage]="'url(' + clubData.coverImageUrl + ')'">
+      <div class="hero-overlay"></div>
+      <div class="container hero-content" @fadeSlideIn>
+        <div class="hero-nav">
+          <a routerLink="/clubs" class="btn-back">Back to Clubs</a>
+        </div>
+        <div class="club-identity">
+          <img [src]="clubData.logoUrl" [alt]="clubData.name + ' logo'" class="club-logo">
+          <div class="club-title">
+            <h1>{{ clubData.name }}</h1>
+            <p class="tagline">{{ clubData.shortDescription }}</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- About Section -->
+    <section class="about-section container" @fadeSlideIn>
+      <div class="section-row">
+        <div class="section-image">
+          <img [src]="clubData.aboutImageUrl" [alt]="clubData.name + ' about'">
+        </div>
+        <div class="section-content">
+          <h2>About Us</h2>
+          <p>{{ clubData.about }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dynamic Sections (alternating layout) -->
+    @for (item of sections(); track item.key) {
+      <section class="detail-section container" @fadeSlideIn>
+        <div class="section-row" [class.reversed]="!item.imageLeft">
+          <div class="section-image">
+            <img [src]="item.section.imageUrl" [alt]="item.section.title">
+          </div>
+          <div class="section-content">
+            <h2>{{ item.section.title }}</h2>
+            <p>{{ item.section.content }}</p>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Contact Section -->
+    @if (hasContact(clubData)) {
+      <section class="contact-section container" @fadeSlideIn>
+        <h2>Get in Touch</h2>
+        <div class="contact-links">
+          @if (clubData.contact?.email) {
+            <a [href]="'mailto:' + clubData.contact!.email" class="contact-item">
+              <span class="contact-icon">📧</span>
+              <span>{{ clubData.contact!.email }}</span>
+            </a>
+          }
+          @if (clubData.contact?.phone) {
+            <a [href]="'tel:' + clubData.contact!.phone" class="contact-item">
+              <span class="contact-icon">📞</span>
+              <span>{{ clubData.contact!.phone }}</span>
+            </a>
+          }
+          @if (clubData.contact?.website) {
+            <a [href]="clubData.contact!.website" target="_blank" rel="noopener" class="contact-item">
+              <span class="contact-icon">🌐</span>
+              <span>Website</span>
+            </a>
+          }
+          @if (clubData.contact?.facebook) {
+            <a [href]="clubData.contact!.facebook" target="_blank" rel="noopener" class="contact-item">
+              <span class="contact-icon">📘</span>
+              <span>Facebook</span>
+            </a>
+          }
+          @if (clubData.contact?.instagram) {
+            <a [href]="clubData.contact!.instagram" target="_blank" rel="noopener" class="contact-item">
+              <span class="contact-icon">📸</span>
+              <span>Instagram</span>
+            </a>
+          }
+          @if (clubData.contact?.linkedin) {
+            <a [href]="clubData.contact!.linkedin" target="_blank" rel="noopener" class="contact-item">
+              <span class="contact-icon">💼</span>
+              <span>LinkedIn</span>
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}
