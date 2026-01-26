@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 export interface JwtPayload {
-  sub: string; // user id
+  sub: number; // user id
   email: string;
   role: string;
 }

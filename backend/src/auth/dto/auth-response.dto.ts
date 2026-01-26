@@ -1,13 +1,12 @@
 import { IsBoolean, IsEmail, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Role as UserRole } from '../../users/enums/role.enum';
 
 export class UserResponseDto {
   @ApiProperty({
     description: 'Unique identifier of the user',
-    format: 'uuid',
   })
-  @IsUUID()
-  id: string;
+  id: number;
 
   @ApiProperty({
     description: 'Email address of the user',
@@ -24,10 +23,10 @@ export class UserResponseDto {
 
   @ApiProperty({
     description: 'Role of the user in the system',
-    enum: ['ADMIN', 'MANAGER', 'USER'],
+    enum: UserRole,
   })
   @IsString()
-  role: string;
+  role: UserRole;
 
   @ApiProperty({
     description: 'Whether the user has verified their email address',

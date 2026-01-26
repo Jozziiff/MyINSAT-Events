@@ -2,20 +2,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { RefreshToken } from '../entities/refresh-token.entity';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
   Strategy,
   'jwt-refresh',
 ) {
-  constructor(
-    private configService: ConfigService,
-    @InjectRepository(RefreshToken)
-    private refreshTokenRepository: Repository<RefreshToken>,
-  ) {
+  constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
@@ -31,20 +24,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException('Refresh token not provided');
     }
 
-    // Verify token exists and is not revoked
-    const tokenRecord = await this.refreshTokenRepository.findOne({
-      where: { userId: payload.sub },
-      relations: ['user'],
-    });
-
-    if (!tokenRecord || tokenRecord.revokedAt != null) {
-      throw new UnauthorizedException('Invalid or revoked refresh token');
-    }
-
-    if (new Date() > tokenRecord.expiresAt) {
-      throw new UnauthorizedException('Refresh token expired');
-    }
-
+    // Return payload with token - full validation happens in service
     return {
       id: payload.sub,
       email: payload.email,
