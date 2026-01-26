@@ -15,7 +15,7 @@ import { CreateClubDto } from './dto/create-club.dto';
 
 @Controller('clubs')
 export class ClubsController {
-  constructor(private readonly clubsService: ClubsService) {}
+  constructor(private readonly clubsService: ClubsService) { }
 
   // Get all clubs (summary for list page)
   @Get()
@@ -88,11 +88,25 @@ export class ClubsController {
 
   // Get club events with statistics
   @Get(':id/events')
-  async getClubEvents(@Param('id', ParseIntPipe) id: number) {
+  async getClubEvents(@Param('id', ParseIntPipe) id: number): Promise<{
+    events: any[];
+    statistics: {
+      totalEvents: number;
+      totalAttendance: number;
+      averageAttendanceRate: number;
+    };
+  }> {
     const events = await this.clubsService.getClubEventsWithStats(id);
     if (!events) {
       throw new NotFoundException(`Club with ID ${id} not found`);
     }
-    return events;
+    return events as {
+      events: any[];
+      statistics: {
+        totalEvents: number;
+        totalAttendance: number;
+        averageAttendanceRate: number;
+      };
+    };
   }
 }

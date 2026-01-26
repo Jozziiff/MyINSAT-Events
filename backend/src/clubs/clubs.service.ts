@@ -95,7 +95,7 @@ export class ClubsService {
     private readonly eventRepository: Repository<Event>,
     @InjectRepository(Registration)
     private readonly registrationRepository: Repository<Registration>,
-  ) {}
+  ) { }
 
   // Helper to apply default images to sections (unchanged)
   private applyDefaultImages(club: any): any {
@@ -106,35 +106,35 @@ export class ClubsService {
       coverImageUrl: club.coverImageUrl || DEFAULT_SECTION_IMAGES.cover,
       history: club.history
         ? {
-            ...club.history,
-            imageUrl: club.history.imageUrl || DEFAULT_SECTION_IMAGES.history,
-          }
+          ...club.history,
+          imageUrl: club.history.imageUrl || DEFAULT_SECTION_IMAGES.history,
+        }
         : undefined,
       mission: club.mission
         ? {
-            ...club.mission,
-            imageUrl: club.mission.imageUrl || DEFAULT_SECTION_IMAGES.mission,
-          }
+          ...club.mission,
+          imageUrl: club.mission.imageUrl || DEFAULT_SECTION_IMAGES.mission,
+        }
         : undefined,
       activities: club.activities
         ? {
-            ...club.activities,
-            imageUrl:
-              club.activities.imageUrl || DEFAULT_SECTION_IMAGES.activities,
-          }
+          ...club.activities,
+          imageUrl:
+            club.activities.imageUrl || DEFAULT_SECTION_IMAGES.activities,
+        }
         : undefined,
       achievements: club.achievements
         ? {
-            ...club.achievements,
-            imageUrl:
-              club.achievements.imageUrl || DEFAULT_SECTION_IMAGES.achievements,
-          }
+          ...club.achievements,
+          imageUrl:
+            club.achievements.imageUrl || DEFAULT_SECTION_IMAGES.achievements,
+        }
         : undefined,
       joinUs: club.joinUs
         ? {
-            ...club.joinUs,
-            imageUrl: club.joinUs.imageUrl || DEFAULT_SECTION_IMAGES.joinUs,
-          }
+          ...club.joinUs,
+          imageUrl: club.joinUs.imageUrl || DEFAULT_SECTION_IMAGES.joinUs,
+        }
         : undefined,
     };
   }
@@ -209,7 +209,14 @@ export class ClubsService {
   }
 
   // Get club events with statistics (past events only)
-  async getClubEventsWithStats(clubId: number): Promise<any> {
+  async getClubEventsWithStats(clubId: number): Promise<{
+    events: any[];
+    statistics: {
+      totalEvents: number;
+      totalAttendance: number;
+      averageAttendanceRate: number;
+    };
+  } | null> {
     // Check if club exists
     const club = await this.clubRepository.findOne({ where: { id: clubId } });
     if (!club) return null;
@@ -229,8 +236,8 @@ export class ClubsService {
     const eventsWithStats = pastEvents.map(event => {
       const registrations = event.registrations || [];
       const attendedCount = registrations.filter(r => r.status === RegistrationStatus.ATTENDED).length;
-      const attendanceRate = registrations.length > 0 
-        ? Math.round((attendedCount / registrations.length) * 100) 
+      const attendanceRate = registrations.length > 0
+        ? Math.round((attendedCount / registrations.length) * 100)
         : 0;
 
       return {
@@ -261,18 +268,17 @@ export class ClubsService {
       return sum + (e.registrations?.length || 0);
     }, 0);
 
-    const clubAverageAttendanceRate = totalRegistrations > 0 
-      ? Math.round((totalAttendance / totalRegistrations) * 100) 
+    const clubAverageAttendanceRate = totalRegistrations > 0
+      ? Math.round((totalAttendance / totalRegistrations) * 100)
       : 0;
 
     return {
-      clubId,
-      clubName: club.name,
-      totalEvents: pastEvents.length,
-      totalAttendance,
-      averageAttendanceRate: clubAverageAttendanceRate,
-      averageRating: 4.5, // Placeholder
       events: eventsWithStats,
+      statistics: {
+        totalEvents: pastEvents.length,
+        totalAttendance,
+        averageAttendanceRate: clubAverageAttendanceRate,
+      },
     };
   }
 }

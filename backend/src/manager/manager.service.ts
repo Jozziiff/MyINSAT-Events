@@ -61,7 +61,7 @@ export class ManagerService {
         endTime: string,
         excludeEventId?: number
     ): Promise<void> {
-        // Check for overlapping events: start before our end AND end after our start
+
         const conflictingEvent = await this.eventRepository.findOne({
             where: {
                 location,
@@ -197,6 +197,18 @@ export class ManagerService {
         }
 
         await this.verifyManagerAccess(userId, registration.event.clubId);
+
+        // Validate attendance marking can only happen on or after event day
+        if ((newStatus === RegistrationStatus.ATTENDED || newStatus === RegistrationStatus.NO_SHOW)) {
+            const eventDate = new Date(registration.event.startTime);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            eventDate.setHours(0, 0, 0, 0);
+
+            if (eventDate > today) {
+                throw new BadRequestException('Attendance can only be marked on or after the event day');
+            }
+        }
 
         if (newStatus === RegistrationStatus.CONFIRMED) {
             const confirmedCount = await this.registrationRepository.count({

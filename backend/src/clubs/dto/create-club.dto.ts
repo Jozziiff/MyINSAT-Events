@@ -1,3 +1,6 @@
+import { IsString, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
 // Default images for each section type (served from backend)
 export const DEFAULT_SECTION_IMAGES = {
   about: '/uploads/defaults/about-default.jpg',
@@ -12,42 +15,104 @@ export const DEFAULT_SECTION_IMAGES = {
 
 // Section with image support (defaults to section-specific default image)
 export class ClubSectionDto {
+  @IsString()
+  @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsNotEmpty()
   content: string;
+
+  @IsString()
+  @IsOptional()
   imageUrl?: string; // Will use default image if not provided
 }
 
 // Contact information
 export class ClubContactDto {
+  @IsString()
+  @IsOptional()
   email?: string;
+
+  @IsString()
+  @IsOptional()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
   facebook?: string;
+
+  @IsString()
+  @IsOptional()
   instagram?: string;
+
+  @IsString()
+  @IsOptional()
   linkedin?: string;
+
+  @IsString()
+  @IsOptional()
   website?: string;
 }
 
 // DTO for creating a new club
 export class CreateClubDto {
   // Required fields
+  @IsString()
+  @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
   shortDescription: string; // For the clubs list page
+
+  @IsString()
+  @IsNotEmpty()
   logoUrl: string;
 
   // Required sections
+  @IsString()
+  @IsNotEmpty()
   about: string; // General description/about the club
+
+  @IsString()
+  @IsOptional()
   aboutImageUrl?: string; // Image for the about section
 
   // Optional sections with optional images
+  @ValidateNested()
+  @Type(() => ClubSectionDto)
+  @IsOptional()
   history?: ClubSectionDto;
+
+  @ValidateNested()
+  @Type(() => ClubSectionDto)
+  @IsOptional()
   mission?: ClubSectionDto;
+
+  @ValidateNested()
+  @Type(() => ClubSectionDto)
+  @IsOptional()
   activities?: ClubSectionDto;
+
+  @ValidateNested()
+  @Type(() => ClubSectionDto)
+  @IsOptional()
   achievements?: ClubSectionDto;
+
+  @ValidateNested()
+  @Type(() => ClubSectionDto)
+  @IsOptional()
   joinUs?: ClubSectionDto; // How to join the club
 
   // Contact information (optional)
+  @ValidateNested()
+  @Type(() => ClubContactDto)
+  @IsOptional()
   contact?: ClubContactDto;
 
   // Cover/banner image (optional)
+  @IsString()
+  @IsOptional()
   coverImageUrl?: string;
 }

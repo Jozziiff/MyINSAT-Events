@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } 
 import { Router, ActivatedRoute } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService } from '../../services/manager-api.service';
+import { resolveImageUrl } from '../../utils/image.utils';
 
 interface EventSection {
     title: string;
@@ -23,7 +24,7 @@ export class EventFormComponent implements OnInit {
     sections = signal<EventSection[]>([]);
     sectionControls = signal<FormControl[]>([]);
     coverImageUrl = signal<string>('');
-    
+
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
     loading = signal(false);
@@ -73,19 +74,14 @@ export class EventFormComponent implements OnInit {
                         capacity: event.capacity,
                         price: event.price || 0
                     });
-                    
-                    // Load cover image
-                    if ((event as any).photoUrl) {
-                        let photoUrl = (event as any).photoUrl;
-                        if (photoUrl && !photoUrl.startsWith('http')) {
-                            photoUrl = `http://localhost:3000${photoUrl}`;
-                        }
-                        this.coverImageUrl.set(photoUrl);
+
+                    if (event.photoUrl) {
+                        this.coverImageUrl.set(resolveImageUrl(event.photoUrl) || '');
                     }
-                    
-                    if ((event as any).sections && Array.isArray((event as any).sections)) {
-                        this.sections.set((event as any).sections);
-                        this.initializeSectionControls((event as any).sections);
+
+                    if (event.sections && Array.isArray(event.sections)) {
+                        this.sections.set(event.sections);
+                        this.initializeSectionControls(event.sections);
                     }
                 }
                 this.loading.set(false);
@@ -152,7 +148,7 @@ export class EventFormComponent implements OnInit {
     onSectionImageSelected(event: Event, sectionIndex: number): void {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
-        
+
         if (!file) return;
 
         this.error.set('');
@@ -185,29 +181,29 @@ export class EventFormComponent implements OnInit {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Upload failed');
-            return response.json();
-        })
-        .then(data => {
-            let imageUrl = data.url;
-            // Make sure URL is absolute if it's relative
-            if (imageUrl && !imageUrl.startsWith('http')) {
-                imageUrl = `http://localhost:3000${imageUrl}`;
-            }
-            this.sections.update(s => {
-                const updated = [...s];
-                updated[sectionIndex] = { ...updated[sectionIndex], imageUrl };
-                return updated;
+            .then(response => {
+                if (!response.ok) throw new Error('Upload failed');
+                return response.json();
+            })
+            .then(data => {
+                let imageUrl = data.url;
+                // Make sure URL is absolute if it's relative
+                if (imageUrl && !imageUrl.startsWith('http')) {
+                    imageUrl = `http://localhost:3000${imageUrl}`;
+                }
+                this.sections.update(s => {
+                    const updated = [...s];
+                    updated[sectionIndex] = { ...updated[sectionIndex], imageUrl };
+                    return updated;
+                });
+                this.uploadingPhotoIndex.set(null);
+                input.value = '';
+            })
+            .catch(err => {
+                this.error.set('Failed to upload photo. Please try again.');
+                this.uploadingPhotoIndex.set(null);
+                input.value = '';
             });
-            this.uploadingPhotoIndex.set(null);
-            input.value = '';
-        })
-        .catch(err => {
-            this.error.set('Failed to upload photo. Please try again.');
-            this.uploadingPhotoIndex.set(null);
-            input.value = '';
-        });
     }
 
     removeSectionImage(index: number): void {
@@ -222,7 +218,7 @@ export class EventFormComponent implements OnInit {
     onCoverImageSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
-        
+
         if (!file) return;
 
         this.error.set('');
@@ -255,25 +251,25 @@ export class EventFormComponent implements OnInit {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Upload failed');
-            return response.json();
-        })
-        .then(data => {
-            let imageUrl = data.url;
-            // Make sure URL is absolute if it's relative
-            if (imageUrl && !imageUrl.startsWith('http')) {
-                imageUrl = `http://localhost:3000${imageUrl}`;
-            }
-            this.coverImageUrl.set(imageUrl);
-            this.uploadingCoverImage.set(false);
-            input.value = '';
-        })
-        .catch(err => {
-            this.error.set('Failed to upload cover image. Please try again.');
-            this.uploadingCoverImage.set(false);
-            input.value = '';
-        });
+            .then(response => {
+                if (!response.ok) throw new Error('Upload failed');
+                return response.json();
+            })
+            .then(data => {
+                let imageUrl = data.url;
+                // Make sure URL is absolute if it's relative
+                if (imageUrl && !imageUrl.startsWith('http')) {
+                    imageUrl = `http://localhost:3000${imageUrl}`;
+                }
+                this.coverImageUrl.set(imageUrl);
+                this.uploadingCoverImage.set(false);
+                input.value = '';
+            })
+            .catch(err => {
+                this.error.set('Failed to upload cover image. Please try again.');
+                this.uploadingCoverImage.set(false);
+                input.value = '';
+            });
     }
 
     removeCoverImage(): void {
@@ -314,13 +310,13 @@ export class EventFormComponent implements OnInit {
         this.error.set('');
 
         const formValue = this.eventForm.value;
-        
+
         // Get the relative URL for the cover image (remove base URL if present)
         let photoUrl = this.coverImageUrl();
         if (photoUrl && photoUrl.startsWith('http://localhost:3000')) {
             photoUrl = photoUrl.replace('http://localhost:3000', '');
         }
-        
+
         const eventData = {
             ...formValue,
             startTime: new Date(formValue.startTime).toISOString(),

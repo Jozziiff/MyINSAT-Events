@@ -35,7 +35,8 @@
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Time:</span>
-                    <span class="meta-value">{{ formatTime(event()!.startTime) }} - {{ formatTime(event()!.endTime) }}</span>
+                    <span class="meta-value">{{ formatTime(event()!.startTime) }} - {{ formatTime(event()!.endTime)
+                        }}</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Location:</span>
@@ -48,7 +49,12 @@
                 @if (event()!.price) {
                 <div class="meta-item">
                     <span class="meta-label">Price:</span>
-                    <span class="meta-value">{{ event()!.price }} TND</span>
+                    <span class="meta-value">{{ formatPrice(event()!.price) }}</span>
+                </div>
+                } @else {
+                <div class="meta-item">
+                    <span class="meta-label">Price:</span>
+                    <span class="meta-value">Free</span>
                 </div>
                 }
             </div>

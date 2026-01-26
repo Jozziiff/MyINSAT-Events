@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Event, EventSummary } from '../models/event.model';
+import { resolveImageUrl } from '../utils/image.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -12,22 +13,15 @@ export class EventsService {
   loading = signal(false);
   error = signal<string | null>(null);
 
-  private resolveImageUrl(url?: string): string | undefined {
-    if (!url) return undefined;
-    return url.startsWith('http://') || url.startsWith('https://')
-      ? url
-      : `${this.apiUrl}${url}`;
-  }
-
   private resolveEventImages(event: any): EventSummary {
     return {
       ...event,
-      photoUrl: this.resolveImageUrl(event.photoUrl),
+      photoUrl: resolveImageUrl(event.photoUrl),
       startTime: new Date(event.startTime),
       endTime: new Date(event.endTime),
       club: event.club ? {
         ...event.club,
-        logoUrl: this.resolveImageUrl(event.club.logoUrl),
+        logoUrl: resolveImageUrl(event.club.logoUrl),
       } : null,
     };
   }
@@ -35,18 +29,18 @@ export class EventsService {
   private resolveFullEventImages(event: any): Event {
     return {
       ...event,
-      photoUrl: this.resolveImageUrl(event.photoUrl),
+      photoUrl: resolveImageUrl(event.photoUrl),
       startTime: new Date(event.startTime),
       endTime: new Date(event.endTime),
       createdAt: new Date(event.createdAt),
       updatedAt: new Date(event.updatedAt),
       sections: event.sections?.map((section: any) => ({
         ...section,
-        imageUrl: this.resolveImageUrl(section.imageUrl),
+        imageUrl: resolveImageUrl(section.imageUrl),
       })),
       club: event.club ? {
         ...event.club,
-        logoUrl: this.resolveImageUrl(event.club.logoUrl),
+        logoUrl: resolveImageUrl(event.club.logoUrl),
       } : null,
     };
   }

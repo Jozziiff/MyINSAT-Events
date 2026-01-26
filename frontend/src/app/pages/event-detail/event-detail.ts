@@ -2,27 +2,8 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
-import { ManagerApiService } from '../../services/manager-api.service';
-
-interface EventSection {
-    title: string;
-    description: string;
-    imageUrl?: string;
-}
-
-interface Event {
-    id: number;
-    title: string;
-    description?: string;
-    location: string;
-    startTime: string;
-    endTime: string;
-    capacity: number;
-    price?: number;
-    photoUrl?: string;
-    sections?: EventSection[];
-    status: string;
-}
+import { EventsService } from '../../services/events.service';
+import { Event } from '../../models/event.model';
 
 @Component({
     selector: 'app-event-detail',
@@ -40,8 +21,8 @@ export class EventDetailComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private managerApi: ManagerApiService
-    ) {}
+        private eventsService: EventsService
+    ) { }
 
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
@@ -50,45 +31,22 @@ export class EventDetailComponent implements OnInit {
         }
     }
 
-    private readonly apiUrl = 'http://localhost:3000';
-
-    private resolveImageUrl(url?: string): string | undefined {
-        if (!url) return undefined;
-        return url.startsWith('http://') || url.startsWith('https://')
-            ? url
-            : `${this.apiUrl}${url}`;
-    }
-
-    loadEvent(id: number) {
+    async loadEvent(id: number) {
         this.loading.set(true);
-        this.managerApi.getAllEvents().subscribe({
-            next: (events) => {
-                const event = events.find(e => e.id === id);
-                if (event) {
-                    // Resolve image URLs
-                    const resolvedEvent: Event = {
-                        ...event,
-                        photoUrl: this.resolveImageUrl(event.photoUrl),
-                        sections: event.sections?.map(s => ({
-                            ...s,
-                            imageUrl: this.resolveImageUrl(s.imageUrl)
-                        }))
-                    };
-                    this.event.set(resolvedEvent);
-                } else {
-                    this.error.set('Event not found');
-                }
-                this.loading.set(false);
-            },
-            error: (err) => {
-                this.error.set('Failed to load event');
-                this.loading.set(false);
-            }
-        });
+        this.error.set('');
+
+        const event = await this.eventsService.getEventById(id);
+
+        if (event) {
+            this.event.set(event);
+        } else {
+            this.error.set(this.eventsService.error() || 'Event not found');
+        }
+
+        this.loading.set(false);
     }
 
-    formatDate(dateString: string): string {
-        const date = new Date(dateString);
+    formatDate(date: Date): string {
         return date.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -97,15 +55,18 @@ export class EventDetailComponent implements OnInit {
         });
     }
 
-    formatTime(dateString: string): string {
-        const date = new Date(dateString);
+    formatTime(date: Date): string {
         return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
         });
     }
 
+    formatPrice(price?: number): string {
+        return this.eventsService.formatPrice(price);
+    }
+
     goBack() {
-        this.router.navigate(['/manager']);
+        this.router.navigate(['/events']);
     }
 }

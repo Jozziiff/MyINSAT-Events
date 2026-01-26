@@ -9,9 +9,9 @@ export class EventsService {
   constructor(
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
-  ) {}
+  ) { }
 
-  async getAllEvents() {
+  getAllEvents() {
     return this.eventRepository.find({
       where: { status: EventStatus.PUBLISHED },
       relations: ['club'],
@@ -19,7 +19,7 @@ export class EventsService {
     });
   }
 
-  async getUpcomingEvents() {
+  getUpcomingEvents() {
     const now = new Date();
     return this.eventRepository.find({
       where: {
@@ -31,7 +31,7 @@ export class EventsService {
     });
   }
 
-  async getEventById(id: number) {
+  getEventById(id: number) {
     return this.eventRepository.findOne({
       where: { id },
       relations: ['club'],
