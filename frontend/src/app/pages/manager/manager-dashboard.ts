@@ -108,6 +108,10 @@ export class ManagerDashboardComponent implements OnInit {
         this.router.navigate(['/manager/events', eventId, 'registrations']);
     }
 
+    viewEvent(eventId: number) {
+        this.router.navigate(['/events', eventId]);
+    }
+
     editEvent(eventId: number) {
         this.router.navigate(['/manager/events', eventId, 'edit']);
     }

@@ -8,14 +8,18 @@
 
     @if (error()) {
     <div class="alert alert-error">
-        <span>❌</span>
+        <span>Error</span>
         <p>{{ error() }}</p>
     </div>
     }
 
     <div class="form-container">
         <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
-            <div class="form-grid">
+            <!-- Basic Info Section -->
+            <div class="section-header">
+                <h2>Event Details</h2>
+            </div>
+            <div class="form-grid two-col">
                 <div class="form-group full-width">
                     <label for="title">Event Title *</label>
                     <input id="title" type="text" formControlName="title"
@@ -28,15 +32,24 @@
                 <div class="form-group full-width">
                     <label for="description">Description</label>
                     <textarea id="description" formControlName="description" placeholder="Describe your event..."
-                        rows="4"></textarea>
+                        rows="3"></textarea>
                 </div>
 
-                <div class="form-group full-width">
+                <div class="form-group">
                     <label for="location">Location *</label>
                     <input id="location" type="text" formControlName="location" placeholder="e.g. Amphi 2, Room B101"
                         [class.invalid]="isFieldInvalid('location')">
                     @if (isFieldInvalid('location')) {
                     <span class="error-message">{{ getFieldError('location') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="capacity">Capacity *</label>
+                    <input id="capacity" type="number" formControlName="capacity" placeholder="30" min="1"
+                        [class.invalid]="isFieldInvalid('capacity')">
+                    @if (isFieldInvalid('capacity')) {
+                    <span class="error-message">{{ getFieldError('capacity') }}</span>
                     }
                 </div>
 
@@ -59,15 +72,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="capacity">Capacity *</label>
-                    <input id="capacity" type="number" formControlName="capacity" placeholder="30" min="1"
-                        [class.invalid]="isFieldInvalid('capacity')">
-                    @if (isFieldInvalid('capacity')) {
-                    <span class="error-message">{{ getFieldError('capacity') }}</span>
-                    }
-                </div>
-
-                <div class="form-group">
                     <label for="price">Price (TND)</label>
                     <input id="price" type="number" formControlName="price" placeholder="0" min="0" step="0.5"
                         [class.invalid]="isFieldInvalid('price')">
@@ -75,7 +79,86 @@
                 </div>
             </div>
 
+            <!-- Sections -->
+            <div class="sections-container">
+                <div class="section-header">
+                    <h2>Event Sections</h2>
+                </div>
+
+                @if (sections().length === 0) {
+                <p class="empty-state">No sections yet. Add one to get started!</p>
+                }
+
+                @for (section of sections(); let i = $index; track i) {
+                <div class="section-card">
+                    <div class="section-content">
+                        <div class="section-form-grid">
+                            <!-- Left: Section Title & Description -->
+                            <div class="section-text">
+                                <div class="form-group">
+                                    <label>Section Title</label>
+                                    <input type="text" [formControl]="getSectionTitleControl(i)"
+                                        placeholder="e.g. Workshop Overview, Agenda, etc." class="section-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Section Content</label>
+                                    <textarea [formControl]="getSectionDescriptionControl(i)"
+                                        placeholder="Add content for this section..." rows="4" class="section-textarea"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Right: Image Upload -->
+                            <div class="section-image">
+                                <label>Section Image</label>
+                                <div class="image-upload-box">
+                                    @if (getSectionImageUrl(i)) {
+                                    <div class="image-preview-container">
+                                        <img [src]="getSectionImageUrl(i)" [alt]="getSectionTitleControl(i).value || 'Section image'"
+                                            class="image-preview">
+                                        <button type="button" class="btn-remove-image" (click)="removeSectionImage(i)">×</button>
+                                    </div>
+                                    } @else {
+                                    <label [for]="'section-image-' + i" class="upload-label">
+                                        <div class="upload-placeholder">+</div>
+                                        <span class="upload-text">Add Image</span>
+                                    </label>
+                                    }
+                                    <input
+                                        [id]="'section-image-' + i"
+                                        type="file"
+                                        accept="image/*"
+                                        (change)="onSectionImageSelected($event, i)"
+                                        [disabled]="uploadingPhotoIndex() === i"
+                                        class="hidden"
+                                    >
+                                    @if (uploadingPhotoIndex() === i) {
+                                    <div class="uploading-badge">
+                                        <div class="spinner-tiny"></div>
+                                        <span>Uploading...</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remove Section Button -->
+                    <button type="button" class="btn-remove-section" (click)="removeSection(i)">
+                        Remove Section
+                    </button>
+                </div>
+                }
+
+                <button type="button" class="btn-add-section" (click)="addSection()">
+                    + Add Section
+                </button>
+            </div>
+
+            <!-- Form Actions -->
             <div class="form-actions">
+                <button type="button" class="btn-preview" (click)="openPreview()">
+                    Preview Event
+                </button>
                 <button type="submit" class="btn-primary" [disabled]="loading() || eventForm.invalid">
                     @if (loading()) {
                     <span class="spinner-small"></span>
@@ -91,3 +174,49 @@
         </form>
     </div>
 </div>
+
+<!-- Event Preview Modal -->
+@if (showPreview()) {
+<div class="modal-overlay" (click)="closePreview()">
+    <div class="modal-content event-preview-modal" (click)="$event.stopPropagation()">
+        <button type="button" class="btn-close-modal" (click)="closePreview()">×</button>
+        <div class="preview-container">
+            <!-- Event Header -->
+            <div class="preview-header">
+                <h1>{{ eventForm.get('title')?.value || 'Event Title' }}</h1>
+                <div class="preview-meta-info">
+                    <span class="meta-item">{{ eventForm.get('location')?.value || 'Location TBD' }}</span>
+                    <span class="meta-item">{{ eventForm.get('capacity')?.value || '0' }} Capacity</span>
+                    <span class="meta-item">{{ eventForm.get('price')?.value || '0' }} TND</span>
+                </div>
+                @if (eventForm.get('description')?.value) {
+                <p class="preview-description">{{ eventForm.get('description')?.value }}</p>
+                }
+            </div>
+
+            <!-- Event Sections -->
+            <div class="preview-sections">
+                @if (sections().length === 0) {
+                <p class="no-sections">No sections added yet</p>
+                }
+
+                @for (section of sections(); let i = $index; track i) {
+                <div class="preview-section-card">
+                    <div class="section-layout" [ngClass]="{'image-left': i % 2 === 0, 'image-right': i % 2 !== 0}">
+                        @if (getSectionImageUrl(i)) {
+                        <div class="section-image-wrapper">
+                            <img [src]="getSectionImageUrl(i)" [alt]="getSectionTitleControl(i).value" class="section-image-preview">
+                        </div>
+                        }
+                        <div class="section-text-wrapper">
+                            <h3>{{ getSectionTitleControl(i).value || 'Section ' + (i + 1) }}</h3>
+                            <p class="section-text">{{ getSectionDescriptionControl(i).value || 'No description added' }}</p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}

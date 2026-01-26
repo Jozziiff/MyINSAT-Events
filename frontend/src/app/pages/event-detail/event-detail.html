@@ -1,0 +1,87 @@
+<div class="page-container" @fadeSlideIn>
+    <!-- Header with Back Button -->
+    <header class="event-header">
+        <button type="button" class="btn-back" (click)="goBack()">← Back</button>
+    </header>
+
+    @if (loading()) {
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading event...</p>
+    </div>
+    } @else if (error()) {
+    <div class="error-container">
+        <p>{{ error() }}</p>
+        <button type="button" class="btn-back-main" (click)="goBack()">Back to Events</button>
+    </div>
+    } @else if (event()) {
+    <div class="event-detail">
+        <!-- Hero Section -->
+        @if (event()!.photoUrl) {
+        <div class="hero-section">
+            <img [src]="event()!.photoUrl" [alt]="event()!.title" class="hero-image">
+        </div>
+        }
+
+        <div class="event-content">
+            <!-- Event Title -->
+            <h1 class="event-title">{{ event()!.title }}</h1>
+
+            <!-- Event Meta Info -->
+            <div class="event-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Date:</span>
+                    <span class="meta-value">{{ formatDate(event()!.startTime) }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Time:</span>
+                    <span class="meta-value">{{ formatTime(event()!.startTime) }} - {{ formatTime(event()!.endTime) }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Location:</span>
+                    <span class="meta-value">{{ event()!.location }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Capacity:</span>
+                    <span class="meta-value">{{ event()!.capacity }} people</span>
+                </div>
+                @if (event()!.price && event()!.price > 0) {
+                <div class="meta-item">
+                    <span class="meta-label">Price:</span>
+                    <span class="meta-value">{{ event()!.price }} TND</span>
+                </div>
+                }
+            </div>
+
+            <!-- Event Description -->
+            @if (event()!.description) {
+            <div class="event-description">
+                <h2>About This Event</h2>
+                <p>{{ event()!.description }}</p>
+            </div>
+            }
+
+            <!-- Sections -->
+            @if (sections().length > 0) {
+            <div class="event-sections">
+                <h2>Event Details</h2>
+
+                @for (section of sections(); let i = $index; track i) {
+                <div class="section-block" [class.image-left]="i % 2 === 0" [class.image-right]="i % 2 === 1">
+                    <div class="section-text">
+                        <h3>{{ section.title }}</h3>
+                        <p>{{ section.description }}</p>
+                    </div>
+                    @if (section.imageUrl) {
+                    <div class="section-image">
+                        <img [src]="section.imageUrl" [alt]="section.title" class="section-img">
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+    }
+</div>

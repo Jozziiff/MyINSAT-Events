@@ -1,0 +1,133 @@
+<div class="page-container" @fadeSlideIn>
+  <!-- Header -->
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">← Back</button>
+    <h1>{{ eventsData()?.clubName }}</h1>
+    <p class="subtitle">All Events</p>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading events...</p>
+  </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+  <div class="error-state">
+    <p>{{ error() }}</p>
+    <button class="btn-outline" (click)="loadEvents(clubId())">Retry</button>
+  </div>
+  }
+
+  <!-- Content -->
+  @if (!loading() && !error() && eventsData()) {
+  <!-- Stats Summary -->
+  <div class="stats-summary">
+    <div class="stat-item">
+      <span class="stat-count">{{ eventsData()!.totalEvents }}</span>
+      <span class="stat-name">Total Events</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-count">{{ eventsData()!.totalAttendance }}</span>
+      <span class="stat-name">Total Attendees</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-count">{{ eventsData()!.averageAttendanceRate }}%</span>
+      <span class="stat-name">Avg Attendance</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-count">{{ eventsData()!.averageRating }}</span>
+      <span class="stat-name">Avg Rating</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  @if (pastEvents().length === 0) {
+  <div class="empty-state">
+    <h3>No events yet</h3>
+    <p>This club hasn't organized any events</p>
+  </div>
+  } @else {
+  <!-- Events List -->
+  <div class="events-list">
+    @for (event of pastEvents(); track event.id) {
+    <div class="event-item">
+      <!-- Event Photo (if available) -->
+      <div class="event-photo">
+        @if (event.photoUrl) {
+        <img [src]="event.photoUrl" [alt]="event.title" class="photo">
+        } @else {
+        <div class="photo-placeholder">
+          <span>No Image</span>
+        </div>
+        }
+      </div>
+
+      <!-- Event Content -->
+      <div class="event-content">
+        <div class="event-header">
+          <h3>{{ event.title }}</h3>
+          <span class="status-badge" [class]="'status-' + event.status.toLowerCase()">
+            {{ event.status }}
+          </span>
+        </div>
+
+        @if (event.description) {
+        <p class="event-description">{{ event.description }}</p>
+        }
+
+        <div class="event-meta">
+          <div class="meta-item">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{ formatDate(event.startTime) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Time</span>
+            <span class="meta-value">{{ formatTime(event.startTime) }}</span>
+          </div>
+          @if (event.location) {
+          <div class="meta-item">
+            <span class="meta-label">Location</span>
+            <span class="meta-value">{{ event.location }}</span>
+          </div>
+          }
+          @if (event.capacity) {
+          <div class="meta-item">
+            <span class="meta-label">Capacity</span>
+            <span class="meta-value">{{ event.capacity }}</span>
+          </div>
+          }
+          @if (event.price) {
+          <div class="meta-item">
+            <span class="meta-label">Price</span>
+            <span class="meta-value">{{ event.price }} TND</span>
+          </div>
+          }
+        </div>
+
+        <!-- Stats Row -->
+        <div class="event-stats">
+          <div class="stat">
+            <span class="stat-label">Registrations</span>
+            <span class="stat-value">{{ event.registrationsCount }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Attendance</span>
+            <span class="stat-value">{{ event.attendanceRate }}%</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Rating</span>
+            <span class="stat-value">{{ event.averageRating }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+  }
+</div>
+

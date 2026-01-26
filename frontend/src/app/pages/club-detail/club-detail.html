@@ -28,6 +28,13 @@
       </div>
     </header>
 
+    <!-- View Events CTA Button -->
+    <div class="cta-button-top" @fadeInRight>
+      <button class="btn-primary" (click)="viewClubEvents()">
+        View Past Events
+      </button>
+    </div>
+
     <!-- About Section -->
     <section class="about-section container" @fadeSlideIn>
       <div class="section-row">
@@ -63,37 +70,37 @@
         <div class="contact-links">
           @if (clubData.contact?.email) {
             <a [href]="'mailto:' + clubData.contact!.email" class="contact-item">
-              <span class="contact-icon">📧</span>
+              <span class="contact-label">Email</span>
               <span>{{ clubData.contact!.email }}</span>
             </a>
           }
           @if (clubData.contact?.phone) {
             <a [href]="'tel:' + clubData.contact!.phone" class="contact-item">
-              <span class="contact-icon">📞</span>
+              <span class="contact-label">Phone</span>
               <span>{{ clubData.contact!.phone }}</span>
             </a>
           }
           @if (clubData.contact?.website) {
             <a [href]="clubData.contact!.website" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-icon">🌐</span>
+              <span class="contact-label">Website</span>
               <span>Website</span>
             </a>
           }
           @if (clubData.contact?.facebook) {
             <a [href]="clubData.contact!.facebook" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-icon">📘</span>
+              <span class="contact-label">Facebook</span>
               <span>Facebook</span>
             </a>
           }
           @if (clubData.contact?.instagram) {
             <a [href]="clubData.contact!.instagram" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-icon">📸</span>
+              <span class="contact-label">Instagram</span>
               <span>Instagram</span>
             </a>
           }
           @if (clubData.contact?.linkedin) {
             <a [href]="clubData.contact!.linkedin" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-icon">💼</span>
+              <span class="contact-label">LinkedIn</span>
               <span>LinkedIn</span>
             </a>
           }

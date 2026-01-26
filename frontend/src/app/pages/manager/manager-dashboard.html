@@ -98,6 +98,7 @@
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-icon" title="View" (click)="viewEvent(event.id)">View</button>
                             @if (event.status === 'DRAFT') {
                             <button class="btn-icon" title="Publish" (click)="publishEvent(event)">Publish</button>
                             }
@@ -161,6 +162,7 @@
                     </td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn-icon" title="View" (click)="viewEvent(event.id)">View</button>
                             @if (event.status === 'PUBLISHED') {
                             <button class="btn-icon" title="View Registrations"
                                 (click)="viewRegistrations(event.id)">Registrations</button>

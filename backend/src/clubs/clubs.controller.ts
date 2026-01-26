@@ -85,4 +85,14 @@ export class ClubsController {
     }
     return { deleted: true };
   }
+
+  // Get club events with statistics
+  @Get(':id/events')
+  async getClubEvents(@Param('id', ParseIntPipe) id: number) {
+    const events = await this.clubsService.getClubEventsWithStats(id);
+    if (!events) {
+      throw new NotFoundException(`Club with ID ${id} not found`);
+    }
+    return events;
+  }
 }
