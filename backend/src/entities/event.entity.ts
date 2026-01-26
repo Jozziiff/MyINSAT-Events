@@ -41,6 +41,12 @@ export class Event {
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
     price: number;
 
+    @Column({ type: 'varchar', nullable: true, name: 'photo_url' })
+    photoUrl: string;
+
+    @Column({ type: 'json', nullable: true })
+    sections: Array<{ title: string; description: string; imageUrl?: string }>;
+
     @Column({ type: 'enum', enum: EventStatus, nullable: false, default: EventStatus.DRAFT })
     status: EventStatus;
 

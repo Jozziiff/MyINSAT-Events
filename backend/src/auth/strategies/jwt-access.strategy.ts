@@ -2,9 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { UsersService } from '../../users/users.service';
 
 export interface JwtPayload {
   sub: number; // user id
@@ -16,8 +14,7 @@ export interface JwtPayload {
 export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
   constructor(
     private configService: ConfigService,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private usersService: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -27,9 +24,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.userRepository.findOne({
-      where: { id: payload.sub },
-    });
+    const user = await this.usersService.findById(payload.sub);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');

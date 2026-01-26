@@ -58,8 +58,7 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto): Promise<{ message: string }> {
-    await this.authService.verifyEmail(verifyEmailDto.token);
-    return { message: 'Email verified successfully' };
+    return this.authService.verifyEmail(verifyEmailDto.token);
   }
 
   @Public()
@@ -74,11 +73,10 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-    await this.authService.resetPassword(
+    return this.authService.resetPassword(
       resetPasswordDto.token,
       resetPasswordDto.newPassword,
     );
-    return { message: 'Password reset successfully' };
   }
 
   // ==================== PROTECTED ENDPOINTS ====================

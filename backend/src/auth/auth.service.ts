@@ -10,8 +10,8 @@ import { Repository, IsNull } from 'typeorm';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import { Role } from '../users/enums/role.enum';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerificationToken } from './entities/email-verification-token.entity';
@@ -24,8 +24,7 @@ import { JwtPayload } from './strategies/jwt-access.strategy';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private usersService: UsersService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(EmailVerificationToken)
@@ -40,29 +39,16 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, password, fullName } = registerDto;
 
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
-
     // Hash password
     const passwordHash = await this.hashPassword(password);
 
-    // Create user
-    const user = this.userRepository.create({
+    // Create user (UsersService handles duplicate check)
+    const user = await this.usersService.create({
       email,
       passwordHash,
       fullName,
-      role: Role.USER, // Explicitly set role
-      emailVerified: false,
-      isActive: true,
+      role: Role.USER,
     });
-
-    await this.userRepository.save(user);
 
     // Generate email verification token (for future implementation)
     await this.generateEmailVerificationToken(user.id);
@@ -76,7 +62,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Find user
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -116,13 +102,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Hash the provided refresh token to compare with database
-    const hashedProvidedToken = this.hashToken(refreshToken);
-
-    // Find the specific refresh token record by its hash
+    // Find the specific refresh token record
     const existingRefreshToken = await this.refreshTokenRepository.findOne({
       where: {
-        tokenHash: hashedProvidedToken,
+        token: refreshToken,
         userId,
         revokedAt: IsNull(),
       },
@@ -132,15 +115,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or revoked refresh token');
     }
 
-    // Check if refresh token has expired
-    if (new Date() > existingRefreshToken.expiresAt) {
-      throw new UnauthorizedException('Refresh token expired');
-    }
-
     // Get user
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.usersService.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -162,50 +138,91 @@ export class AuthService {
   }
 
   // ==================== EMAIL VERIFICATION ====================
-  async verifyEmail(token: string): Promise<void> {
-    const hashedToken = this.hashToken(token);
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    try {
+      const payload = this.jwtService.verify<{
+        sub: number;
+        type: string;
+        exp: number;
+      }>(token, {
+        secret: this.configService.get('JWT_EMAIL_VERIFICATION_SECRET'),
+      });
 
-    const verificationToken = await this.emailVerificationRepository.findOne({
-      where: { tokenHash: hashedToken },
-      relations: ['user'],
-    });
+      if (payload.type !== 'email-verification') {
+        throw new BadRequestException('Invalid verification token');
+      }
 
-    if (!verificationToken || verificationToken.usedAt) {
-      throw new BadRequestException('Invalid or already used token');
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      if (payload.exp < currentTimestamp) {
+        throw new BadRequestException('Verification link expired');
+      }
+
+      // Check if token exists in database and matches
+      const verificationToken = await this.emailVerificationRepository.findOne({
+        where: {
+          userId: payload.sub,
+          token: token,
+        },
+        relations: ['user'],
+      });
+
+      if (!verificationToken || verificationToken.usedAt) {
+        throw new BadRequestException('Invalid or expired verification token');
+      }
+
+      if (verificationToken.user.emailVerified) {
+        return {
+          message: 'Email is already verified',
+        };
+      }
+
+      // Verify email and mark token as used (one-time use)
+      verificationToken.user.emailVerified = true;
+      await this.usersService.save(verificationToken.user);
+
+      verificationToken.usedAt = new Date();
+      await this.emailVerificationRepository.save(verificationToken);
+
+      return {
+        message: 'Email verified successfully',
+      };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        throw new BadRequestException('Invalid verification token');
+      }
+      if (error.name === 'TokenExpiredError') {
+        throw new BadRequestException('Verification link expired');
+      }
+      throw error;
     }
-
-    if (new Date() > verificationToken.expiresAt) {
-      throw new BadRequestException('Token expired');
-    }
-
-    // Update user
-    verificationToken.user.emailVerified = true;
-    await this.userRepository.save(verificationToken.user);
-
-    // Mark token as used
-    verificationToken.usedAt = new Date();
-    await this.emailVerificationRepository.save(verificationToken);
   }
 
   // ==================== PASSWORD RESET ====================
   async requestPasswordReset(email: string): Promise<void> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       // Don't reveal if email exists
       return;
     }
 
-    // Generate reset token
-    const token = crypto.randomBytes(32).toString('hex');
-    const hashedToken = this.hashToken(token);
+    // Generate JWT reset token
+    const token = this.jwtService.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        type: 'password-reset',
+      },
+      {
+        secret: this.configService.get('JWT_PASSWORD_RESET_SECRET'),
+        expiresIn: '1h',
+      },
+    );
 
-    const PASSWORD_RESET_TOKEN_EXPIRATION_MS = 60 * 60 * 1000;
-
+    // Store token in database for verification
     const resetToken = this.passwordResetRepository.create({
       userId: user.id,
-      tokenHash: hashedToken,
-      expiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRATION_MS), // 1 hour
+      token: token,
     });
 
     await this.passwordResetRepository.save(resetToken);
@@ -215,32 +232,61 @@ export class AuthService {
     console.log(`Password reset token for ${email}: ${token}`);
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const hashedToken = this.hashToken(token);
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      const payload = this.jwtService.verify<{
+        sub: number;
+        email: string;
+        type: string;
+        exp: number;
+      }>(token, {
+        secret: this.configService.get('JWT_PASSWORD_RESET_SECRET'),
+      });
 
-    const resetToken = await this.passwordResetRepository.findOne({
-      where: { tokenHash: hashedToken },
-      relations: ['user'],
-    });
+      if (payload.type !== 'password-reset') {
+        throw new BadRequestException('Invalid reset token');
+      }
 
-    if (!resetToken || resetToken.usedAt) {
-      throw new BadRequestException('Invalid or already used token');
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      if (payload.exp < currentTimestamp) {
+        throw new BadRequestException('Reset link expired');
+      }
+
+      // Check if token exists in database and matches
+      const resetToken = await this.passwordResetRepository.findOne({
+        where: {
+          userId: payload.sub,
+          token: token,
+        },
+        relations: ['user'],
+      });
+
+      if (!resetToken || resetToken.usedAt) {
+        throw new BadRequestException('Invalid or expired reset token');
+      }
+
+      // Update password and mark token as used (one-time use)
+      resetToken.user.passwordHash = await this.hashPassword(newPassword);
+      await this.usersService.save(resetToken.user);
+
+      resetToken.usedAt = new Date();
+      await this.passwordResetRepository.save(resetToken);
+
+      // Revoke all refresh tokens for this user
+      await this.revokeRefreshToken(resetToken.user.id);
+
+      return {
+        message: 'Password reset successfully',
+      };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        throw new BadRequestException('Invalid reset token');
+      }
+      if (error.name === 'TokenExpiredError') {
+        throw new BadRequestException('Reset link expired');
+      }
+      throw error;
     }
-
-    if (new Date() > resetToken.expiresAt) {
-      throw new BadRequestException('Token expired');
-    }
-
-    // Update password
-    resetToken.user.passwordHash = await this.hashPassword(newPassword);
-    await this.userRepository.save(resetToken.user);
-
-    // Mark token as used
-    resetToken.usedAt = new Date();
-    await this.passwordResetRepository.save(resetToken);
-
-    // Revoke all refresh tokens for this user
-    await this.revokeRefreshToken(resetToken.user.id);
   }
 
   // ==================== HELPER METHODS ====================
@@ -283,14 +329,9 @@ export class AuthService {
     });
 
     // Store refresh token in database
-    const hashedRefreshToken = this.hashToken(refreshToken);
-
     const refreshTokenEntity = this.refreshTokenRepository.create({
       userId: user.id,
-      tokenHash: hashedRefreshToken,
-      expiresAt: new Date(
-        Date.now() + this.parseExpirationToMs(this.configService.get<string>('JWT_REFRESH_EXPIRATION') as string),
-      ),
+      token: refreshToken,
     });
 
     await this.refreshTokenRepository.save(refreshTokenEntity);
@@ -310,20 +351,31 @@ export class AuthService {
     return bcrypt.hash(password, saltRounds);
   }
 
-  private hashToken(token: string): string {
-    return crypto.createHash('sha256').update(token).digest('hex');
-  }
-
   private async generateEmailVerificationToken(
     userId: number,
   ): Promise<string> {
-    const token = crypto.randomBytes(32).toString('hex');
-    const hashedToken = this.hashToken(token);
+    const user = await this.usersService.findById(userId);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
+    const token = this.jwtService.sign(
+      {
+        sub: userId,
+        email: user.email,
+        type: 'email-verification',
+      },
+      {
+        secret: this.configService.get('JWT_EMAIL_VERIFICATION_SECRET'),
+        expiresIn: '24h',
+      },
+    );
+
+    // Store token in database for verification
     const verificationToken = this.emailVerificationRepository.create({
-      userId,
-      tokenHash: hashedToken,
-      expiresAt: new Date(Date.now() + 86400000), // 24 hours
+      userId: userId,
+      token: token,
     });
 
     await this.emailVerificationRepository.save(verificationToken);
@@ -332,22 +384,5 @@ export class AuthService {
     console.log(`Email verification token for user ${userId}: ${token}`);
 
     return token;
-  }
-
-  private parseExpirationToMs(expiration: string): number {
-    const match = expiration.match(/^(\d+)([smhd])$/);
-    if (!match) return 7 * 24 * 60 * 60 * 1000; // Default 7 days
-
-    const value = parseInt(match[1]);
-    const unit = match[2];
-
-    const multipliers = {
-      s: 1000,
-      m: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-    };
-
-    return value * multipliers[unit];
   }
 }

@@ -8,7 +8,7 @@ import { AuthController } from './auth.controller';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerificationToken } from './entities/email-verification-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
-import { User } from '../users/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -16,8 +16,8 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
   imports: [
     ConfigModule,
     PassportModule,
+    UsersModule,
     TypeOrmModule.forFeature([
-      User,
       RefreshToken,
       EmailVerificationToken,
       PasswordResetToken,

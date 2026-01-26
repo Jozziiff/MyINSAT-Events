@@ -13,6 +13,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ClubsModule } from './clubs/clubs.module';
 import { UploadModule } from './upload/upload.module';
 import { ManagerModule } from './manager/manager.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { ManagerModule } from './manager/manager.module';
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false,
+        synchronize: false ,
         logging: configService.get('NODE_ENV') === 'development',
         ssl: {
           rejectUnauthorized: false,
@@ -46,6 +47,7 @@ import { ManagerModule } from './manager/manager.module';
     ManagerModule,
     ClubsModule,
     UploadModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

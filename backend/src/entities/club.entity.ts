@@ -15,14 +15,45 @@ export class Club {
     @PrimaryGeneratedColumn()
     id: number;
 
+
     @Column({ type: 'varchar', unique: true, nullable: false })
     name: string;
 
-    @Column({ type: 'text', nullable: true })
-    description: string;
+    @Column({ type: 'varchar', nullable: true, name: 'short_description' })
+    shortDescription: string;
 
-    @Column({ type: 'text', name: 'payment_info', nullable: true })
-    paymentInfo: string;
+    @Column({ type: 'varchar', nullable: true, name: 'logo_url' })
+    logoUrl: string;
+
+    @Column({ type: 'text', nullable: true })
+    about: string;
+
+    @Column({ type: 'varchar', nullable: true, name: 'about_image_url' })
+    aboutImageUrl: string;
+
+    @Column({ type: 'jsonb', nullable: true })
+    history: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    mission: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    activities: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    achievements: any;
+
+    @Column({ type: 'jsonb', nullable: true, name: 'join_us' })
+    joinUs: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    contact: any;
+
+    @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
+    coverImageUrl: string;
+
+    @Column({ type: 'int', nullable: true, name: 'owner_id' })
+    ownerId: number;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

@@ -20,11 +20,8 @@ export class PasswordResetToken {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'token_hash' })
-  tokenHash: string;
-
-  @Column({ name: 'expires_at', type: 'timestamp' })
-  expiresAt: Date;
+  @Column({ type: 'text' })
+  token: string;
 
   @Column({ name: 'used_at', type: 'timestamp', nullable: true })
   usedAt: Date | null;
