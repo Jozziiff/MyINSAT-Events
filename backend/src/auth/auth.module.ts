@@ -9,6 +9,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerificationToken } from './entities/email-verification-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { UsersModule } from '../users/users.module';
+import { MailModule } from '../mail/mail.module';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -17,6 +18,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
     ConfigModule,
     PassportModule,
     UsersModule,
+    MailModule,
     TypeOrmModule.forFeature([
       RefreshToken,
       EmailVerificationToken,

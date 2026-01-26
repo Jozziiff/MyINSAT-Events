@@ -16,6 +16,7 @@ import { Role } from '../users/enums/role.enum';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerificationToken } from './entities/email-verification-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { MailService } from '../mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -33,6 +34,7 @@ export class AuthService {
     private passwordResetRepository: Repository<PasswordResetToken>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   // ==================== REGISTRATION ====================
@@ -227,9 +229,8 @@ export class AuthService {
 
     await this.passwordResetRepository.save(resetToken);
 
-    // TODO: Send email with token
-    // For now, we just log it (in production, use email service)
-    console.log(`Password reset token for ${email}: ${token}`);
+    // Send password reset email
+    await this.mailService.sendPasswordReset(email, token);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
@@ -380,8 +381,8 @@ export class AuthService {
 
     await this.emailVerificationRepository.save(verificationToken);
 
-    // TODO: Send email with token
-    console.log(`Email verification token for user ${userId}: ${token}`);
+    // Send email verification email
+    await this.mailService.sendEmailVerification(user.email, token);
 
     return token;
   }
