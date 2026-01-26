@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-// Default images for each section type (served from backend)
+// Default images for each section type (using placeholder service for missing files)
 export const DEFAULT_SECTION_IMAGES = {
   about: '/uploads/defaults/about-default.jpg',
   history: '/uploads/defaults/history-default.jpg',
@@ -9,8 +9,8 @@ export const DEFAULT_SECTION_IMAGES = {
   activities: '/uploads/defaults/activities-default.jpg',
   achievements: '/uploads/defaults/achievements-default.jpg',
   joinUs: '/uploads/defaults/join-default.jpg',
-  cover: '/uploads/defaults/cover-default.jpg',
-  logo: '/uploads/defaults/logo-default.png',
+  cover: 'https://via.placeholder.com/1920x600/667eea/ffffff?text=Club+Cover',
+  logo: 'https://via.placeholder.com/200x200/667eea/ffffff?text=Club+Logo',
 };
 
 // Section with image support (defaults to section-specific default image)
@@ -67,8 +67,8 @@ export class CreateClubDto {
   shortDescription: string; // For the clubs list page
 
   @IsString()
-  @IsNotEmpty()
-  logoUrl: string;
+  @IsOptional()
+  logoUrl?: string;
 
   // Required sections
   @IsString()
