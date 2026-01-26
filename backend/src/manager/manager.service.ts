@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan, MoreThan, Not } from 'typeorm';
 import { Event, Club, Registration, ClubManager } from '../entities';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -42,8 +42,39 @@ export class ManagerService {
     }
 
     private validateEventDates(startTime: string, endTime: string): void {
-        if (new Date(startTime) >= new Date(endTime)) {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const now = new Date();
+
+        if (start < now) {
+            throw new BadRequestException('Event start time cannot be in the past');
+        }
+
+        if (start >= end) {
             throw new BadRequestException('End time must be after start time');
+        }
+    }
+
+    private async checkLocationConflict(
+        location: string,
+        startTime: string,
+        endTime: string,
+        excludeEventId?: number
+    ): Promise<void> {
+        // Check for overlapping events: start before our end AND end after our start
+        const conflictingEvent = await this.eventRepository.findOne({
+            where: {
+                location,
+                startTime: LessThan(new Date(endTime)),
+                endTime: MoreThan(new Date(startTime)),
+                ...(excludeEventId && { id: Not(excludeEventId) }),
+            },
+        });
+
+        if (conflictingEvent) {
+            throw new BadRequestException(
+                `Another event is already scheduled at "${location}" during this time period`
+            );
         }
     }
 
@@ -73,6 +104,13 @@ export class ManagerService {
         const club = await this.getManagedClub(userId);
         this.validateEventDates(createEventDto.startTime, createEventDto.endTime);
 
+
+        await this.checkLocationConflict(
+            createEventDto.location,
+            createEventDto.startTime,
+            createEventDto.endTime
+        );
+
         const event = this.eventRepository.create({
             ...createEventDto,
             clubId: club.id,
@@ -87,6 +125,14 @@ export class ManagerService {
 
         if (updateEventDto.startTime && updateEventDto.endTime) {
             this.validateEventDates(updateEventDto.startTime, updateEventDto.endTime);
+
+            // Check for location conflicts if location, start time, or end time is being updated
+            await this.checkLocationConflict(
+                updateEventDto.location || event.location,
+                updateEventDto.startTime,
+                updateEventDto.endTime,
+                eventId // Exclude current event from conflict check
+            );
         }
 
         Object.assign(event, updateEventDto);
@@ -121,6 +167,7 @@ export class ManagerService {
                 title: event.title,
                 capacity: event.capacity,
                 confirmedCount,
+                startTime: event.startTime,
             },
             registrations: registrations.map(r => ({
                 id: r.id,

@@ -17,8 +17,24 @@ export class ManagerDashboardComponent implements OnInit {
     loading = signal(true);
     error = signal('');
 
+    private now = () => new Date();
+    private compareByStartTime = (a: Event, b: Event) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+
     publishedCount = computed(() => this.events().filter(e => e.status === 'PUBLISHED').length);
     draftCount = computed(() => this.events().filter(e => e.status === 'DRAFT').length);
+
+    upcomingEvents = computed(() =>
+        this.events()
+            .filter(e => new Date(e.startTime) >= this.now())
+            .sort(this.compareByStartTime)
+    );
+
+    pastEvents = computed(() =>
+        this.events()
+            .filter(e => new Date(e.startTime) < this.now())
+            .sort((a, b) => -this.compareByStartTime(a, b))
+    );
 
     constructor(
         private managerApi: ManagerApiService,
@@ -56,31 +72,36 @@ export class ManagerDashboardComponent implements OnInit {
     }
 
     formatDate(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 
     formatTime(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        return new Date(dateString).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
     publishEvent(event: Event) {
-        if (confirm(`Publish "${event.title}"? Students will be able to register.`)) {
-            this.managerApi.publishEvent(event.id).subscribe({
-                next: () => this.loadData(),
-                error: (err) => alert('Failed to publish event: ' + err.message)
-            });
-        }
+        if (!confirm(`Publish "${event.title}"? Students will be able to register.`)) return;
+
+        this.managerApi.publishEvent(event.id).subscribe({
+            next: () => this.loadData(),
+            error: (err) => alert('Failed to publish event: ' + err.message)
+        });
     }
 
     deleteEvent(event: Event) {
-        if (confirm(`Delete "${event.title}"? This cannot be undone.`)) {
-            this.managerApi.deleteEvent(event.id).subscribe({
-                next: () => this.loadData(),
-                error: (err) => alert('Failed to delete event: ' + err.message)
-            });
-        }
+        if (!confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+
+        this.managerApi.deleteEvent(event.id).subscribe({
+            next: () => this.loadData(),
+            error: (err) => alert('Failed to delete event: ' + err.message)
+        });
     }
 
     viewRegistrations(eventId: number) {

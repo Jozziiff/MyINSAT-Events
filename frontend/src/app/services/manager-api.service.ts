@@ -43,6 +43,7 @@ export interface EventRegistrations {
         title: string;
         capacity: number;
         confirmedCount: number;
+        startTime: string;
     };
     registrations: Registration[];
 }
