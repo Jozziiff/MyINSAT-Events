@@ -22,12 +22,14 @@ export class EventFormComponent implements OnInit {
     eventForm: FormGroup;
     sections = signal<EventSection[]>([]);
     sectionControls = signal<FormControl[]>([]);
+    coverImageUrl = signal<string>('');
     
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
     loading = signal(false);
     error = signal('');
     uploadingPhotoIndex = signal<number | null>(null);
+    uploadingCoverImage = signal(false);
     showPreview = signal(false);
 
     constructor(
@@ -71,6 +73,15 @@ export class EventFormComponent implements OnInit {
                         capacity: event.capacity,
                         price: event.price || 0
                     });
+                    
+                    // Load cover image
+                    if ((event as any).photoUrl) {
+                        let photoUrl = (event as any).photoUrl;
+                        if (photoUrl && !photoUrl.startsWith('http')) {
+                            photoUrl = `http://localhost:3000${photoUrl}`;
+                        }
+                        this.coverImageUrl.set(photoUrl);
+                    }
                     
                     if ((event as any).sections && Array.isArray((event as any).sections)) {
                         this.sections.set((event as any).sections);
@@ -207,6 +218,68 @@ export class EventFormComponent implements OnInit {
         });
     }
 
+    // Cover Image Upload Methods
+    onCoverImageSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        
+        if (!file) return;
+
+        this.error.set('');
+
+        // Validate file type
+        if (!file.type.match(/image\/(jpg|jpeg|png|gif|webp)/)) {
+            this.error.set('Please select a valid image file (JPG, PNG, GIF, WebP)');
+            input.value = '';
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            this.error.set('Image must be smaller than 5MB');
+            input.value = '';
+            return;
+        }
+
+        this.uploadCoverImage(file, input);
+    }
+
+    private uploadCoverImage(file: File, input: HTMLInputElement): void {
+        this.uploadingCoverImage.set(true);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('event', 'event');
+
+        fetch('http://localhost:3000/upload/image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Upload failed');
+            return response.json();
+        })
+        .then(data => {
+            let imageUrl = data.url;
+            // Make sure URL is absolute if it's relative
+            if (imageUrl && !imageUrl.startsWith('http')) {
+                imageUrl = `http://localhost:3000${imageUrl}`;
+            }
+            this.coverImageUrl.set(imageUrl);
+            this.uploadingCoverImage.set(false);
+            input.value = '';
+        })
+        .catch(err => {
+            this.error.set('Failed to upload cover image. Please try again.');
+            this.uploadingCoverImage.set(false);
+            input.value = '';
+        });
+    }
+
+    removeCoverImage(): void {
+        this.coverImageUrl.set('');
+    }
+
     openPreview(): void {
         this.showPreview.set(true);
     }
@@ -241,10 +314,18 @@ export class EventFormComponent implements OnInit {
         this.error.set('');
 
         const formValue = this.eventForm.value;
+        
+        // Get the relative URL for the cover image (remove base URL if present)
+        let photoUrl = this.coverImageUrl();
+        if (photoUrl && photoUrl.startsWith('http://localhost:3000')) {
+            photoUrl = photoUrl.replace('http://localhost:3000', '');
+        }
+        
         const eventData = {
             ...formValue,
             startTime: new Date(formValue.startTime).toISOString(),
             endTime: new Date(formValue.endTime).toISOString(),
+            photoUrl: photoUrl || undefined,
             sections: this.sections()
         };
 

@@ -45,6 +45,10 @@ export class CreateEventDto {
     @IsOptional()
     price?: number;
 
+    @IsString()
+    @IsOptional()
+    photoUrl?: string;
+
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => EventSectionDto)

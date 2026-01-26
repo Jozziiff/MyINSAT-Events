@@ -11,6 +11,12 @@ export interface Club {
     updatedAt: string;
 }
 
+export interface EventSection {
+    title: string;
+    description: string;
+    imageUrl?: string;
+}
+
 export interface Event {
     id: number;
     clubId: number;
@@ -21,6 +27,8 @@ export interface Event {
     endTime: string;
     capacity: number;
     price?: number;
+    photoUrl?: string;
+    sections?: EventSection[];
     status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
     createdAt: string;
     updatedAt: string;

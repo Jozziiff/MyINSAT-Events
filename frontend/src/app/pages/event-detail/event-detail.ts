@@ -13,12 +13,12 @@ interface EventSection {
 interface Event {
     id: number;
     title: string;
-    description: string;
+    description?: string;
     location: string;
     startTime: string;
     endTime: string;
     capacity: number;
-    price: number;
+    price?: number;
     photoUrl?: string;
     sections?: EventSection[];
     status: string;
@@ -50,13 +50,31 @@ export class EventDetailComponent implements OnInit {
         }
     }
 
+    private readonly apiUrl = 'http://localhost:3000';
+
+    private resolveImageUrl(url?: string): string | undefined {
+        if (!url) return undefined;
+        return url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${this.apiUrl}${url}`;
+    }
+
     loadEvent(id: number) {
         this.loading.set(true);
         this.managerApi.getAllEvents().subscribe({
             next: (events) => {
                 const event = events.find(e => e.id === id);
                 if (event) {
-                    this.event.set(event as Event);
+                    // Resolve image URLs
+                    const resolvedEvent: Event = {
+                        ...event,
+                        photoUrl: this.resolveImageUrl(event.photoUrl),
+                        sections: event.sections?.map(s => ({
+                            ...s,
+                            imageUrl: this.resolveImageUrl(s.imageUrl)
+                        }))
+                    };
+                    this.event.set(resolvedEvent);
                 } else {
                     this.error.set('Event not found');
                 }

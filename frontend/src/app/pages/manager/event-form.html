@@ -19,22 +19,62 @@
             <div class="section-header">
                 <h2>Event Details</h2>
             </div>
+            
+            <!-- Cover Image + Title/Description Grid -->
+            <div class="event-header-grid">
+                <!-- Left: Cover Image Upload -->
+                <div class="cover-image-section">
+                    <label>Cover Image</label>
+                    <div class="cover-image-upload-box">
+                        @if (coverImageUrl()) {
+                        <div class="cover-image-preview-container">
+                            <img [src]="coverImageUrl()" alt="Event cover" class="cover-image-preview">
+                            <button type="button" class="btn-remove-cover" (click)="removeCoverImage()">×</button>
+                        </div>
+                        } @else {
+                        <label for="cover-image-input" class="cover-upload-label">
+                            <div class="cover-upload-placeholder">+</div>
+                            <span class="cover-upload-text">Add Cover Image</span>
+                        </label>
+                        }
+                        <input
+                            id="cover-image-input"
+                            type="file"
+                            accept="image/*"
+                            (change)="onCoverImageSelected($event)"
+                            [disabled]="uploadingCoverImage()"
+                            class="hidden"
+                        >
+                        @if (uploadingCoverImage()) {
+                        <div class="uploading-badge">
+                            <div class="spinner-tiny"></div>
+                            <span>Uploading...</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                
+                <!-- Right: Title and Description -->
+                <div class="event-title-section">
+                    <div class="form-group">
+                        <label for="title">Event Title *</label>
+                        <input id="title" type="text" formControlName="title"
+                            placeholder="e.g. AI & Machine Learning Workshop" [class.invalid]="isFieldInvalid('title')">
+                        @if (isFieldInvalid('title')) {
+                        <span class="error-message">{{ getFieldError('title') }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" formControlName="description" placeholder="Describe your event..."
+                            rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other Details Grid -->
             <div class="form-grid two-col">
-                <div class="form-group full-width">
-                    <label for="title">Event Title *</label>
-                    <input id="title" type="text" formControlName="title"
-                        placeholder="e.g. AI & Machine Learning Workshop" [class.invalid]="isFieldInvalid('title')">
-                    @if (isFieldInvalid('title')) {
-                    <span class="error-message">{{ getFieldError('title') }}</span>
-                    }
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="description">Description</label>
-                    <textarea id="description" formControlName="description" placeholder="Describe your event..."
-                        rows="3"></textarea>
-                </div>
-
                 <div class="form-group">
                     <label for="location">Location *</label>
                     <input id="location" type="text" formControlName="location" placeholder="e.g. Amphi 2, Room B101"
@@ -181,6 +221,13 @@
     <div class="modal-content event-preview-modal" (click)="$event.stopPropagation()">
         <button type="button" class="btn-close-modal" (click)="closePreview()">×</button>
         <div class="preview-container">
+            <!-- Cover Image -->
+            @if (coverImageUrl()) {
+            <div class="preview-cover-image">
+                <img [src]="coverImageUrl()" alt="Event cover">
+            </div>
+            }
+            
             <!-- Event Header -->
             <div class="preview-header">
                 <h1>{{ eventForm.get('title')?.value || 'Event Title' }}</h1>
