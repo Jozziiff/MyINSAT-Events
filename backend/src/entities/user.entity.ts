@@ -10,6 +10,7 @@ import { UserRole } from '../common/enums';
 import { ClubManager } from './club-manager.entity';
 import { Registration } from './registration.entity';
 import { ClubFollower } from './club-follower.entity';
+import { EventRating } from './event-rating.entity';
 
 @Entity('users')
 export class User {
@@ -27,6 +28,15 @@ export class User {
 
     @Column({ type: 'varchar', name: 'avatar_url', nullable: true })
     avatarUrl: string;
+
+    @Column({ type: 'text', nullable: true })
+    bio: string;
+
+    @Column({ type: 'varchar', name: 'student_year', nullable: true })
+    studentYear: string;
+
+    @Column({ type: 'varchar', name: 'phone_number', nullable: true })
+    phoneNumber: string;
 
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER, nullable: false })
     role: UserRole;
@@ -51,4 +61,7 @@ export class User {
 
     @OneToMany(() => ClubFollower, (follower) => follower.user)
     followedClubs: ClubFollower[];
+
+    @OneToMany(() => EventRating, (rating) => rating.user)
+    eventRatings: EventRating[];
 }

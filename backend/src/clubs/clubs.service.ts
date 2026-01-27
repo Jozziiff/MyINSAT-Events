@@ -1,10 +1,11 @@
 
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Club } from '../entities/club.entity';
 import { Event } from '../entities/event.entity';
 import { Registration } from '../entities/registration.entity';
+import { ClubFollower } from '../entities/club-follower.entity';
 import { RegistrationStatus } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
@@ -19,6 +20,8 @@ export class ClubsService {
     private readonly eventRepository: Repository<Event>,
     @InjectRepository(Registration)
     private readonly registrationRepository: Repository<Registration>,
+    @InjectRepository(ClubFollower)
+    private readonly clubFollowerRepository: Repository<ClubFollower>,
   ) { }
 
   // Helper to apply default images to sections (unchanged)
@@ -210,6 +213,102 @@ export class ClubsService {
         totalAttendance,
         averageAttendanceRate: clubAverageAttendanceRate,
       },
+    };
+  }
+
+  // Get club follower count
+  async getFollowerCount(clubId: number): Promise<number> {
+    return this.clubFollowerRepository.count({ where: { clubId } });
+  }
+
+  // Get club followers list
+  async getFollowers(clubId: number): Promise<{ id: number; fullName: string; avatarUrl: string | null }[]> {
+    const club = await this.clubRepository.findOne({ where: { id: clubId } });
+    if (!club) {
+      throw new NotFoundException('Club not found');
+    }
+
+    const followers = await this.clubFollowerRepository.find({
+      where: { clubId },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return followers.map(f => ({
+      id: f.user.id,
+      fullName: f.user.fullName,
+      avatarUrl: f.user.avatarUrl,
+    }));
+  }
+
+  // Check if user follows club
+  async isFollowing(userId: number, clubId: number): Promise<boolean> {
+    const follow = await this.clubFollowerRepository.findOne({
+      where: { userId, clubId },
+    });
+    return !!follow;
+  }
+
+  // Follow a club
+  async followClub(userId: number, clubId: number): Promise<ClubFollower> {
+    const club = await this.clubRepository.findOne({ where: { id: clubId } });
+    if (!club) {
+      throw new NotFoundException('Club not found');
+    }
+
+    const existing = await this.clubFollowerRepository.findOne({
+      where: { userId, clubId },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const follow = this.clubFollowerRepository.create({
+      userId,
+      clubId,
+    });
+
+    return this.clubFollowerRepository.save(follow);
+  }
+
+  // Unfollow a club
+  async unfollowClub(userId: number, clubId: number): Promise<void> {
+    const follow = await this.clubFollowerRepository.findOne({
+      where: { userId, clubId },
+    });
+
+    if (follow) {
+      await this.clubFollowerRepository.delete(follow.id);
+    }
+  }
+
+  // Get club with follow status and stats
+  async getClubWithStats(clubId: number, userId?: number): Promise<ClubDto & { 
+    followerCount: number; 
+    isFollowing: boolean;
+    upcomingEventsCount: number;
+  } | null> {
+    const club = await this.getClubById(clubId);
+    if (!club) return null;
+
+    const now = new Date();
+    const [followerCount, isFollowing, upcomingEvents] = await Promise.all([
+      this.getFollowerCount(clubId),
+      userId ? this.isFollowing(userId, clubId) : false,
+      this.eventRepository.count({
+        where: {
+          clubId,
+          startTime: new Date(now.getTime()),
+        },
+      }),
+    ]);
+
+    return {
+      ...club,
+      followerCount,
+      isFollowing,
+      upcomingEventsCount: upcomingEvents,
     };
   }
 }

@@ -1,15 +1,17 @@
-
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClubsController } from './clubs.controller';
 import { ClubsService } from './clubs.service';
-import { Club } from '../entities/club.entity';
-import { Event } from '../entities/event.entity';
-import { Registration } from '../entities/registration.entity';
+import { Club, Event, Registration, ClubFollower } from '../entities';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Club, Event, Registration])],
+  imports: [
+    TypeOrmModule.forFeature([Club, Event, Registration, ClubFollower]),
+    forwardRef(() => AuthModule),
+  ],
   controllers: [ClubsController],
   providers: [ClubsService],
+  exports: [ClubsService],
 })
 export class ClubsModule {}

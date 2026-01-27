@@ -20,6 +20,8 @@
   padding: 0.9rem 1.2rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
 }
 
 .club-card:hover {
@@ -56,22 +58,139 @@
   border: 2px solid var(--color-background);
 }
 
+.club-logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: none;
+}
+
+.club-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
 .club-name {
   color: var(--color-text-primary);
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .club-card:hover .club-name {
   color: var(--color-primary-light);
 }
 
-.empty {
+.club-followed-date {
+  font-size: 0.8rem;
   color: var(--color-text-muted);
-  text-align: center;
-  font-size: 1rem;
+}
+
+/* Unfollow button */
+.unfollow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.club-card:hover .unfollow-btn {
+  opacity: 1;
+}
+
+.unfollow-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.1);
+}
+
+.unfollow-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.unfollow-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.unfollow-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-top-color: var(--color-error);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 2rem 1rem;
-  font-style: italic;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.empty-text {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.discover-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.discover-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+@media (max-width: 600px) {
+  .unfollow-btn {
+    opacity: 1;
+  }
 }

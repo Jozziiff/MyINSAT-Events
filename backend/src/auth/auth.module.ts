@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -12,12 +12,14 @@ import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { JwtAccessGuard } from './guards/jwt-access.guard';
+import { OptionalAuth } from './decorators/optional-auth.decorator';
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
     MailModule,
     TypeOrmModule.forFeature([
       RefreshToken,
@@ -36,7 +38,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy],
-  exports: [AuthService],
+  providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy, JwtAccessGuard],
+  exports: [AuthService, JwtAccessGuard, JwtModule],
 })
 export class AuthModule {}

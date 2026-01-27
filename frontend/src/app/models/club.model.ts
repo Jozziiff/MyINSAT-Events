@@ -43,6 +43,20 @@ export interface Club {
   updatedAt: Date;
 }
 
+// Extended club with stats (from API)
+export interface ClubWithStats extends Club {
+  followerCount: number;
+  isFollowing: boolean;
+  upcomingEventsCount: number;
+}
+
+// Club follower info
+export interface ClubFollower {
+  id: number;
+  fullName: string;
+  avatarUrl: string | null;
+}
+
 // DTO for creating a new club
 export interface CreateClubDto {
   // Required fields
