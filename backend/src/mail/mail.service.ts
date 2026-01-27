@@ -21,14 +21,10 @@ export class MailService implements OnModuleInit {
   }
 
   private async createTransporter() {
-    const smtpHost = this.configService.get<string>('SMTP_HOST');
-    const smtpPort = this.configService.get<number>('SMTP_PORT');
-    const smtpUser = this.configService.get<string>('SMTP_USER');
-    const smtpPass = this.configService.get<string>('SMTP_PASS');
 
-    // If SMTP credentials are not configured, use Ethereal for testing
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      this.logger.warn('SMTP credentials not found. Creating Ethereal test account...');
+
+   
+
       
       try {
         const testAccount = await nodemailer.createTestAccount();
@@ -51,20 +47,7 @@ export class MailService implements OnModuleInit {
         this.logger.error('Failed to create Ethereal test account:', error);
         throw error;
       }
-    } else {
-      // Use configured SMTP
-      this.transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
-
-      this.logger.log('✅ SMTP transporter configured');
-    }
+    
 
     // Verify transporter
     try {
