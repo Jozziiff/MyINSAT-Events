@@ -103,10 +103,31 @@
     gap: 1rem;
   }
 
-  .user-name {
-    color: var(--color-text-primary);
-    font-weight: 500;
-    font-size: 0.9rem;
+
+  .profile-link {
+    color: var(--color-primary-light);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    border-radius: var(--radius-full);
+    padding: 0.5rem 1.2rem;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    box-shadow: none;
+    text-shadow: none;
+    outline: none;
+  }
+  .profile-link:hover, .profile-link:focus {
+    /* Animation handled by Angular, but fallback for no-animation */
+    filter: brightness(1.1);
+    text-shadow: 0 2px 16px var(--color-primary);
+    transform: scale(1.08) translateY(-2px);
   }
 
   .auth-buttons {
@@ -143,6 +164,8 @@
   .btn-signup {
     background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: white;
+    position: relative;
+    z-index: 1;
 
     &::before {
       content: '';
@@ -154,20 +177,13 @@
       background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
       opacity: 0;
       transition: opacity var(--transition-base);
+      z-index: 0;
     }
 
     &:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-glow);
-
-      &::before {
-        opacity: 1;
-      }
-    }
-
-    span {
-      position: relative;
-      z-index: 1;
+      color: white;
     }
   }
 
@@ -227,6 +243,36 @@
           background: rgba(99, 102, 241, 0.15);
           color: var(--color-primary-light);
         }
+      }
+
+      .profile-link {
+        color: var(--color-primary-light);
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: 0.01em;
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+        box-shadow: none;
+        text-shadow: none;
+        outline: none;
+        margin-bottom: 0.25rem;
+        width: 100%;
+        display: block;
+        text-align: left;
+        margin-left: 0;
+      }
+      .profile-link:hover, .profile-link:focus {
+        filter: brightness(1.1);
+        text-shadow: 0 2px 16px var(--color-primary);
+        transform: scale(1.08) translateY(-2px);
       }
 
       .btn-mobile-logout {

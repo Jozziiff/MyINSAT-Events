@@ -8,20 +8,18 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       <a routerLink="/events" routerLinkActive="active">Events</a>
       <a routerLink="/clubs" routerLinkActive="active">Clubs</a>
-      
+
       @if (isManager()) {
         <a routerLink="/manager" routerLinkActive="active">Manager</a>
-      }
-      
-      @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active">Profile</a>
       }
     </div>
 
     <div class="auth-section">
       @if (isAuthenticated()) {
         <div class="user-menu">
-          <span class="user-name">{{ currentUser()?.fullName }}</span>
+          <a routerLink="/profile" routerLinkActive="active" class="profile-link" [@nameHoverAnimation]="nameHoverState" (mouseenter)="onNameMouseEnter()" (mouseleave)="onNameMouseLeave()">
+          {{ currentUser()?.fullName }}
+        </a>
           <button class="btn-logout" (click)="logout()">Log Out</button>
         </div>
       } @else {
@@ -44,13 +42,15 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="toggleMenu()">Home</a>
       <a routerLink="/events" routerLinkActive="active" (click)="toggleMenu()">Events</a>
       <a routerLink="/clubs" routerLinkActive="active" (click)="toggleMenu()">Clubs</a>
-      
+
       @if (isManager()) {
         <a routerLink="/manager" routerLinkActive="active" (click)="toggleMenu()">Manager</a>
       }
-      
+
       @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">Profile</a>
+        <a routerLink="/profile" routerLinkActive="active" class="profile-link" [@nameHoverAnimation]="nameHoverState" (mouseenter)="onNameMouseEnter()" (mouseleave)="onNameMouseLeave()" (click)="toggleMenu()">
+          {{ currentUser()?.fullName }}
+        </a>
         <button class="btn-mobile-logout" (click)="logout()">Log Out</button>
       } @else {
         <a routerLink="/login" routerLinkActive="active" (click)="toggleMenu()">Log In</a>
