@@ -91,18 +91,8 @@ export class AuthService {
     userId: number,
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    // First, verify the JWT token itself
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
-
-      if (!payload || payload.sub !== userId) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-    } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
+    // Note: JWT signature is already verified by JwtRefreshGuard/JwtRefreshStrategy
+    // Here we only validate the token exists in DB and is not revoked
 
     // Find the specific refresh token record
     const existingRefreshToken = await this.refreshTokenRepository.findOne({

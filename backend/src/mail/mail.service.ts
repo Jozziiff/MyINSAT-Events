@@ -99,7 +99,7 @@ export class MailService implements OnModuleInit {
   }
 
   async sendEmailVerification(to: string, token: string): Promise<void> {
-    const verificationUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200')}/auth/verify-email?token=${token}`;
+    const verificationUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200')}/verify-email?token=${token}`;
 
     await this.sendMail({
       to,
@@ -147,7 +147,7 @@ export class MailService implements OnModuleInit {
   }
 
   async sendPasswordReset(to: string, token: string): Promise<void> {
-    const resetUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200')}/auth/reset-password?token=${token}`;
+    const resetUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200')}/reset-password?token=${token}`;
 
     await this.sendMail({
       to,

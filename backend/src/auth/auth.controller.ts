@@ -20,6 +20,21 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
+// Type for the user attached to request by JWT guards
+interface AuthenticatedUser {
+  id: number;
+  email: string;
+  fullName: string;
+  role: string;
+  emailVerified: boolean;
+}
+
+interface RefreshTokenUser {
+  id: number;
+  email: string;
+  refreshToken: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -45,7 +60,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtRefreshGuard)
   async refreshTokens(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RefreshTokenUser,
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     return this.authService.refreshTokens(
@@ -84,14 +99,14 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAccessGuard)
-  async logout(@CurrentUser() user: any): Promise<{ message: string }> {
+  async logout(@CurrentUser() user: AuthenticatedUser): Promise<{ message: string }> {
     await this.authService.logout(user.id);
     return { message: 'Logged out successfully' };
   }
 
   @Get('profile')
   @UseGuards(JwtAccessGuard)
-  async getProfile(@CurrentUser() user: any) {
+  async getProfile(@CurrentUser() user: AuthenticatedUser): Promise<AuthenticatedUser> {
     return user;
   }
 }
