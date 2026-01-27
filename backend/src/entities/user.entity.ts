@@ -28,7 +28,7 @@ export class User {
     @Column({ type: 'varchar', name: 'avatar_url', nullable: true })
     avatarUrl: string;
 
-    @Column({ type: 'enum', enum: UserRole, nullable: false })
+    @Column({ type: 'enum', enum: UserRole, default: UserRole.USER, nullable: false })
     role: UserRole;
 
     @Column({ type: 'boolean', name: 'email_verified', default: false })

@@ -6,12 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ClubsModule } from './clubs/clubs.module';
 import { UploadModule } from './upload/upload.module';
 import { ManagerModule } from './manager/manager.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { ManagerModule } from './manager/manager.module';
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: false ,
         logging: configService.get('NODE_ENV') === 'development',
         ssl: {
           rejectUnauthorized: false,
@@ -38,12 +40,14 @@ import { ManagerModule } from './manager/manager.module';
       inject: [ConfigService],
 
     }),
+    AuthModule,
     UsersModule,
     EventsModule,
     SubscriptionsModule,
     ManagerModule,
     ClubsModule,
     UploadModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

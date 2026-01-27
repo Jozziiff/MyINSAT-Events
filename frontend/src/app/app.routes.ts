@@ -9,22 +9,74 @@ import { RegistrationsManagerComponent } from './pages/manager/registrations-man
 import { ClubSettingsComponent } from './pages/manager/club-settings';
 import { ClubDetailComponent } from './pages/club-detail/club-detail';
 import { ClubFormComponent } from './pages/club-form/club-form';
+import { Login } from './pages/auth/login/login';
+import { Register } from './pages/auth/register/register';
+import { ForgotPassword } from './pages/auth/forgot-password/forgot-password';
+import { ResetPassword } from './pages/auth/reset-password/reset-password';
+import { VerifyEmail } from './pages/auth/verify-email/verify-email';
+import { authGuard } from './guards/auth.guard';
+import { guestGuard } from './guards/guest.guard';
+import { roleGuard } from './guards/role.guard';
+import { Role } from './models/auth.models';
 import { ClubEventsComponent } from './pages/club-events/club-events';
 import { EventDetailComponent } from './pages/event-detail/event-detail';
 
 export const routes: Routes = [
+  // Public routes
   { path: '', component: HomeComponent },
   { path: 'events', component: EventsComponent },
   { path: 'clubs', component: ClubsComponent },
-  { path: 'profile', component: ProfilePage},
-  { path: 'manager', component: ManagerDashboardComponent },
-  { path: 'manager/club', component: ClubSettingsComponent },
-  { path: 'manager/events/new', component: EventFormComponent },
-  { path: 'manager/events/:id/edit', component: EventFormComponent },
-  { path: 'manager/events/:eventId/registrations', component: RegistrationsManagerComponent },
-  { path: 'events/:id', component: EventDetailComponent },
-  { path: 'clubs/new', component: ClubFormComponent },
+  { path: 'clubs/:id/events', component: ClubEventsComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
-  { path: 'clubs/:id/edit', component: ClubFormComponent },
-  { path: 'clubs/:id/events', component: ClubEventsComponent }
+
+  // Auth routes (guest only)
+  { path: 'login', component: Login, canActivate: [guestGuard] },
+  { path: 'register', component: Register, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: ForgotPassword, canActivate: [guestGuard] },
+  { path: 'reset-password', component: ResetPassword },
+  { path: 'verify-email', component: VerifyEmail },
+
+  // Protected routes (require authentication)
+  { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
+
+  // Manager routes (require MANAGER or ADMIN role)
+  { 
+    path: 'manager', 
+    component: ManagerDashboardComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'manager/club', 
+    component: ClubSettingsComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'manager/events/new', 
+    component: EventFormComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'manager/events/:id/edit', 
+    component: EventFormComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'manager/events/:eventId/registrations', 
+    component: RegistrationsManagerComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'clubs/new', 
+    component: ClubFormComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+  { 
+    path: 'clubs/:id/edit', 
+    component: ClubFormComponent, 
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  },
+    
+
+  // Wildcard route - redirect to home
+  { path: '**', redirectTo: '' }
 ];
