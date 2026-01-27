@@ -4,3 +4,4 @@ export { ClubManager } from './club-manager.entity';
 export { Event } from './event.entity';
 export { Registration } from './registration.entity';
 export { ClubFollower } from './club-follower.entity';
+export { EventRating } from './event-rating.entity';

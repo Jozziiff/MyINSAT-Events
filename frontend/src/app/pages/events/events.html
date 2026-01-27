@@ -63,7 +63,7 @@
             </span>
           </div>
 
-          <p class="club-by">Hosted by <strong>{{ event.club.name || 'Unknown Club' }}</strong></p>
+          <p class="club-by">Hosted by <strong>{{ event.club?.name || 'Unknown Club' }}</strong></p>
 
           <div class="details-row">
             <span>📅 {{ formatDate(event.startTime) }}</span>

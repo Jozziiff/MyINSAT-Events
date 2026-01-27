@@ -5,6 +5,17 @@ export enum EventStatus {
   CLOSED = 'CLOSED',
 }
 
+// Registration status enum matching backend
+export enum RegistrationStatus {
+  INTERESTED = 'INTERESTED',
+  PENDING_PAYMENT = 'PENDING_PAYMENT',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+  REJECTED = 'REJECTED',
+  ATTENDED = 'ATTENDED',
+  NO_SHOW = 'NO_SHOW',
+}
+
 // Event section structure
 export interface EventSection {
   title: string;
@@ -19,7 +30,23 @@ export interface EventClub {
   logoUrl?: string;
 }
 
-// Event summary for list display
+// Event statistics
+export interface EventStats {
+  interestedCount: number;
+  confirmedCount: number;
+  attendedCount: number;
+  averageRating: number;
+  ratingCount: number;
+}
+
+// User's interaction with an event
+export interface UserEventInteraction {
+  status: RegistrationStatus | null;
+  hasRated: boolean;
+  userRating?: number;
+}
+
+// Event summary for list display (with stats)
 export interface EventSummary {
   id: number;
   title: string;
@@ -31,7 +58,9 @@ export interface EventSummary {
   price?: number;
   photoUrl?: string;
   status: EventStatus;
-  club: EventClub;
+  club: EventClub | null;
+  stats: EventStats;
+  userInteraction?: UserEventInteraction;
 }
 
 // Full event details
@@ -50,5 +79,28 @@ export interface Event {
   status: EventStatus;
   createdAt: Date;
   updatedAt: Date;
-  club: EventClub;
+  club: EventClub | null;
+  stats: EventStats;
+  userInteraction?: UserEventInteraction;
+}
+
+// Rate event request
+export interface RateEventRequest {
+  rating: number;
+  comment?: string;
+}
+
+// Event rating response
+export interface EventRating {
+  id: number;
+  userId: number;
+  eventId: number;
+  rating: number;
+  comment?: string;
+  createdAt: Date;
+  user?: {
+    id: number;
+    fullName: string;
+    avatarUrl?: string;
+  };
 }

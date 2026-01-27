@@ -11,6 +11,7 @@ import {
 import { EventStatus } from '../common/enums';
 import { Club } from './club.entity';
 import { Registration } from './registration.entity';
+import { EventRating } from './event-rating.entity';
 
 @Entity('events')
 export class Event {
@@ -62,4 +63,7 @@ export class Event {
 
     @OneToMany(() => Registration, (registration) => registration.event)
     registrations: Registration[];
+
+    @OneToMany(() => EventRating, (rating) => rating.event)
+    ratings: EventRating[];
 }
