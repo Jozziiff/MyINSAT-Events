@@ -26,31 +26,53 @@
     </div>
   </header>
 
+  <!-- Loading state -->
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Loading events...</p>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button (click)="loadEvents()">Try Again</button>
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && !error() && filteredEvents.length === 0) {
+    <div class="empty-state">
+      <p>No events found.</p>
+    </div>
+  }
+
   <main class="events-grid">
-    @for (event of events(); track event.id) {
+    @for (event of filteredEvents; track event.id) {
       <article class="event-card">
-        <div class="card-image">
-          <div class="category-badge">{{ event.category }}</div>
+        <div class="card-image" [style.background-image]="event.photoUrl ? 'url(' + event.photoUrl + ')' : ''">
+          <div class="category-badge">{{ event.location || 'INSAT' }}</div>
         </div>
 
         <div class="card-content">
           <div class="header">
             <h3>{{ event.title }}</h3>
-            <span class="status-pill" [class]="event.status.toLowerCase().replace(' ', '-')">
-              {{ event.status }}
+            <span class="status-pill" [class]="getStatusLabel(event).toLowerCase().replace(' ', '-')">
+              {{ getStatusLabel(event) }}
             </span>
           </div>
 
-          <p class="club-by">Hosted by <strong>{{ event.club }}</strong></p>
+          <p class="club-by">Hosted by <strong>{{ event.club.name || 'Unknown Club' }}</strong></p>
 
           <div class="details-row">
-            <span>📅 {{ event.date }}</span>
-            <span class="price">{{ event.price }}</span>
+            <span>📅 {{ formatDate(event.startTime) }}</span>
+            <span class="price">{{ formatPrice(event.price) }}</span>
           </div>
         </div>
 
         <div class="card-action">
-            <button class="btn-details">View Details</button>
+            <button class="btn-details" [routerLink]="['/events', event.id]">View Details</button>
         </div>
       </article>
     }

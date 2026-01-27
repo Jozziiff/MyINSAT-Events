@@ -112,6 +112,41 @@
     opacity: 0.5;
 }
 
+.search-bar {
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .search-input {
+        flex: 1;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        transition: all var(--transition-base);
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        &::placeholder {
+            color: var(--color-text-muted);
+        }
+    }
+
+    .search-results {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+}
+
 .registrations-table {
     background: var(--color-surface);
     border-radius: var(--radius-lg);

@@ -1,15 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClubsService } from '../../services/clubs.service';
 import { Club, ClubSection } from '../../models/club.model';
-import { fadeSlideIn } from '../../animations';
+import { fadeSlideIn, fadeInRight } from '../../animations';
 
 @Component({
   selector: 'app-club-detail',
   imports: [RouterLink],
   templateUrl: './club-detail.html',
   styleUrl: './club-detail.css',
-  animations: [fadeSlideIn]
+  animations: [fadeSlideIn, fadeInRight]
 })
 export class ClubDetailComponent implements OnInit {
   club = signal<Club | null>(null);
@@ -21,6 +21,7 @@ export class ClubDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private clubsService: ClubsService
   ) {}
 
@@ -76,5 +77,12 @@ export class ClubDetailComponent implements OnInit {
       club.contact.linkedin ||
       club.contact.website
     ));
+  }
+
+  viewClubEvents(): void {
+    const clubId = this.club()?.id;
+    if (clubId) {
+      this.router.navigate([`/clubs/${clubId}/events`]);
+    }
   }
 }

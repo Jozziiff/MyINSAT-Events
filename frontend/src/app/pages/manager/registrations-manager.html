@@ -50,6 +50,15 @@
         <p>Students haven't registered for this event yet</p>
     </div>
     } @else {
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input type="text" placeholder="🔍 Search by name or email..." [(ngModel)]="searchTerm" class="search-input" />
+        @if (searchTerm()) {
+        <span class="search-results">{{ filteredRegistrations().length }} result(s)</span>
+        }
+    </div>
+
     <div class="registrations-table">
         <table>
             <thead>
@@ -62,7 +71,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (reg of data()!.registrations; track reg.id) {
+                @for (reg of filteredRegistrations(); track reg.id) {
                 <tr>
                     <td>
                         <div class="user-cell">

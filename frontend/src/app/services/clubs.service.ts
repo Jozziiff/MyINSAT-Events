@@ -167,4 +167,20 @@ export class ClubsService {
       return null;
     }
   }
+
+  // Get club events with statistics
+  async getClubEvents(clubId: number): Promise<any> {
+    try {
+      this.loading.set(true);
+      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/events`);
+      if (!response.ok) throw new Error('Failed to fetch club events');
+      const data = await response.json();
+      return data;
+    } catch (err: any) {
+      this.error.set(err?.message || 'Failed to load events');
+      return null;
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }
