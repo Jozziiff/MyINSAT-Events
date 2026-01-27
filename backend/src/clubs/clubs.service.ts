@@ -101,7 +101,7 @@ export class ClubsService {
       const existingClub = await this.clubRepository.findOne({
         where: { name: createClubDto.name },
       });
-      
+
       if (existingClub) {
         throw new ConflictException(`A club with the name "${createClubDto.name}" already exists`);
       }
