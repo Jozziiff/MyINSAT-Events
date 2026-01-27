@@ -36,27 +36,27 @@ export class ManagerController {
     constructor(private readonly managerService: ManagerService) { }
 
     @Get('club')
-    async getClub(@Req() req: AuthenticatedRequest) {
+    getClub(@Req() req: AuthenticatedRequest) {
         return this.managerService.getManagedClub(req.user.id);
     }
 
     @Put('club')
-    async updateClub(@Req() req: AuthenticatedRequest, @Body() updateClubDto: UpdateClubDto) {
+    updateClub(@Req() req: AuthenticatedRequest, @Body() updateClubDto: UpdateClubDto) {
         return this.managerService.updateClub(req.user.id, updateClubDto);
     }
 
     @Get('events')
-    async getAllEvents(@Req() req: AuthenticatedRequest) {
+    getAllEvents(@Req() req: AuthenticatedRequest) {
         return this.managerService.getAllEvents(req.user.id);
     }
 
     @Post('events')
-    async createEvent(@Req() req: AuthenticatedRequest, @Body() createEventDto: CreateEventDto) {
+    createEvent(@Req() req: AuthenticatedRequest, @Body() createEventDto: CreateEventDto) {
         return this.managerService.createEvent(req.user.id, createEventDto);
     }
 
     @Put('events/:id')
-    async updateEvent(
+    updateEvent(
         @Req() req: AuthenticatedRequest,
         @Param('id', ParseIntPipe) id: number,
         @Body() updateEventDto: UpdateEventDto,
@@ -66,22 +66,22 @@ export class ManagerController {
 
     @Delete('events/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    async deleteEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
-        await this.managerService.deleteEvent(req.user.id, id);
+    deleteEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
+        return this.managerService.deleteEvent(req.user.id, id);
     }
 
     @Patch('events/:id/publish')
-    async publishEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
+    publishEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
         return this.managerService.publishEvent(req.user.id, id);
     }
 
     @Get('events/:id/registrations')
-    async getEventRegistrations(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
+    getEventRegistrations(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
         return this.managerService.getEventRegistrations(req.user.id, id);
     }
 
     @Patch('registrations/:id/status')
-    async updateRegistrationStatus(
+    updateRegistrationStatus(
         @Req() req: AuthenticatedRequest,
         @Param('id', ParseIntPipe) id: number,
         @Body() updateStatusDto: UpdateRegistrationStatusDto,

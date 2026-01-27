@@ -18,12 +18,15 @@ import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { roleGuard } from './guards/role.guard';
 import { Role } from './models/auth.models';
+import { ClubEventsComponent } from './pages/club-events/club-events';
+import { EventDetailComponent } from './pages/event-detail/event-detail';
 
 export const routes: Routes = [
   // Public routes
   { path: '', component: HomeComponent },
   { path: 'events', component: EventsComponent },
   { path: 'clubs', component: ClubsComponent },
+  { path: 'clubs/:id/events', component: ClubEventsComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
 
   // Auth routes (guest only)
@@ -72,6 +75,7 @@ export const routes: Routes = [
     component: ClubFormComponent, 
     canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
   },
+    
 
   // Wildcard route - redirect to home
   { path: '**', redirectTo: '' }
