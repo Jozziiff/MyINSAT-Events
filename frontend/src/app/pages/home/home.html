@@ -10,8 +10,8 @@
         secure your spot, and never miss a beat.
       </p>
       <div class="actions">
-        <button class="btn-primary">Browse Events</button>
-        <button class="btn-outline">How it works</button>
+        <button class="btn-primary" (click)="navigateToEvents()">Browse Events</button>
+        <button class="btn-outline" routerLink="/clubs">Explore Clubs</button>
       </div>
     </div>
 
@@ -21,51 +21,279 @@
   <section class="container events-section">
     <div class="section-header">
       <h2>Trending Events</h2>
-      <a href="#" class="view-all">View all &rarr;</a>
+      <a routerLink="/events" class="view-all">View all &rarr;</a>
     </div>
 
-    <div class="event-grid">
-      <div class="event-card">
-        <div class="card-header">
-          <span class="category-tag tag-tech">Tech</span>
-          <span class="price-tag">Free</span>
-        </div>
-        <div class="card-body">
-          <h3>Aerospace Workshop</h3>
-          <p class="club-name">by Aeroclub INSAT</p>
-          <div class="meta-info">
-            <span>📅 Oct 12</span>
-            <span>📍 Amphi 2</span>
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading trending events...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="error-state">
+        <p>{{ error() }}</p>
+        <button class="btn-outline" (click)="loadTrendingEvents()">Try Again</button>
+      </div>
+    }
+
+    <!-- Events Grid -->
+    @if (!loading() && !error()) {
+      <div class="event-grid">
+        @for (event of trendingEvents(); track event.id) {
+          <div class="event-card" (click)="navigateToEvent(event.id)">
+            <!-- Event Image -->
+            @if (event.photoUrl) {
+              <div class="card-image">
+                <img [src]="event.photoUrl" [alt]="event.title" />
+                <div class="image-overlay"></div>
+              </div>
+            }
+            
+            <div class="card-header">
+              <div class="header-left">
+                <!-- Club Logo -->
+                @if (event.club?.logoUrl) {
+                  <img class="club-logo" [src]="event.club?.logoUrl" [alt]="event.club?.name" />
+                }
+                <span class="price-tag">{{ formatPrice(event.price) }}</span>
+              </div>
+              
+              <!-- Rating Badge -->
+              <div class="rating-badge" [class.new-event]="event.stats.ratingCount === 0">
+                @if (event.stats.ratingCount > 0) {
+                  <svg class="star-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <span>{{ formatRating(event.stats.averageRating) }}</span>
+                  <span class="rating-count">({{ event.stats.ratingCount }})</span>
+                } @else {
+                  <span>New</span>
+                }
+              </div>
+            </div>
+            
+            <div class="card-body">
+              <h3>{{ event.title }}</h3>
+              <p class="club-name">by {{ event.club?.name || 'Unknown Club' }}</p>
+              
+              <div class="meta-info">
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  {{ formatDate(event.startTime) }}
+                </span>
+                @if (event.location) {
+                  <span class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    {{ event.location }}
+                  </span>
+                }
+              </div>
+              
+              <!-- Stats Row -->
+              <div class="stats-row">
+                <div class="stat">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  <span>{{ event.stats.interestedCount }}</span>
+                </div>
+                <div class="stat">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span>{{ event.stats.confirmedCount }}</span>
+                </div>
+                @if (event.stats.attendedCount > 0) {
+                  <div class="stat attended">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>{{ event.stats.attendedCount }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <!-- Interest Button -->
+              <button 
+                class="btn-interest" 
+                [class.interested]="isInterested(event)"
+                [class.processing]="isProcessing(event.id)"
+                (click)="toggleInterest(event, $event)"
+                [disabled]="isProcessing(event.id)"
+              >
+                @if (isProcessing(event.id)) {
+                  <div class="btn-spinner"></div>
+                } @else if (isInterested(event)) {
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  Interested
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  Interested
+                }
+              </button>
+              
+              <!-- View Details Button -->
+              <button class="btn-icon" (click)="navigateToEvent(event.id)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <p>No trending events at the moment.</p>
+            <button class="btn-outline" routerLink="/events">Browse All Events</button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- About Section -->
+  <section class="about-section">
+    <div class="container">
+      <div class="section-header centered">
+        <h2>About <span class="text-gradient">MyINSAT Events</span></h2>
+        <p class="section-subtitle">Your gateway to campus life and unforgettable experiences</p>
+      </div>
+
+      <!-- Feature 1: Discover Events - Image Left -->
+      <div class="feature-block">
+        <div class="feature-image">
+          <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <circle cx="12" cy="16" r="2"></circle>
+            </svg>
           </div>
         </div>
-        <div class="card-footer">
-          <button class="btn-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
+        <div class="feature-content">
+          <h3>Discover Amazing Events</h3>
+          <p>
+            Explore a wide variety of workshops, hackathons, cultural nights, and networking events 
+            organized by INSAT's vibrant club community. From tech talks to art exhibitions, 
+            there's something for everyone.
+          </p>
+          <ul class="feature-list">
+            <li>Browse events by category or club</li>
+            <li>Get personalized recommendations</li>
+            <li>Never miss what matters to you</li>
+          </ul>
         </div>
       </div>
 
-      <div class="event-card">
-        <div class="card-header">
-          <span class="category-tag tag-art">Art</span>
-          <span class="price-tag">15 TND</span>
-        </div>
-        <div class="card-body">
-          <h3>CineClub Night</h3>
-          <p class="club-name">by CineClub</p>
-          <div class="meta-info">
-            <span>📅 Oct 14</span>
-            <span>📍 Canteen</span>
+      <!-- Feature 2: Connect with Clubs - Image Right -->
+      <div class="feature-block reverse">
+        <div class="feature-image">
+          <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
           </div>
         </div>
-        <div class="card-footer">
-          <button class="btn-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+        <div class="feature-content">
+          <h3>Connect with Clubs</h3>
+          <p>
+            Follow your favorite clubs and stay updated with their latest activities. 
+            Engage with passionate communities, discover new interests, and become part 
+            of something bigger.
+          </p>
+          <ul class="feature-list">
+            <li>Follow clubs that match your interests</li>
+            <li>Get instant notifications for new events</li>
+            <li>Connect with like-minded students</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Feature 3: Easy Registration - Image Left -->
+      <div class="feature-block">
+        <div class="feature-image">
+          <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
-          </button>
+          </div>
+        </div>
+        <div class="feature-content">
+          <h3>Seamless Registration</h3>
+          <p>
+            Register for events with just a few clicks. Mark your interest, confirm your attendance, 
+            and manage all your registrations in one place. No more missed deadlines or lost tickets.
+          </p>
+          <ul class="feature-list">
+            <li>One-click event registration</li>
+            <li>Track your upcoming events</li>
+            <li>Receive reminders before events</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Feature 4: Rate & Review - Image Right -->
+      <div class="feature-block reverse">
+        <div class="feature-image">
+          <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+        </div>
+        <div class="feature-content">
+          <h3>Share Your Experience</h3>
+          <p>
+            After attending events, share your feedback through ratings and reviews. 
+            Help fellow students discover the best events and help organizers improve 
+            their future offerings.
+          </p>
+          <ul class="feature-list">
+            <li>Rate events you've attended</li>
+            <li>Read authentic student reviews</li>
+            <li>Help the community grow</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Ready to dive in?</h2>
+        <p>Join thousands of INSAT students already discovering amazing events.</p>
+        <div class="cta-buttons">
+          <button class="btn-primary" routerLink="/register">Get Started</button>
+          <button class="btn-outline" routerLink="/clubs">Explore Clubs</button>
         </div>
       </div>
     </div>
