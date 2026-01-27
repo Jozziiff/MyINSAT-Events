@@ -1,12 +1,13 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService, EventRegistrations, Registration } from '../../services/manager-api.service';
 
 @Component({
     selector: 'app-registrations-manager',
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './registrations-manager.html',
     styleUrl: './registrations-manager.css',
     animations: [fadeSlideIn]
@@ -17,6 +18,29 @@ export class RegistrationsManagerComponent implements OnInit {
     loading = signal(true);
     error = signal('');
     updatingId = signal<number | null>(null);
+    searchTerm = signal('');
+
+    filteredRegistrations = computed(() => {
+        const term = this.searchTerm().toLowerCase();
+        const regs = this.data()?.registrations || [];
+
+        if (!term) return regs;
+
+        return regs.filter(r =>
+            r.user.fullName.toLowerCase().includes(term) ||
+            r.user.email.toLowerCase().includes(term)
+        );
+    });
+
+    isEventDay = computed(() => {
+        const eventData = this.data();
+        if (!eventData) return false;
+
+        const eventDate = new Date(eventData.event.startTime);
+        const today = new Date();
+
+        return eventDate.toDateString() === today.toDateString() || eventDate < today;
+    });
 
     constructor(
         private managerApi: ManagerApiService,
@@ -66,6 +90,12 @@ export class RegistrationsManagerComponent implements OnInit {
     updateStatus(registration: Registration, newStatus: string) {
         const currentData = this.data();
         if (!currentData) return;
+
+        // Check if trying to mark attendance before event day
+        if ((newStatus === 'ATTENDED' || newStatus === 'NO_SHOW') && !this.isEventDay()) {
+            alert('Attendance can only be marked on or after the event day.');
+            return;
+        }
 
         if (newStatus === 'CONFIRMED' &&
             registration.status !== 'CONFIRMED' &&

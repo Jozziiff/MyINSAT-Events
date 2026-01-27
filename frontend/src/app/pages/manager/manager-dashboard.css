@@ -105,11 +105,30 @@
     }
 }
 
+.section-header {
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+
+    h2 {
+        font-size: 1.5rem;
+        color: var(--color-text-primary);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}
+
 .events-table {
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     overflow: hidden;
+    margin-bottom: 2rem;
+
+    &.past-events {
+        opacity: 0.8;
+    }
 
     table {
         width: 100%;
@@ -141,6 +160,10 @@
 
         &:last-child {
             border-bottom: none;
+        }
+
+        &.past-event-row {
+            opacity: 0.7;
         }
     }
 
@@ -205,27 +228,35 @@
 .action-buttons {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .btn-icon {
-    background: transparent;
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
-    width: 36px;
-    height: 36px;
+    padding: 0.5rem 0.8rem;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all var(--transition-base);
-    font-size: 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-text-primary);
 
     &:hover {
-        background: var(--color-surface-hover);
+        background: var(--color-primary);
         border-color: var(--color-primary);
-        transform: scale(1.1);
+        color: white;
     }
 
-    &.btn-danger:hover {
-        background: rgba(239, 68, 68, 0.1);
-        border-color: #EF4444;
+    &.btn-danger {
+        color: #EF4444;
+
+        &:hover {
+            background: #EF4444;
+            border-color: #EF4444;
+            color: white;
+        }
     }
 }
 

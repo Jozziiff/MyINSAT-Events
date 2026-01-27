@@ -241,11 +241,13 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   text-decoration: none;
-  color: var(--color-text-secondary);
+  color: var(--color-text-body);
   transition: all var(--transition-base);
 
-  .contact-icon {
-    font-size: 1.25rem;
+  .contact-label {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    min-width: 80px;
   }
 
   &:hover {
@@ -301,5 +303,138 @@
       left: 50%;
       transform: translateX(-50%);
     }
+  }
+}
+
+/* Events CTA Section */
+.events-cta-section {
+  padding: 3rem 0;
+  margin-bottom: 3rem;
+}
+
+.cta-card {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: 16px;
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  color: white;
+
+  .cta-content {
+    flex: 1;
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      color: white;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+    }
+  }
+}
+
+.btn-large {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: white;
+  color: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .cta-card {
+    flex-direction: column;
+    text-align: center;
+
+    .cta-content {
+      h2 {
+        font-size: 1.4rem;
+      }
+    }
+
+    .btn-large {
+      width: 100%;
+    }
+  }
+}
+
+/* View Events CTA Button */
+.cta-button-top {
+  position: relative;
+  margin: 3rem auto;
+  width: fit-content;
+  animation: fadeSlideInDown 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeSlideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cta-button-top .btn-primary {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-lg);
+}
+
+.cta-button-top .btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.cta-button-top .btn-primary:active {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .cta-button-top {
+    margin: 2rem 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .cta-button-top .btn-primary {
+    width: 100%;
+    padding: 0.9rem 1.5rem;
   }
 }

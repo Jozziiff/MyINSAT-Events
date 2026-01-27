@@ -35,13 +35,14 @@ export class UploadController {
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
+    @Body() body?: { event?: string; context?: string },
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
 
-    // context can be sent as a field in the multipart form
-    const context = req.body?.context;
+    // context can be sent as 'event' or 'context' field in the multipart form
+    const context = body?.event || body?.context || req.body?.event || req.body?.context;
     const url = await this.uploadService.saveFile(file, req, context);
     return { url };
   }
