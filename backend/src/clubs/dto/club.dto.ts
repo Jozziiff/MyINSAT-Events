@@ -15,7 +15,6 @@ export class ClubDto {
   joinUs?: ClubSectionDto;
   contact?: ClubContactDto;
   coverImageUrl?: string;
-  ownerId: number;
   createdAt: Date;
   updatedAt: Date;
 }

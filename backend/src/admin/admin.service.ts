@@ -22,32 +22,38 @@ export class AdminService {
     async getPendingClubs(): Promise<any[]> {
         const clubs = await this.clubRepository
             .createQueryBuilder('club')
-            .leftJoinAndSelect('club.owner', 'owner', 'club.ownerId = owner.id')
+            .leftJoinAndSelect('club.managers', 'clubManager')
+            .leftJoinAndSelect('clubManager.user', 'user')
             .where('club.status = :status', { status: ClubStatus.PENDING })
             .orderBy('club.createdAt', 'DESC')
             .getMany();
 
-        return clubs.map(club => ({
-            id: club.id,
-            name: club.name,
-            shortDescription: club.shortDescription,
-            logoUrl: club.logoUrl,
-            createdAt: club.createdAt,
-            status: club.status,
-            ownerId: club.ownerId,
-            owner: club.ownerId ? {
-                id: club.ownerId,
-                fullName: (club as any).owner?.fullName || 'Unknown',
-                email: (club as any).owner?.email || 'Unknown',
-            } : null,
-        }));
+        return clubs.map(club => {
+            const manager = club.managers?.[0]; // Get first manager (creator)
+            const user = manager?.user;
+
+            return {
+                id: club.id,
+                name: club.name,
+                shortDescription: club.shortDescription,
+                logoUrl: club.logoUrl,
+                createdAt: club.createdAt,
+                status: club.status,
+                owner: user ? {
+                    id: user.id,
+                    fullName: user.fullName || 'Unknown',
+                    email: user.email || 'Unknown',
+                } : null,
+            };
+        });
     }
 
     // Get all clubs filtered by status
     async getAllClubs(status?: ClubStatus): Promise<any[]> {
         let query = this.clubRepository
             .createQueryBuilder('club')
-            .leftJoinAndSelect('club.owner', 'owner', 'club.ownerId = owner.id')
+            .leftJoinAndSelect('club.managers', 'clubManager')
+            .leftJoinAndSelect('clubManager.user', 'user')
             .orderBy('club.createdAt', 'DESC');
 
         if (status) {
@@ -56,56 +62,56 @@ export class AdminService {
 
         const clubs = await query.getMany();
 
-        return clubs.map(club => ({
-            id: club.id,
-            name: club.name,
-            shortDescription: club.shortDescription,
-            logoUrl: club.logoUrl,
-            createdAt: club.createdAt,
-            status: club.status,
-            ownerId: club.ownerId,
-            owner: club.ownerId ? {
-                id: club.ownerId,
-                fullName: (club as any).owner?.fullName || 'Unknown',
-                email: (club as any).owner?.email || 'Unknown',
-            } : null,
-        }));
+        return clubs.map(club => {
+            const manager = club.managers?.[0];
+            const user = manager?.user;
+
+            return {
+                id: club.id,
+                name: club.name,
+                shortDescription: club.shortDescription,
+                logoUrl: club.logoUrl,
+                createdAt: club.createdAt,
+                status: club.status,
+                owner: user ? {
+                    id: user.id,
+                    fullName: user.fullName || 'Unknown',
+                    email: user.email || 'Unknown',
+                } : null,
+            };
+        });
     }
 
     // Approve a club
     async approveClub(clubId: number): Promise<Club> {
-        const club = await this.clubRepository.findOne({ where: { id: clubId } });
+        const club = await this.clubRepository.findOne({
+            where: { id: clubId },
+            relations: ['managers', 'managers.user'],
+        });
+
         if (!club) {
             throw new NotFoundException('Club not found');
         }
 
-        // Update club status
+        if (club.status !== ClubStatus.PENDING) {
+            throw new Error('Club is not in pending status');
+        }
+
+        const manager = club.managers?.[0];
+        if (!manager || !manager.user) {
+            throw new Error('Club has no manager/creator');
+        }
+
+        // Update club status to APPROVED
         club.status = ClubStatus.APPROVED;
         await this.clubRepository.save(club);
 
-        // If club has an owner, update their role to MANAGER and create ClubManager record
-        if (club.ownerId) {
-            const owner = await this.userRepository.findOne({
-                where: { id: club.ownerId },
-            });
-
-            if (owner && owner.role === UserRole.USER) {
-                owner.role = UserRole.MANAGER;
-                await this.userRepository.save(owner);
-            }
-
-            // Create ClubManager record if it doesn't exist
-            const existingManager = await this.clubManagerRepository.findOne({
-                where: { clubId: club.id, userId: club.ownerId },
-            });
-
-            if (!existingManager) {
-                const clubManager = this.clubManagerRepository.create({
-                    clubId: club.id,
-                    userId: club.ownerId,
-                });
-                await this.clubManagerRepository.save(clubManager);
-            }
+        // Update user role to MANAGER (if not already ADMIN)
+        // Note: club_managers record already exists from creation
+        const user = manager.user;
+        if (user.role !== UserRole.ADMIN) {
+            user.role = UserRole.MANAGER;
+            await this.userRepository.save(user);
         }
 
         return club;
@@ -116,6 +122,10 @@ export class AdminService {
         const club = await this.clubRepository.findOne({ where: { id: clubId } });
         if (!club) {
             throw new NotFoundException('Club not found');
+        }
+
+        if (club.status !== ClubStatus.PENDING) {
+            throw new Error('Club is not in pending status');
         }
 
         club.status = ClubStatus.REJECTED;

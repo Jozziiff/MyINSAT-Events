@@ -14,6 +14,7 @@ import { Register } from './pages/auth/register/register';
 import { ForgotPassword } from './pages/auth/forgot-password/forgot-password';
 import { ResetPassword } from './pages/auth/reset-password/reset-password';
 import { VerifyEmail } from './pages/auth/verify-email/verify-email';
+import { AdminDashboardComponent } from './pages/admin/admin-dashboard';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { roleGuard } from './guards/role.guard';
@@ -26,8 +27,10 @@ export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'events', component: EventsComponent },
   { path: 'clubs', component: ClubsComponent },
+  { path: 'clubs/new', component: ClubFormComponent, canActivate: [authGuard] },
   { path: 'clubs/:id/events', component: ClubEventsComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
+  { path: 'clubs/:id/edit', component: ClubFormComponent, canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] },
 
   // Auth routes (guest only)
   { path: 'login', component: Login, canActivate: [guestGuard] },
@@ -39,43 +42,39 @@ export const routes: Routes = [
   // Protected routes (require authentication)
   { path: 'profile', component: ProfilePage, canActivate: [authGuard] },
 
+  // Admin routes (require ADMIN role)
+  {
+    path: 'admin',
+    component: AdminDashboardComponent,
+    canActivate: [roleGuard([Role.ADMIN])]
+  },
+
   // Manager routes (require MANAGER or ADMIN role)
-  { 
-    path: 'manager', 
-    component: ManagerDashboardComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  {
+    path: 'manager',
+    component: ManagerDashboardComponent,
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
-  { 
-    path: 'manager/club', 
-    component: ClubSettingsComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  {
+    path: 'manager/club',
+    component: ClubSettingsComponent,
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
-  { 
-    path: 'manager/events/new', 
-    component: EventFormComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  {
+    path: 'manager/events/new',
+    component: EventFormComponent,
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
-  { 
-    path: 'manager/events/:id/edit', 
-    component: EventFormComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  {
+    path: 'manager/events/:id/edit',
+    component: EventFormComponent,
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
-  { 
-    path: 'manager/events/:eventId/registrations', 
-    component: RegistrationsManagerComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
+  {
+    path: 'manager/events/:eventId/registrations',
+    component: RegistrationsManagerComponent,
+    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
-  { 
-    path: 'clubs/new', 
-    component: ClubFormComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
-  },
-  { 
-    path: 'clubs/:id/edit', 
-    component: ClubFormComponent, 
-    canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] 
-  },
-    
 
   // Wildcard route - redirect to home
   { path: '**', redirectTo: '' }

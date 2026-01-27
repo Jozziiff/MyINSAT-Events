@@ -19,12 +19,14 @@ export class NavbarComponent {
   readonly currentUser = this.authState.currentUser;
   readonly userRole = this.authState.userRole;
   readonly Role = Role; // Expose Role enum to template
-  
+
   // Computed signal for manager/admin role check
   readonly isManager = computed(() => {
     const role = this.userRole();
     return role === Role.MANAGER || role === Role.ADMIN;
   });
+
+  readonly isAdmin = computed(() => this.userRole() === Role.ADMIN);
 
   toggleMenu(): void {
     this.isMobileMenuOpen.update(value => !value);
