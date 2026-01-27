@@ -1,0 +1,36 @@
+<div class="verify-container">
+  <div class="verify-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <h1>Verifying Email...</h1>
+        <p class="subtitle">Please wait while we verify your email address</p>
+      </div>
+    }
+
+    @if (!isLoading() && successMessage()) {
+      <div class="success-state">
+        <div class="success-icon">✓</div>
+        <h1>Email Verified!</h1>
+        <div class="success-banner">
+          {{ successMessage() }}
+        </div>
+        <p class="subtitle">Redirecting to login...</p>
+      </div>
+    }
+
+    @if (!isLoading() && errorMessage()) {
+      <div class="error-state">
+        <div class="error-icon">✗</div>
+        <h1>Verification Failed</h1>
+        <div class="error-banner">
+          {{ errorMessage() }}
+        </div>
+        <div class="action-links">
+          <a routerLink="/login" class="btn-primary">Go to Login</a>
+          <a routerLink="/" class="link">Return to Home</a>
+        </div>
+      </div>
+    }
+  </div>
+</div>
