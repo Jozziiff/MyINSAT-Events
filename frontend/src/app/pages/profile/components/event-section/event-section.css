@@ -9,6 +9,8 @@
 }
 
 .event-card {
+  display: block;
+  text-decoration: none;
   background: rgba(30, 41, 59, 0.3);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -95,15 +97,111 @@
   opacity: 0.85;
 }
 
-.calendar-icon {
+.meta-icon {
   color: var(--color-primary-light);
   flex-shrink: 0;
 }
 
-.empty {
+.event-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.event-date,
+.event-club {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-body);
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.event-club {
   color: var(--color-text-muted);
-  text-align: center;
-  font-size: 1rem;
+  font-size: 0.85rem;
+}
+
+.event-registration {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.registration-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25em 0.7em;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+}
+
+.registration-badge.status-interested {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary-light);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.registration-badge.status-confirmed {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.registration-badge.status-attended {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Status attended badge */
+.event-status.attended {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 2rem 1rem;
-  font-style: italic;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.empty-text {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.browse-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.browse-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }

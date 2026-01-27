@@ -1,13 +1,49 @@
 <div class="club-list">
-  <div *ngIf="clubs.length > 0; else noClubs" class="clubs-grid">
-    <div class="club-card" *ngFor="let club of clubs">
-      <div class="club-logo-wrapper">
-        <img [src]="club.logoUrl" alt="Club logo" class="club-logo" />
-      </div>
-      <span class="club-name">{{ club.name }}</span>
+  @if (clubs.length > 0) {
+    <div class="clubs-grid">
+      @for (club of clubs; track club.id) {
+        <a [routerLink]="['/clubs', club.id]" class="club-card">
+          <div class="club-logo-wrapper">
+            @if (club.logoUrl) {
+              <img [src]="club.logoUrl" alt="{{ club.name }} logo" class="club-logo" />
+            } @else {
+              <div class="club-logo club-logo-placeholder">
+                {{ club.name.charAt(0).toUpperCase() }}
+              </div>
+            }
+          </div>
+          <div class="club-info">
+            <span class="club-name">{{ club.name }}</span>
+            @if (club.followedAt) {
+              <span class="club-followed-date">Following since {{ club.followedAt | date:'MMM yyyy' }}</span>
+            }
+          </div>
+          @if (showUnfollow) {
+            <button 
+              class="unfollow-btn" 
+              (click)="onUnfollow(club.id, $event)"
+              [disabled]="unfollowingId() === club.id"
+              title="Unfollow club"
+            >
+              @if (unfollowingId() === club.id) {
+                <span class="unfollow-spinner"></span>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+              }
+            </button>
+          }
+        </a>
+      }
     </div>
-  </div>
-  <ng-template #noClubs>
-    <p class="empty">No clubs followed yet.</p>
-  </ng-template>
+  } @else {
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+      <p class="empty-text">No clubs followed yet</p>
+      <a routerLink="/clubs" class="discover-btn">Discover Clubs</a>
+    </div>
+  }
 </div>

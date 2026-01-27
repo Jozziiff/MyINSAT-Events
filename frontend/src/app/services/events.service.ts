@@ -215,6 +215,41 @@ export class EventsService {
     }
   }
 
+  // Register for an event with a specific status
+  async registerForEvent(eventId: number, status: RegistrationStatus): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.apiUrl}/events/${eventId}/register`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Failed to register for event');
+      
+      this.updateEventInteraction(eventId, status);
+      return true;
+    } catch (err: any) {
+      this.error.set(err?.message || 'Unknown error');
+      return false;
+    }
+  }
+
+  // Cancel registration for an event
+  async cancelRegistration(eventId: number): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.apiUrl}/events/${eventId}/register`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      if (!response.ok && response.status !== 204) throw new Error('Failed to cancel registration');
+      
+      this.updateEventInteraction(eventId, RegistrationStatus.CANCELLED);
+      return true;
+    } catch (err: any) {
+      this.error.set(err?.message || 'Unknown error');
+      return false;
+    }
+  }
+
   private updateEventInteraction(eventId: number, status: RegistrationStatus | null) {
     // Update in events list
     const currentEvents = this.events();

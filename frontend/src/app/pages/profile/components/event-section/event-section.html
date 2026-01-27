@@ -1,24 +1,66 @@
 <div class="event-section">
-  <div *ngIf="events.length > 0; else noEvents" class="events-grid">
-    <div class="event-card" *ngFor="let event of events">
-      <div class="event-header">
-        <span class="event-title">{{ event.title }}</span>
-        <span class="event-status" [class.upcoming]="event.status === 'upcoming'" [class.past]="event.status === 'past'">
-          {{ event.status }}
-        </span>
-      </div>
-      <div class="event-date">
-        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        {{ event.date }}
-      </div>
+  @if (events.length > 0) {
+    <div class="events-grid">
+      @for (event of events; track event.id) {
+        <a [routerLink]="['/events', event.id]" class="event-card">
+          <div class="event-header">
+            <span class="event-title">{{ event.title }}</span>
+            <span 
+              class="event-status" 
+              [class.upcoming]="event.status === 'upcoming'" 
+              [class.past]="event.status === 'past'"
+              [class.attended]="event.status === 'attended'"
+            >
+              @switch (event.status) {
+                @case ('upcoming') { Upcoming }
+                @case ('past') { Past }
+                @case ('attended') { ✓ Attended }
+                @default { {{ event.status }} }
+              }
+            </span>
+          </div>
+          <div class="event-meta">
+            <div class="event-date">
+              <svg class="meta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              {{ event.startTime | date:'EEE, MMM d, y · h:mm a' }}
+            </div>
+            @if (showClub && event.clubName) {
+              <div class="event-club">
+                <svg class="meta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                {{ event.clubName }}
+              </div>
+            }
+          </div>
+          @if (event.registrationStatus) {
+            <div class="event-registration">
+              <span class="registration-badge" [class]="'status-' + event.registrationStatus">
+                {{ event.registrationStatus }}
+              </span>
+            </div>
+          }
+        </a>
+      }
     </div>
-  </div>
-  <ng-template #noEvents>
-    <p class="empty">No events to display.</p>
-  </ng-template>
+  } @else {
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <p class="empty-text">{{ emptyMessage }}</p>
+      <a routerLink="/events" class="browse-btn">Browse Events</a>
+    </div>
+  }
 </div>

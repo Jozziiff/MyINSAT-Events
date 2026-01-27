@@ -85,15 +85,30 @@
   margin-bottom: 2rem;
 
   .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     font-weight: 600;
     transition: all var(--transition-base);
-    padding: 0.5rem 0;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
 
     &:hover {
       color: white;
+      background: rgba(0, 0, 0, 0.3);
       transform: translateX(-4px);
+    }
+
+    svg {
+      transition: transform 0.2s ease;
+    }
+
+    &:hover svg {
+      transform: translateX(-2px);
     }
   }
 
@@ -150,7 +165,83 @@
     font-size: 1.2rem;
     color: rgba(255, 255, 255, 0.85);
     max-width: 600px;
+    margin-bottom: 1.25rem;
   }
+}
+
+/* Club Stats & Actions */
+.club-stats-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.follower-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border: none;
+  color: white;
+  text-decoration: none;
+}
+
+.follow-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.follow-btn.following {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: var(--color-success);
+}
+
+.follow-btn.following:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--color-error);
+  box-shadow: none;
+}
+
+.follow-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.follow-btn.following .btn-spinner {
+  border-color: rgba(16, 185, 129, 0.3);
+  border-top-color: var(--color-success);
 }
 
 /* Section Rows */

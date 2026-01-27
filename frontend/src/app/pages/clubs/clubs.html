@@ -20,16 +20,47 @@
   } @else {
     <div class="clubs-list">
       @for (club of clubs(); track club.id) {
-        <a [routerLink]="['/clubs', club.id]" class="club-item">
-          <div class="club-image">
-            <img [src]="club.logoUrl" [alt]="club.name + ' logo'">
-          </div>
-          <div class="club-info">
-            <h2>{{ club.name }}</h2>
-            <p class="description">{{ club.shortDescription }}</p>
-            <span class="view-details">View Details</span>
-          </div>
-        </a>
+        <div class="club-item-wrapper">
+          <a [routerLink]="['/clubs', club.id]" class="club-item">
+            <div class="club-image">
+              @if (club.logoUrl) {
+                <img [src]="club.logoUrl" [alt]="club.name + ' logo'">
+              } @else {
+                <div class="club-logo-placeholder">
+                  {{ club.name.charAt(0).toUpperCase() }}
+                </div>
+              }
+            </div>
+            <div class="club-info">
+              <h2>{{ club.name }}</h2>
+              <p class="description">{{ club.shortDescription }}</p>
+              <span class="view-details">View Details →</span>
+            </div>
+          </a>
+          @if (isLoggedIn()) {
+            <button 
+              class="quick-follow-btn"
+              [class.following]="club.isFollowing"
+              [disabled]="club.followLoading"
+              (click)="toggleFollow(club, $event)"
+              [title]="club.isFollowing ? 'Unfollow' : 'Follow'">
+              @if (club.followLoading) {
+                <span class="btn-spinner"></span>
+              } @else if (club.isFollowing) {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span class="btn-text">Following</span>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span class="btn-text">Follow</span>
+              }
+            </button>
+          }
+        </div>
       } @empty {
         <div class="empty-state">
           <p>No clubs available yet. Check back soon!</p>

@@ -9,9 +9,9 @@ import { Repository, IsNull } from 'typeorm';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { User } from '../users/entities/user.entity';
+import { User } from '../entities';
 import { UsersService } from '../users/users.service';
-import { Role } from '../users/enums/role.enum';
+import { UserRole } from '../common/enums';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { EmailVerificationToken } from './entities/email-verification-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
@@ -48,7 +48,7 @@ export class AuthService {
       email,
       passwordHash,
       fullName,
-      role: Role.USER,
+      role: UserRole.USER,
     });
 
     // Generate email verification token (for future implementation)
