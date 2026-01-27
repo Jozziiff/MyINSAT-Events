@@ -32,7 +32,7 @@ import { MailModule } from './mail/mail.module';
         url: configService.get('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false ,
-        logging: configService.get('NODE_ENV') === 'development',
+        logging: false,
         ssl: {
           rejectUnauthorized: false,
         },
