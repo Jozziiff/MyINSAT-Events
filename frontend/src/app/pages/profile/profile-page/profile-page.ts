@@ -58,7 +58,7 @@ export class ProfilePage implements OnInit {
 
   loading = signal(true);
   error = signal<string | null>(null);
-  
+
   profile = signal<UserProfile | null>(null);
   stats = signal<UserStats>({
     eventsAttended: 0,
@@ -81,10 +81,10 @@ export class ProfilePage implements OnInit {
   async loadDashboard() {
     this.loading.set(true);
     this.error.set(null);
-    
+
     try {
       const dashboard = await this.userService.getDashboard();
-      
+
       if (dashboard) {
         this.profile.set(dashboard.profile);
         this.stats.set(dashboard.stats);

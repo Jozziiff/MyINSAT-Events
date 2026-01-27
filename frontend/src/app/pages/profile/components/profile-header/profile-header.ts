@@ -1,4 +1,6 @@
 import { Component, Input, Output, EventEmitter, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserProfile, UpdateProfileRequest } from '../../../../models/profile.models';
@@ -17,9 +19,45 @@ export class ProfileHeader {
   @Output() profileUpdated = new EventEmitter<void>();
 
   private userService = inject(UserService);
+  private sanitizer = inject(DomSanitizer);
+  private http = inject(HttpClient);
+  uploadingAvatar = signal(false);
+  avatarUploadError: string | null = null;
+
+  onAvatarClick(fileInput: HTMLInputElement) {
+    if (this.isEditing) fileInput.click();
+  }
+
+  async onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      this.avatarUploadError = 'Please select a valid image file.';
+      return;
+    }
+    this.avatarUploadError = null;
+    this.uploadingAvatar.set(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      // Send the old avatar URL to backend for deletion
+      if (this.profile.avatarUrl) {
+        formData.append('oldAvatarUrl', this.profile.avatarUrl);
+      }
+      const data: any = await this.http.post('/upload/image', formData, { withCredentials: true }).toPromise();
+      if (!data || !data.url) throw new Error('No URL returned');
+      await this.userService.updateProfile({ avatarUrl: data.url });
+      this.profile.avatarUrl = data.url;
+      this.profileUpdated.emit();
+    } catch (e) {
+      this.avatarUploadError = 'Failed to upload image.';
+    } finally {
+      this.uploadingAvatar.set(false);
+    }
+  }
 
   saving = signal(false);
-  
   // Edit form fields
   editForm = {
     fullName: '',
@@ -49,7 +87,31 @@ export class ProfileHeader {
     this.editToggle.emit();
   }
 
+  phoneNumberError: string | null = null;
+
+  validatePhoneNumber(): boolean {
+    const value = this.editForm.phoneNumber;
+    if (!value) {
+      this.phoneNumberError = null;
+      return true;
+    }
+    if (!/^[0-9]{8}$/.test(value)) {
+      this.phoneNumberError = 'Le numéro doit contenir exactement 8 chiffres.';
+      return false;
+    }
+    this.phoneNumberError = null;
+    return true;
+  }
+
+  clearPhoneNumber() {
+    this.editForm.phoneNumber = '';
+    this.phoneNumberError = null;
+  }
+
   async saveProfile() {
+    if (!this.validatePhoneNumber()) {
+      return;
+    }
     this.saving.set(true);
     try {
       const updates: UpdateProfileRequest = {};

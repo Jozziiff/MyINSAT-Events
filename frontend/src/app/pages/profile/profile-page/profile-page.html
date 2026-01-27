@@ -18,8 +18,8 @@
   } @else if (profile()) {
     <!-- Profile Header -->
     <div class="profile-header-wrapper glass-card animate-card" [@fadeInUp]>
-      <app-profile-header 
-        [profile]="profile()!" 
+      <app-profile-header
+        [profile]="profile()!"
         [isEditing]="isEditing()"
         (editToggle)="toggleEditMode()"
         (profileUpdated)="onProfileUpdated()">
@@ -118,8 +118,8 @@
             </h2>
             <a routerLink="/clubs" class="view-all-link">Explore →</a>
           </div>
-          <app-club-list 
-            [clubs]="followedClubs()" 
+          <app-club-list
+            [clubs]="followedClubs()"
             [showUnfollow]="true"
             (unfollowClub)="unfollowClub($event)">
           </app-club-list>
