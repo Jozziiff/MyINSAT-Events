@@ -5,10 +5,14 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToMany,
+    ManyToOne,
+    JoinColumn,
 } from 'typeorm';
 import { ClubManager } from './club-manager.entity';
 import { Event } from './event.entity';
 import { ClubFollower } from './club-follower.entity';
+import { User } from './user.entity';
+import { ClubStatus } from '../common/enums/club-status.enum';
 
 @Entity('clubs')
 export class Club {
@@ -52,8 +56,15 @@ export class Club {
     @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
     coverImageUrl: string;
 
-    @Column({ type: 'int', nullable: true, name: 'owner_id' })
-    ownerId: number;
+    @Column({ type: 'int', nullable: true, name: 'user_id' })
+    userId: number;
+
+    @ManyToOne(() => User)
+    @JoinColumn({ name: 'user_id' })
+    owner: User;
+
+    @Column({ type: 'enum', enum: ClubStatus })
+    status: ClubStatus;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

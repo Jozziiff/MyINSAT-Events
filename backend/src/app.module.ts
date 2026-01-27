@@ -14,6 +14,7 @@ import { ClubsModule } from './clubs/clubs.module';
 import { UploadModule } from './upload/upload.module';
 import { ManagerModule } from './manager/manager.module';
 import { MailModule } from './mail/mail.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { MailModule } from './mail/mail.module';
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false ,
+        synchronize: false,
         logging: configService.get('NODE_ENV') === 'development',
         ssl: {
           rejectUnauthorized: false,
@@ -48,12 +49,13 @@ import { MailModule } from './mail/mail.module';
     ClubsModule,
     UploadModule,
     MailModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements OnModuleInit {
-   constructor(private dataSource: DataSource) {}
+  constructor(private dataSource: DataSource) { }
 
   async onModuleInit() {
     try {
@@ -63,14 +65,14 @@ export class AppModule implements OnModuleInit {
         await this.dataSource.initialize();
         console.log('✅ TypeORM connection initialized successfully.');
       }
-      
-    
+
+
       const result = await this.dataSource.query('SELECT current_database()');
       console.log(`Connected to database: ${result[0].current_database}`);
 
     } catch (error) {
       console.error('❌ Database connection failed during startup:', error.message);
-  
+
     }
   }
 }
