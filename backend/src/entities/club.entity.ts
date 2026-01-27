@@ -56,14 +56,14 @@ export class Club {
     @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
     coverImageUrl: string;
 
-    @Column({ type: 'int', nullable: true, name: 'user_id' })
-    userId: number;
+    @Column({ type: 'int', nullable: true, name: 'owner_id' })
+    ownerId: number;
 
     @ManyToOne(() => User)
-    @JoinColumn({ name: 'user_id' })
+    @JoinColumn({ name: 'owner_id' })
     owner: User;
 
-    @Column({ type: 'enum', enum: ClubStatus })
+    @Column({ type: 'enum', enum: ClubStatus, default: ClubStatus.PENDING })
     status: ClubStatus;
 
     @CreateDateColumn({ name: 'created_at' })
