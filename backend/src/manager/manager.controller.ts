@@ -15,7 +15,10 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ManagerService } from './manager.service';
-import { MockManagerGuard } from './guards/mock-manager.guard';
+import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../common/enums';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
@@ -31,7 +34,8 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('manager')
-@UseGuards(MockManagerGuard)
+@UseGuards(JwtAccessGuard, RolesGuard)
+@Roles(UserRole.MANAGER, UserRole.ADMIN)
 export class ManagerController {
     constructor(private readonly managerService: ManagerService) { }
 

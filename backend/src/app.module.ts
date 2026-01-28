@@ -32,8 +32,8 @@ import { AdminModule } from './admin/admin.module';
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false,
-        logging: configService.get('NODE_ENV') === 'development',
+        synchronize: false ,
+        logging: false,
         ssl: {
           rejectUnauthorized: false,
         },

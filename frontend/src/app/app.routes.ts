@@ -26,6 +26,7 @@ export const routes: Routes = [
   // Public routes
   { path: '', component: HomeComponent },
   { path: 'events', component: EventsComponent },
+  { path: 'events/:id', component: EventDetailComponent },
   { path: 'clubs', component: ClubsComponent },
   { path: 'clubs/new', component: ClubFormComponent, canActivate: [authGuard] },
   { path: 'clubs/:id/events', component: ClubEventsComponent },
