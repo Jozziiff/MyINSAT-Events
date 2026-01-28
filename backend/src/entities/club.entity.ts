@@ -7,6 +7,7 @@ import {
     OneToMany,
 } from 'typeorm';
 import { ClubManager } from './club-manager.entity';
+import { ClubJoinRequest } from './club-join-request.entity';
 import { Event } from './event.entity';
 import { ClubFollower } from './club-follower.entity';
 import { ClubStatus } from '../common/enums/club-status.enum';
@@ -70,4 +71,7 @@ export class Club {
 
     @OneToMany(() => ClubFollower, (follower) => follower.club)
     followers: ClubFollower[];
+
+    @OneToMany(() => ClubJoinRequest, (joinRequest) => joinRequest.club)
+    joinRequests: ClubJoinRequest[];
 }
