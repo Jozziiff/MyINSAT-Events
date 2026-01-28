@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, LessThan, MoreThanOrEqual, In } from 'typeorm';
-import { User, Registration, ClubFollower, EventRating, Event, Club } from '../entities';
+import { User, Registration, ClubFollower, ClubManager, EventRating, Event, Club } from '../entities';
 import { UserRole, RegistrationStatus, EventStatus } from '../common/enums';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
@@ -21,6 +21,8 @@ export class UsersService {
     private registrationRepository: Repository<Registration>,
     @InjectRepository(ClubFollower)
     private clubFollowerRepository: Repository<ClubFollower>,
+    @InjectRepository(ClubManager)
+    private clubManagerRepository: Repository<ClubManager>,
     @InjectRepository(EventRating)
     private eventRatingRepository: Repository<EventRating>,
     @InjectRepository(Event)
@@ -94,6 +96,111 @@ export class UsersService {
       role: user.role,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+    };
+  }
+
+  // Get public user profile (comprehensive info for profile page)
+  async getPublicProfile(userId: number): Promise<{
+    id: number;
+    fullName: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    studentYear: string | null;
+    createdAt: Date;
+    followedClubs: { id: number; name: string; logoUrl: string | null; shortDescription: string }[];
+    managedClubs: { id: number; name: string; logoUrl: string | null; shortDescription: string }[];
+    upcomingEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
+    pastEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
+  }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const now = new Date();
+
+    // Get followed clubs
+    const followedClubsData = await this.clubFollowerRepository.find({
+      where: { userId },
+      relations: ['club'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const followedClubs = followedClubsData.map(f => ({
+      id: f.club.id,
+      name: f.club.name,
+      logoUrl: f.club.logoUrl,
+      shortDescription: f.club.shortDescription,
+    }));
+
+    // Get managed clubs
+    const managedClubsData = await this.clubManagerRepository.find({
+      where: { userId },
+      relations: ['club'],
+    });
+
+    const managedClubs = managedClubsData.map(m => ({
+      id: m.club.id,
+      name: m.club.name,
+      logoUrl: m.club.logoUrl,
+      shortDescription: m.club.shortDescription,
+    }));
+
+    // Get upcoming events (interested/confirmed/pending)
+    const upcomingRegistrations = await this.registrationRepository.find({
+      where: {
+        userId,
+        status: In([RegistrationStatus.INTERESTED, RegistrationStatus.CONFIRMED, RegistrationStatus.PENDING_PAYMENT]),
+      },
+      relations: ['event', 'event.club'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const upcomingEvents = upcomingRegistrations
+      .filter(reg => reg.event && new Date(reg.event.startTime) >= now)
+      .slice(0, 10)
+      .map(reg => ({
+        id: reg.event.id,
+        title: reg.event.title,
+        photoUrl: reg.event.photoUrl,
+        startTime: reg.event.startTime,
+        clubName: reg.event.club?.name || 'Unknown Club',
+        status: reg.status,
+      }));
+
+    // Get past events (attended/confirmed past events)
+    const pastRegistrations = await this.registrationRepository.find({
+      where: {
+        userId,
+        status: In([RegistrationStatus.ATTENDED, RegistrationStatus.CONFIRMED]),
+      },
+      relations: ['event', 'event.club'],
+      order: { updatedAt: 'DESC' },
+    });
+
+    const pastEvents = pastRegistrations
+      .filter(reg => reg.event && new Date(reg.event.endTime) < now)
+      .slice(0, 10)
+      .map(reg => ({
+        id: reg.event.id,
+        title: reg.event.title,
+        photoUrl: reg.event.photoUrl,
+        startTime: reg.event.startTime,
+        clubName: reg.event.club?.name || 'Unknown Club',
+        status: reg.status,
+      }));
+
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      studentYear: user.studentYear,
+      createdAt: user.createdAt,
+      followedClubs,
+      managedClubs,
+      upcomingEvents,
+      pastEvents,
     };
   }
 

@@ -62,11 +62,11 @@ export interface CreateClubDto {
   // Required fields
   name: string;
   shortDescription: string;
-  logoUrl?: string;
+  logoUrl: string; // Required - club logo
 
   // Required sections
   about: string;
-  aboutImageUrl?: string;
+  aboutImageUrl?: string; // Optional
 
   // Optional sections
   history?: ClubSection;
@@ -78,6 +78,6 @@ export interface CreateClubDto {
   // Contact information
   contact?: ClubContact;
 
-  // Cover image
-  coverImageUrl?: string;
+  // Cover image - required
+  coverImageUrl: string;
 }

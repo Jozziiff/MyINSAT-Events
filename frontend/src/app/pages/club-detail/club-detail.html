@@ -31,7 +31,7 @@
             
             <!-- Follower Stats & Follow Button -->
             <div class="club-stats-actions">
-              <span class="follower-count">
+              <button class="follower-count" (click)="openFollowersPopup()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
@@ -39,7 +39,7 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 {{ followerCount() }} {{ followerCount() === 1 ? 'follower' : 'followers' }}
-              </span>
+              </button>
               
               @if (isLoggedIn()) {
                 <button 
@@ -157,4 +157,58 @@
       </section>
     }
   </div>
+
+  <!-- Followers Popup -->
+  @if (showFollowersPopup()) {
+    <div class="popup-overlay" (click)="onPopupBackdropClick($event)">
+      <div class="popup-modal followers-popup" @fadeSlideIn>
+        <div class="popup-header">
+          <h3>Followers</h3>
+          <button class="popup-close" (click)="closeFollowersPopup()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="popup-content">
+          @if (loadingFollowers()) {
+            <div class="popup-loading">
+              <div class="loading-spinner"></div>
+              <p>Loading followers...</p>
+            </div>
+          } @else if (followers().length === 0) {
+            <div class="popup-empty">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <p>No followers yet</p>
+            </div>
+          } @else {
+            <ul class="followers-list">
+              @for (follower of followers(); track follower.id) {
+                <li class="follower-item">
+                  <a [routerLink]="['/users', follower.id]" class="follower-link" (click)="closeFollowersPopup()">
+                    <div class="follower-avatar">
+                      @if (follower.avatarUrl) {
+                        <img [src]="follower.avatarUrl" [alt]="follower.fullName">
+                      } @else {
+                        <div class="avatar-placeholder">
+                          {{ follower.fullName.charAt(0).toUpperCase() }}
+                        </div>
+                      }
+                    </div>
+                    <span class="follower-name">{{ follower.fullName }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+  }
 }

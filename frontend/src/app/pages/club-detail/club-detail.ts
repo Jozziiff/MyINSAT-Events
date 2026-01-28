@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClubsService } from '../../services/clubs.service';
-import { Club, ClubSection, ClubWithStats } from '../../models/club.model';
+import { Club, ClubSection, ClubWithStats, ClubFollower } from '../../models/club.model';
 import { TokenService } from '../../services/auth/token';
 import { fadeSlideIn, fadeInRight } from '../../animations';
 
@@ -22,6 +22,11 @@ export class ClubDetailComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   followLoading = signal(false);
+
+  // Followers popup
+  showFollowersPopup = signal(false);
+  followers = signal<ClubFollower[]>([]);
+  loadingFollowers = signal(false);
 
   // Computed
   isLoggedIn = computed(() => !!this.tokenService.getAccessToken());
@@ -118,6 +123,29 @@ export class ClubDetailComponent implements OnInit {
     const clubId = this.club()?.id;
     if (clubId) {
       this.router.navigate([`/clubs/${clubId}/events`]);
+    }
+  }
+
+  async openFollowersPopup(): Promise<void> {
+    const clubData = this.club();
+    if (!clubData) return;
+
+    this.showFollowersPopup.set(true);
+    this.loadingFollowers.set(true);
+    
+    const followers = await this.clubsService.getFollowers(clubData.id);
+    this.followers.set(followers);
+    this.loadingFollowers.set(false);
+  }
+
+  closeFollowersPopup(): void {
+    this.showFollowersPopup.set(false);
+    this.followers.set([]);
+  }
+
+  onPopupBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('popup-overlay')) {
+      this.closeFollowersPopup();
     }
   }
 }
