@@ -1,0 +1,213 @@
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.admin-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+}
+
+.tab:hover {
+    color: #374151;
+}
+
+.tab.active {
+    color: #8b5cf6;
+    border-bottom-color: #8b5cf6;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 3rem;
+    font-size: 1.125rem;
+}
+
+.error {
+    color: #dc2626;
+}
+
+.clubs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.club-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: box-shadow 0.2s;
+}
+
+.club-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.club-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex: 1;
+}
+
+.club-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 0.5rem;
+    object-fit: cover;
+}
+
+.club-logo.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.club-details h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.club-details p {
+    color: #666;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.club-owner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.owner-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.owner-name {
+    color: #374151;
+    font-weight: 600;
+}
+
+.owner-email {
+    color: #6b7280;
+    font-size: 0.8125rem;
+}
+
+.club-date {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+.club-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-approve,
+.btn-reject {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-approve {
+    background: #10b981;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #059669;
+}
+
+.btn-reject {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #dc2626;
+}
+
+.club-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #9ca3af;
+}
+
+.empty-state p {
+    font-size: 1.125rem;
+}

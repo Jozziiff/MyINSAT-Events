@@ -118,11 +118,7 @@ export class ClubsService {
     try {
       const response = await fetch(`${this.apiUrl}/clubs`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId.toString(),
-          'x-user-role': 'owner',
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(clubData),
       });
       if (!response.ok) {
@@ -147,11 +143,7 @@ export class ClubsService {
     try {
       const response = await fetch(`${this.apiUrl}/clubs/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId.toString(),
-          'x-user-role': 'owner',
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(clubData),
       });
       if (!response.ok) {
@@ -212,7 +204,7 @@ export class ClubsService {
         headers: this.getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to follow club');
-      
+
       // Update local state
       this.selectedClub.update(club => {
         if (club && club.id === clubId) {
@@ -224,7 +216,7 @@ export class ClubsService {
         }
         return club;
       });
-      
+
       return true;
     } catch (err: any) {
       this.error.set(err?.message || 'Unknown error');
@@ -240,7 +232,7 @@ export class ClubsService {
         headers: this.getAuthHeaders(),
       });
       if (!response.ok && response.status !== 204) throw new Error('Failed to unfollow club');
-      
+
       // Update local state
       this.selectedClub.update(club => {
         if (club && club.id === clubId) {
@@ -252,7 +244,7 @@ export class ClubsService {
         }
         return club;
       });
-      
+
       return true;
     } catch (err: any) {
       this.error.set(err?.message || 'Unknown error');

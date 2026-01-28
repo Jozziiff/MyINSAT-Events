@@ -9,6 +9,7 @@ import {
 import { ClubManager } from './club-manager.entity';
 import { Event } from './event.entity';
 import { ClubFollower } from './club-follower.entity';
+import { ClubStatus } from '../common/enums/club-status.enum';
 
 @Entity('clubs')
 export class Club {
@@ -52,8 +53,8 @@ export class Club {
     @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
     coverImageUrl: string;
 
-    @Column({ type: 'int', nullable: true, name: 'owner_id' })
-    ownerId: number;
+    @Column({ type: 'enum', enum: ClubStatus, default: ClubStatus.PENDING })
+    status: ClubStatus;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
