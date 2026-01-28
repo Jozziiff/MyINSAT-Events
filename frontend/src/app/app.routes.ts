@@ -3,6 +3,7 @@ import { HomeComponent } from './pages/home/home';
 import { EventsComponent } from './pages/events/events';
 import { ClubsComponent } from './pages/clubs/clubs';
 import { ProfilePage } from './pages/profile/profile-page/profile-page';
+import { UserProfileComponent } from './pages/user-profile/user-profile';
 import { ManagerDashboardComponent } from './pages/manager/manager-dashboard';
 import { EventFormComponent } from './pages/manager/event-form';
 import { RegistrationsManagerComponent } from './pages/manager/registrations-manager';
@@ -32,6 +33,7 @@ export const routes: Routes = [
   { path: 'clubs/:id/events', component: ClubEventsComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'clubs/:id/edit', component: ClubFormComponent, canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] },
+  { path: 'users/:id', component: UserProfileComponent },
 
   // Auth routes (guest only)
   { path: 'login', component: Login, canActivate: [guestGuard] },

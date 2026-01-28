@@ -6,6 +6,7 @@ import { Event } from '../entities/event.entity';
 import { Registration } from '../entities/registration.entity';
 import { ClubFollower } from '../entities/club-follower.entity';
 import { ClubManager } from '../entities/club-manager.entity';
+import { EventRating } from '../entities/event-rating.entity';
 import { RegistrationStatus, ClubStatus } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
@@ -18,21 +19,18 @@ export class ClubsService {
     private readonly clubRepository: Repository<Club>,
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
-    @InjectRepository(Registration)
-    private readonly registrationRepository: Repository<Registration>,
     @InjectRepository(ClubFollower)
     private readonly clubFollowerRepository: Repository<ClubFollower>,
     @InjectRepository(ClubManager)
     private readonly clubManagerRepository: Repository<ClubManager>,
+    @InjectRepository(EventRating)
+    private readonly eventRatingRepository: Repository<EventRating>,
   ) { }
 
-  // Helper to apply default images to sections (unchanged)
   private applyDefaultImages(club: any): any {
     return {
       ...club,
-      logoUrl: club.logoUrl || DEFAULT_SECTION_IMAGES.logo,
       aboutImageUrl: club.aboutImageUrl || DEFAULT_SECTION_IMAGES.about,
-      coverImageUrl: club.coverImageUrl || DEFAULT_SECTION_IMAGES.cover,
       history: club.history
         ? {
           ...club.history,
@@ -68,7 +66,6 @@ export class ClubsService {
     };
   }
 
-  // Get all clubs (summary only for list page - only APPROVED clubs)
   async getAllClubs(): Promise<ClubSummaryDto[]> {
     const clubs = await this.clubRepository.find({
       where: { status: ClubStatus.APPROVED },
@@ -79,22 +76,21 @@ export class ClubsService {
       id: club.id,
       name: club.name,
       shortDescription: club.shortDescription,
-      logoUrl: club.logoUrl || DEFAULT_SECTION_IMAGES.logo,
+      logoUrl: club.logoUrl
     }));
   }
 
-  // Get full club details by ID (with default images applied)
+  // Get full club details by ID
   async getClubById(id: number): Promise<ClubDto | undefined> {
     const club = await this.clubRepository.findOne({ where: { id } });
     if (!club) return undefined;
     return this.applyDefaultImages(club);
   }
 
-  // Create a new club (authenticated users only)
+  // Create a new club
   async createClub(
     createClubDto: CreateClubDto,
     userId: number,
-    userRole: string,
   ): Promise<ClubDto> {
     try {
       // Check if club name already exists
@@ -106,7 +102,6 @@ export class ClubsService {
         throw new ConflictException(`A club with the name "${createClubDto.name}" already exists`);
       }
 
-      // Any authenticated user can create a club (it will be PENDING until admin approves)
       const newClub = this.clubRepository.create({
         ...createClubDto,
         status: ClubStatus.PENDING, // All new clubs start as pending
@@ -123,15 +118,10 @@ export class ClubsService {
 
       return this.applyDefaultImages(savedClub);
     } catch (error) {
-      // Handle duplicate key error from database
-      if (error.code === '23505') {
-        throw new ConflictException(`A club with the name "${createClubDto.name}" already exists`);
-      }
-      throw error;
+        throw error;
     }
   }
 
-  // Update a club (club owner, manager, or admin only)
   async updateClub(
     id: number,
     updateData: Partial<CreateClubDto>,
@@ -144,12 +134,11 @@ export class ClubsService {
     });
     if (!club) return null;
 
-    // Check if user is a manager of this club
     const isManager = club.managers?.some(m => m.userId === userId);
-    const isAdminOrManagerRole = userRole === 'ADMIN' || userRole === 'MANAGER';
+    const isAdmin = userRole === 'ADMIN';
 
-    if (!isManager && !isAdminOrManagerRole) {
-      throw new ForbiddenException('Only the club manager or admin can update this club');
+    if (!isManager && !isAdmin) {
+      throw new ForbiddenException('Only a club manager or admin can update this club');
     }
 
     Object.assign(club, updateData);
@@ -157,7 +146,6 @@ export class ClubsService {
     return this.applyDefaultImages(updatedClub);
   }
 
-  // Delete a club (club owner or admin only)
   async deleteClub(
     id: number,
     userId: number,
@@ -169,7 +157,6 @@ export class ClubsService {
     });
     if (!club) return false;
 
-    // Check if user is a manager of this club or admin
     const isManager = club.managers?.some(m => m.userId === userId);
     const isAdmin = userRole === 'ADMIN';
 
@@ -181,23 +168,23 @@ export class ClubsService {
     return true;
   }
 
-  // Get club events with statistics (past events only)
   async getClubEventsWithStats(clubId: number): Promise<{
     events: any[];
     statistics: {
       totalEvents: number;
       totalAttendance: number;
       averageAttendanceRate: number;
+      averageRating: number;
     };
   } | null> {
     // Check if club exists
     const club = await this.clubRepository.findOne({ where: { id: clubId } });
     if (!club) return null;
 
-    // Get past events for this club
+    // Get past events for this club with registrations and ratings
     const events = await this.eventRepository.find({
       where: { clubId },
-      relations: ['registrations'],
+      relations: ['registrations', 'ratings'],
       order: { startTime: 'DESC' },
     });
 
@@ -205,12 +192,17 @@ export class ClubsService {
     const now = new Date();
     const pastEvents = events.filter(e => new Date(e.endTime) < now);
 
-    // Calculate statistics for each event
     const eventsWithStats = pastEvents.map(event => {
       const registrations = event.registrations || [];
+      const ratings = event.ratings || [];
       const attendedCount = registrations.filter(r => r.status === RegistrationStatus.ATTENDED).length;
       const attendanceRate = registrations.length > 0
         ? Math.round((attendedCount / registrations.length) * 100)
+        : 0;
+
+      // Calculate average rating for this event
+      const averageRating = ratings.length > 0
+        ? Math.round((ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length) * 10) / 10
         : 0;
 
       return {
@@ -223,11 +215,11 @@ export class ClubsService {
         capacity: event.capacity,
         price: event.price,
         photoUrl: event.photoUrl,
-        status: event.status,
         registrationsCount: registrations.length,
         attendedCount,
         attendanceRate,
-        averageRating: 4.5, // Placeholder - implement if you add ratings table
+        ratingsCount: ratings.length,
+        averageRating,
       };
     });
 
@@ -245,17 +237,23 @@ export class ClubsService {
       ? Math.round((totalAttendance / totalRegistrations) * 100)
       : 0;
 
+    // Calculate club average rating across all events
+    const allRatings = pastEvents.flatMap(e => e.ratings || []);
+    const clubAverageRating = allRatings.length > 0
+      ? Math.round((allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length) * 10) / 10
+      : 0;
+
     return {
       events: eventsWithStats,
       statistics: {
         totalEvents: pastEvents.length,
         totalAttendance,
         averageAttendanceRate: clubAverageAttendanceRate,
+        averageRating: clubAverageRating,
       },
     };
   }
 
-  // Get club follower count
   async getFollowerCount(clubId: number): Promise<number> {
     return this.clubFollowerRepository.count({ where: { clubId } });
   }

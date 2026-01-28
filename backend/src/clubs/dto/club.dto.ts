@@ -1,11 +1,13 @@
+import { User } from 'src/entities';
 import { ClubContactDto, ClubSectionDto } from './create-club.dto';
 
-// Full club details (returned when clicking on a club)
+// Full club details
 export class ClubDto {
   id: number;
   name: string;
   shortDescription: string;
   logoUrl: string;
+  coverImageUrl?: string;
   about: string;
   aboutImageUrl?: string;
   history?: ClubSectionDto;
@@ -14,7 +16,6 @@ export class ClubDto {
   achievements?: ClubSectionDto;
   joinUs?: ClubSectionDto;
   contact?: ClubContactDto;
-  coverImageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

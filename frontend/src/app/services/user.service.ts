@@ -68,6 +68,52 @@ export class UserService {
     };
   }
 
+  // Get public user profile (no auth required)
+  async getPublicProfile(userId: number): Promise<{
+    id: number;
+    fullName: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    studentYear: string | null;
+    createdAt: Date;
+    followedClubs: { id: number; name: string; logoUrl: string | null; shortDescription: string }[];
+    managedClubs: { id: number; name: string; logoUrl: string | null; shortDescription: string }[];
+    upcomingEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
+    pastEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
+  } | null> {
+    try {
+      const response = await fetch(`${this.apiUrl}/users/${userId}/profile`);
+      if (!response.ok) throw new Error('Failed to fetch user profile');
+      const data = await response.json();
+      return {
+        ...data,
+        avatarUrl: resolveImageUrl(data.avatarUrl),
+        createdAt: new Date(data.createdAt),
+        followedClubs: data.followedClubs.map((c: any) => ({
+          ...c,
+          logoUrl: resolveImageUrl(c.logoUrl),
+        })),
+        managedClubs: data.managedClubs.map((c: any) => ({
+          ...c,
+          logoUrl: resolveImageUrl(c.logoUrl),
+        })),
+        upcomingEvents: data.upcomingEvents.map((e: any) => ({
+          ...e,
+          photoUrl: resolveImageUrl(e.photoUrl),
+          startTime: new Date(e.startTime),
+        })),
+        pastEvents: data.pastEvents.map((e: any) => ({
+          ...e,
+          photoUrl: resolveImageUrl(e.photoUrl),
+          startTime: new Date(e.startTime),
+        })),
+      };
+    } catch (err: any) {
+      console.error('Error fetching public profile:', err);
+      return null;
+    }
+  }
+
   // Get current user's profile
   async getProfile(): Promise<UserProfile | null> {
     this.loading.set(true);

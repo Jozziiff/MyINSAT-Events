@@ -1,0 +1,271 @@
+<section class="user-profile-page" [@staggerCards]>
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading user profile...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-container glass-card">
+      <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>{{ error() }}</p>
+      <button class="retry-btn" (click)="goBack()">Go Back</button>
+    </div>
+  } @else if (profile(); as user) {
+    <!-- Back Button -->
+    <div class="nav-bar">
+      <button class="back-btn" (click)="goBack()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </button>
+    </div>
+
+    <!-- Profile Header Card -->
+    <div class="profile-card glass-card animate-card" [@fadeInUp]>
+      <div class="profile-header">
+        <div class="avatar-section">
+          <div class="avatar-wrapper">
+            @if (user.avatarUrl) {
+              <img [src]="user.avatarUrl" alt="Profile avatar" class="avatar" />
+            } @else {
+              <div class="avatar avatar-placeholder">
+                {{ user.fullName.charAt(0).toUpperCase() }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <h1 class="profile-name">{{ user.fullName }}</h1>
+          @if (user.studentYear) {
+            <span class="profile-year">{{ user.studentYear }}</span>
+          }
+          @if (user.bio) {
+            <p class="profile-bio">{{ user.bio }}</p>
+          } @else {
+            <p class="profile-bio profile-bio--empty">No bio available</p>
+          }
+        </div>
+      </div>
+
+      <div class="profile-details">
+        <div class="detail-item">
+          <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="detail-label">Member since</span>
+          <span class="detail-value">{{ user.createdAt | date:'MMMM yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="profile-content-grid">
+      <!-- Left Column - Events -->
+      <div class="profile-events">
+        <!-- Upcoming Events -->
+        <div class="section-card glass-card animate-card" [@fadeInUp]>
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Upcoming Events
+            </h2>
+          </div>
+          @if (user.upcomingEvents.length > 0) {
+            <div class="events-list">
+              @for (event of user.upcomingEvents; track event.id) {
+                <a [routerLink]="['/events', event.id]" class="event-item">
+                  <div class="event-image">
+                    @if (event.photoUrl) {
+                      <img [src]="event.photoUrl" [alt]="event.title">
+                    } @else {
+                      <div class="event-image-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                    }
+                  </div>
+                  <div class="event-info">
+                    <h3 class="event-title">{{ event.title }}</h3>
+                    <span class="event-club">{{ event.clubName }}</span>
+                    <span class="event-date">{{ event.startTime | date:'MMM d, yyyy' }}</span>
+                  </div>
+                  <span class="event-status" [ngClass]="getStatusClass(event.status)">
+                    {{ getStatusLabel(event.status) }}
+                  </span>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-section">
+              <svg class="empty-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <p>No upcoming events</p>
+            </div>
+          }
+        </div>
+
+        <!-- Past Events -->
+        <div class="section-card glass-card animate-card" [@fadeInUp]>
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Past Events
+            </h2>
+          </div>
+          @if (user.pastEvents.length > 0) {
+            <div class="events-list">
+              @for (event of user.pastEvents; track event.id) {
+                <a [routerLink]="['/events', event.id]" class="event-item">
+                  <div class="event-image">
+                    @if (event.photoUrl) {
+                      <img [src]="event.photoUrl" [alt]="event.title">
+                    } @else {
+                      <div class="event-image-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                    }
+                  </div>
+                  <div class="event-info">
+                    <h3 class="event-title">{{ event.title }}</h3>
+                    <span class="event-club">{{ event.clubName }}</span>
+                    <span class="event-date">{{ event.startTime | date:'MMM d, yyyy' }}</span>
+                  </div>
+                  <span class="event-status" [ngClass]="getStatusClass(event.status)">
+                    {{ getStatusLabel(event.status) }}
+                  </span>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-section">
+              <svg class="empty-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <p>No past events</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Right Column - Clubs -->
+      <div class="profile-sidebar">
+        <!-- Managed Clubs -->
+        <div class="section-card glass-card animate-card manager-card" [@fadeInUp]>
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              Managed Clubs
+            </h2>
+          </div>
+          @if (user.managedClubs.length > 0) {
+            <div class="clubs-list">
+              @for (club of user.managedClubs; track club.id) {
+                <a [routerLink]="['/clubs', club.id]" class="club-item">
+                  <div class="club-logo">
+                    @if (club.logoUrl) {
+                      <img [src]="club.logoUrl" [alt]="club.name">
+                    } @else {
+                      <div class="club-logo-placeholder">
+                        {{ club.name.charAt(0).toUpperCase() }}
+                      </div>
+                    }
+                  </div>
+                  <div class="club-info">
+                    <h3 class="club-name">{{ club.name }}</h3>
+                    <p class="club-desc">{{ club.shortDescription }}</p>
+                  </div>
+                  <span class="manager-badge">Manager</span>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-section">
+              <svg class="empty-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              <p>Not managing any clubs</p>
+            </div>
+          }
+        </div>
+
+        <!-- Followed Clubs -->
+        <div class="section-card glass-card animate-card" [@fadeInUp]>
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Following
+            </h2>
+          </div>
+          @if (user.followedClubs.length > 0) {
+            <div class="clubs-list">
+              @for (club of user.followedClubs; track club.id) {
+                <a [routerLink]="['/clubs', club.id]" class="club-item">
+                  <div class="club-logo">
+                    @if (club.logoUrl) {
+                      <img [src]="club.logoUrl" [alt]="club.name">
+                    } @else {
+                      <div class="club-logo-placeholder">
+                        {{ club.name.charAt(0).toUpperCase() }}
+                      </div>
+                    }
+                  </div>
+                  <div class="club-info">
+                    <h3 class="club-name">{{ club.name }}</h3>
+                    <p class="club-desc">{{ club.shortDescription }}</p>
+                  </div>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-section">
+              <svg class="empty-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <p>Not following any clubs yet</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

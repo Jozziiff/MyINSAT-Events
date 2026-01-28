@@ -31,13 +31,11 @@ interface AuthenticatedRequest extends Request {
 export class ClubsController {
   constructor(private readonly clubsService: ClubsService) { }
 
-  // Get all clubs (summary for list page)
   @Get()
   getAllClubs() {
     return this.clubsService.getAllClubs();
   }
 
-  // Get full club details (with optional user context for follow status)
   @Get(':id')
   @UseGuards(OptionalAuth)
   async getClubById(
@@ -51,7 +49,6 @@ export class ClubsController {
     return club;
   }
 
-  // Create a new club (owner only)
   @Post()
   @UseGuards(JwtAccessGuard)
   createClub(
@@ -60,12 +57,10 @@ export class ClubsController {
   ) {
     return this.clubsService.createClub(
       createClubDto,
-      user.id,
-      user.role,
+      user.id
     );
   }
 
-  // Update a club (owner only)
   @Put(':id')
   @UseGuards(JwtAccessGuard)
   async updateClub(
@@ -85,7 +80,6 @@ export class ClubsController {
     return club;
   }
 
-  // Delete a club (owner only)
   @Delete(':id')
   @UseGuards(JwtAccessGuard)
   async deleteClub(
@@ -103,7 +97,6 @@ export class ClubsController {
     return { deleted: true };
   }
 
-  // Get club events with statistics
   @Get(':id/events')
   async getClubEvents(@Param('id', ParseIntPipe) id: number): Promise<{
     events: any[];

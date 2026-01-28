@@ -9,11 +9,8 @@ export const DEFAULT_SECTION_IMAGES = {
   activities: '/uploads/defaults/activities-default.jpg',
   achievements: '/uploads/defaults/achievements-default.jpg',
   joinUs: '/uploads/defaults/join-default.jpg',
-  cover: 'https://via.placeholder.com/1920x600/667eea/ffffff?text=Club+Cover',
-  logo: 'https://via.placeholder.com/200x200/667eea/ffffff?text=Club+Logo',
 };
 
-// Section with image support (defaults to section-specific default image)
 export class ClubSectionDto {
   @IsString()
   @IsNotEmpty()
@@ -25,7 +22,7 @@ export class ClubSectionDto {
 
   @IsString()
   @IsOptional()
-  imageUrl?: string; // Will use default image if not provided
+  imageUrl?: string;
 }
 
 // Contact information
@@ -55,31 +52,31 @@ export class ClubContactDto {
   website?: string;
 }
 
-// DTO for creating a new club
 export class CreateClubDto {
-  // Required fields
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @IsString()
   @IsNotEmpty()
-  shortDescription: string; // For the clubs list page
+  shortDescription: string;
 
-  @IsString()
-  @IsOptional()
-  logoUrl?: string;
-
-  // Required sections
   @IsString()
   @IsNotEmpty()
-  about: string; // General description/about the club
+  logoUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  coverImageUrl: string;
+  
+  @IsString()
+  @IsNotEmpty()
+  about: string;
 
   @IsString()
   @IsOptional()
-  aboutImageUrl?: string; // Image for the about section
+  aboutImageUrl?: string;
 
-  // Optional sections with optional images
   @ValidateNested()
   @Type(() => ClubSectionDto)
   @IsOptional()
@@ -103,16 +100,10 @@ export class CreateClubDto {
   @ValidateNested()
   @Type(() => ClubSectionDto)
   @IsOptional()
-  joinUs?: ClubSectionDto; // How to join the club
+  joinUs?: ClubSectionDto;
 
-  // Contact information (optional)
   @ValidateNested()
   @Type(() => ClubContactDto)
   @IsOptional()
   contact?: ClubContactDto;
-
-  // Cover/banner image (optional)
-  @IsString()
-  @IsOptional()
-  coverImageUrl?: string;
 }

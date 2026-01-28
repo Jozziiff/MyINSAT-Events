@@ -2,12 +2,12 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClubsController } from './clubs.controller';
 import { ClubsService } from './clubs.service';
-import { Club, Event, Registration, ClubFollower, ClubManager } from '../entities';
+import { Club, Event, Registration, ClubFollower, ClubManager, EventRating } from '../entities';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Club, Event, Registration, ClubFollower, ClubManager]),
+    TypeOrmModule.forFeature([Club, Event, Registration, ClubFollower, ClubManager, EventRating]),
     forwardRef(() => AuthModule),
   ],
   controllers: [ClubsController],

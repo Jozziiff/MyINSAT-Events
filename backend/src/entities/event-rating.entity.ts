@@ -24,7 +24,7 @@ export class EventRating {
     eventId: number;
 
     @Column({ type: 'int', nullable: false })
-    rating: number; // 1-5 stars
+    rating: number;
 
     @Column({ type: 'text', nullable: true })
     comment: string | null;
