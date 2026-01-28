@@ -7,18 +7,18 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  Headers,
-  NotFoundException,
   UseGuards,
+  NotFoundException,
   Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { ClubsService } from './clubs.service';
-import { CreateClubDto } from './dto/create-club.dto';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ClubsService } from './clubs.service';
+import { CreateClubDto } from './dto/create-club.dto';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -52,33 +52,32 @@ export class ClubsController {
   }
 
   // Create a new club (owner only)
-  // Note: In production, use proper auth guards instead of headers
   @Post()
+  @UseGuards(JwtAccessGuard)
   createClub(
     @Body() createClubDto: CreateClubDto,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     return this.clubsService.createClub(
       createClubDto,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id,
+      user.role,
     );
   }
 
   // Update a club (owner only)
   @Put(':id')
+  @UseGuards(JwtAccessGuard)
   async updateClub(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateData: Partial<CreateClubDto>,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     const club = await this.clubsService.updateClub(
       id,
       updateData,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id,
+      user.role,
     );
     if (!club) {
       throw new NotFoundException(`Club with ID ${id} not found`);
@@ -88,15 +87,15 @@ export class ClubsController {
 
   // Delete a club (owner only)
   @Delete(':id')
+  @UseGuards(JwtAccessGuard)
   async deleteClub(
     @Param('id', ParseIntPipe) id: number,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     const deleted = await this.clubsService.deleteClub(
       id,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id,
+      user.role,
     );
     if (!deleted) {
       throw new NotFoundException(`Club with ID ${id} not found`);

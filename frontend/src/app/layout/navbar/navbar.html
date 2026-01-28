@@ -8,27 +8,31 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       <a routerLink="/events" routerLinkActive="active">Events</a>
       <a routerLink="/clubs" routerLinkActive="active">Clubs</a>
-      
+
       @if (isManager()) {
-        <a routerLink="/manager" routerLinkActive="active">Manager</a>
+      <a routerLink="/manager" routerLinkActive="active">Manager</a>
       }
-      
+
+      @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+
       @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a routerLink="/profile" routerLinkActive="active">Profile</a>
       }
     </div>
 
     <div class="auth-section">
       @if (isAuthenticated()) {
-        <div class="user-menu">
-          <span class="user-name">{{ currentUser()?.fullName }}</span>
-          <button class="btn-logout" (click)="logout()">Log Out</button>
-        </div>
+      <div class="user-menu">
+        <span class="user-name">{{ currentUser()?.fullName }}</span>
+        <button class="btn-logout" (click)="logout()">Log Out</button>
+      </div>
       } @else {
-        <div class="auth-buttons">
-          <button class="btn-login" routerLink="/login">Log In</button>
-          <button class="btn-signup" routerLink="/register">Sign Up</button>
-        </div>
+      <div class="auth-buttons">
+        <button class="btn-login" routerLink="/login">Log In</button>
+        <button class="btn-signup" routerLink="/register">Sign Up</button>
+      </div>
       }
     </div>
 
@@ -40,22 +44,27 @@
   </div>
 
   @if (isMobileMenuOpen()) {
-    <div class="mobile-menu">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="toggleMenu()">Home</a>
-      <a routerLink="/events" routerLinkActive="active" (click)="toggleMenu()">Events</a>
-      <a routerLink="/clubs" routerLinkActive="active" (click)="toggleMenu()">Clubs</a>
-      
-      @if (isManager()) {
-        <a routerLink="/manager" routerLinkActive="active" (click)="toggleMenu()">Manager</a>
-      }
-      
-      @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">Profile</a>
-        <button class="btn-mobile-logout" (click)="logout()">Log Out</button>
-      } @else {
-        <a routerLink="/login" routerLinkActive="active" (click)="toggleMenu()">Log In</a>
-        <a routerLink="/register" routerLinkActive="active" (click)="toggleMenu()">Sign Up</a>
-      }
-    </div>
+  <div class="mobile-menu">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+      (click)="toggleMenu()">Home</a>
+    <a routerLink="/events" routerLinkActive="active" (click)="toggleMenu()">Events</a>
+    <a routerLink="/clubs" routerLinkActive="active" (click)="toggleMenu()">Clubs</a>
+
+    @if (isManager()) {
+    <a routerLink="/manager" routerLinkActive="active" (click)="toggleMenu()">Manager</a>
+    }
+
+    @if (isAdmin()) {
+    <a routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
+    }
+
+    @if (isAuthenticated()) {
+    <a routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">Profile</a>
+    <button class="btn-mobile-logout" (click)="logout()">Log Out</button>
+    } @else {
+    <a routerLink="/login" routerLinkActive="active" (click)="toggleMenu()">Log In</a>
+    <a routerLink="/register" routerLinkActive="active" (click)="toggleMenu()">Sign Up</a>
+    }
+  </div>
   }
 </nav>

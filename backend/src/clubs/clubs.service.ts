@@ -1,12 +1,12 @@
-
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Club } from '../entities/club.entity';
 import { Event } from '../entities/event.entity';
 import { Registration } from '../entities/registration.entity';
 import { ClubFollower } from '../entities/club-follower.entity';
-import { RegistrationStatus } from '../common/enums';
+import { ClubManager } from '../entities/club-manager.entity';
+import { RegistrationStatus, ClubStatus } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
 
@@ -22,6 +22,8 @@ export class ClubsService {
     private readonly registrationRepository: Repository<Registration>,
     @InjectRepository(ClubFollower)
     private readonly clubFollowerRepository: Repository<ClubFollower>,
+    @InjectRepository(ClubManager)
+    private readonly clubManagerRepository: Repository<ClubManager>,
   ) { }
 
   // Helper to apply default images to sections (unchanged)
@@ -66,9 +68,10 @@ export class ClubsService {
     };
   }
 
-  // Get all clubs (summary only for list page)
+  // Get all clubs (summary only for list page - only APPROVED clubs)
   async getAllClubs(): Promise<ClubSummaryDto[]> {
     const clubs = await this.clubRepository.find({
+      where: { status: ClubStatus.APPROVED },
       select: ['id', 'name', 'shortDescription', 'logoUrl'],
     });
 
@@ -87,37 +90,66 @@ export class ClubsService {
     return this.applyDefaultImages(club);
   }
 
-  // Create a new club (owner only)
+  // Create a new club (authenticated users only)
   async createClub(
     createClubDto: CreateClubDto,
     userId: number,
     userRole: string,
   ): Promise<ClubDto> {
-    if (userRole !== 'owner') {
-      throw new ForbiddenException('Only owners can create clubs');
+    try {
+      // Check if club name already exists
+      const existingClub = await this.clubRepository.findOne({
+        where: { name: createClubDto.name },
+      });
+
+      if (existingClub) {
+        throw new ConflictException(`A club with the name "${createClubDto.name}" already exists`);
+      }
+
+      // Any authenticated user can create a club (it will be PENDING until admin approves)
+      const newClub = this.clubRepository.create({
+        ...createClubDto,
+        status: ClubStatus.PENDING, // All new clubs start as pending
+      });
+
+      const savedClub = await this.clubRepository.save(newClub);
+
+      // Create club_managers record immediately to track who created it
+      const clubManager = this.clubManagerRepository.create({
+        userId: userId,
+        clubId: savedClub.id,
+      });
+      await this.clubManagerRepository.save(clubManager);
+
+      return this.applyDefaultImages(savedClub);
+    } catch (error) {
+      // Handle duplicate key error from database
+      if (error.code === '23505') {
+        throw new ConflictException(`A club with the name "${createClubDto.name}" already exists`);
+      }
+      throw error;
     }
-
-    const newClub = this.clubRepository.create({
-      ...createClubDto,
-      ownerId: userId,
-    });
-
-    const savedClub = await this.clubRepository.save(newClub);
-    return this.applyDefaultImages(savedClub);
   }
 
-  // Update a club (owner only)
+  // Update a club (club owner, manager, or admin only)
   async updateClub(
     id: number,
     updateData: Partial<CreateClubDto>,
     userId: number,
     userRole: string,
   ): Promise<ClubDto | null> {
-    const club = await this.clubRepository.findOne({ where: { id } });
+    const club = await this.clubRepository.findOne({
+      where: { id },
+      relations: ['managers'],
+    });
     if (!club) return null;
 
-    if (userRole !== 'owner' || club.ownerId !== userId) {
-      throw new ForbiddenException('Only the club owner can update this club');
+    // Check if user is a manager of this club
+    const isManager = club.managers?.some(m => m.userId === userId);
+    const isAdminOrManagerRole = userRole === 'ADMIN' || userRole === 'MANAGER';
+
+    if (!isManager && !isAdminOrManagerRole) {
+      throw new ForbiddenException('Only the club manager or admin can update this club');
     }
 
     Object.assign(club, updateData);
@@ -125,17 +157,24 @@ export class ClubsService {
     return this.applyDefaultImages(updatedClub);
   }
 
-  // Delete a club (owner only)
+  // Delete a club (club owner or admin only)
   async deleteClub(
     id: number,
     userId: number,
     userRole: string,
   ): Promise<boolean> {
-    const club = await this.clubRepository.findOne({ where: { id } });
+    const club = await this.clubRepository.findOne({
+      where: { id },
+      relations: ['managers'],
+    });
     if (!club) return false;
 
-    if (userRole !== 'owner' || club.ownerId !== userId) {
-      throw new ForbiddenException('Only the club owner can delete this club');
+    // Check if user is a manager of this club or admin
+    const isManager = club.managers?.some(m => m.userId === userId);
+    const isAdmin = userRole === 'ADMIN';
+
+    if (!isManager && !isAdmin) {
+      throw new ForbiddenException('Only the club manager or admin can delete this club');
     }
 
     await this.clubRepository.delete(id);
@@ -284,8 +323,8 @@ export class ClubsService {
   }
 
   // Get club with follow status and stats
-  async getClubWithStats(clubId: number, userId?: number): Promise<ClubDto & { 
-    followerCount: number; 
+  async getClubWithStats(clubId: number, userId?: number): Promise<ClubDto & {
+    followerCount: number;
     isFollowing: boolean;
     upcomingEventsCount: number;
   } | null> {

@@ -8,6 +8,7 @@ import { StatsCard } from '../components/stats-card/stats-card';
 import { RatingsSection } from '../components/ratings-section/ratings-section';
 import { UserService } from '../../../services/user.service';
 import { AuthStateService } from '../../../services/auth/auth-state';
+import { Role } from '../../../models/auth.models';
 import {
   UserProfile,
   UserDashboard,
@@ -56,9 +57,12 @@ export class ProfilePage implements OnInit {
   private userService = inject(UserService);
   private authState = inject(AuthStateService);
 
+  readonly userRole = this.authState.userRole;
+  readonly Role = Role;
+
   loading = signal(true);
   error = signal<string | null>(null);
-  
+
   profile = signal<UserProfile | null>(null);
   stats = signal<UserStats>({
     eventsAttended: 0,
@@ -81,10 +85,10 @@ export class ProfilePage implements OnInit {
   async loadDashboard() {
     this.loading.set(true);
     this.error.set(null);
-    
+
     try {
       const dashboard = await this.userService.getDashboard();
-      
+
       if (dashboard) {
         this.profile.set(dashboard.profile);
         this.stats.set(dashboard.stats);

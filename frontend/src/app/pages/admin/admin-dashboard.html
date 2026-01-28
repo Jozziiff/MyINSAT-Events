@@ -1,0 +1,73 @@
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage club submissions and approvals</p>
+    </div>
+
+    @if (loading()) {
+    <div class="loading">Loading clubs...</div>
+    } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+    } @else {
+    <div class="tabs">
+        <button class="tab" [class.active]="activeTab() === 'PENDING'" (click)="setActiveTab('PENDING')">
+            Pending ({{ pendingClubs().length }})
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'APPROVED'" (click)="setActiveTab('APPROVED')">
+            Approved ({{ approvedClubs().length }})
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'REJECTED'" (click)="setActiveTab('REJECTED')">
+            Rejected ({{ rejectedClubs().length }})
+        </button>
+    </div>
+
+    <div class="clubs-list">
+        @if (getClubsByTab().length === 0) {
+        <div class="empty-state">
+            <p>No {{ activeTab().toLowerCase() }} clubs</p>
+        </div>
+        } @else {
+        @for (club of getClubsByTab(); track club.id) {
+        <div class="club-card">
+            <div class="club-info">
+                @if (club.logoUrl) {
+                <img [src]="club.logoUrl" [alt]="club.name" class="club-logo">
+                } @else {
+                <div class="club-logo placeholder">{{ club.name.charAt(0) }}</div>
+                }
+                <div class="club-details">
+                    <h3>{{ club.name }}</h3>
+                    <p>{{ club.shortDescription }}</p>
+                    @if (club.owner) {
+                    <div class="club-owner">
+                        <span class="owner-label">Submitted by:</span>
+                        <span class="owner-name">{{ club.owner.fullName }}</span>
+                        <span class="owner-email">({{ club.owner.email }})</span>
+                    </div>
+                    }
+                    <span class="club-date">Created: {{ club.createdAt | date:'short' }}</span>
+                </div>
+            </div>
+
+            @if (activeTab() === 'PENDING') {
+            <div class="club-actions">
+                <button class="btn-approve" (click)="approveClub(club.id)">
+                    ✓ Approve
+                </button>
+                <button class="btn-reject" (click)="rejectClub(club.id)">
+                    ✗ Reject
+                </button>
+            </div>
+            } @else {
+            <div class="club-status">
+                <span class="status-badge" [class]="activeTab().toLowerCase()">
+                    {{ activeTab() }}
+                </span>
+            </div>
+            }
+        </div>
+        }
+        }
+    </div>
+    }
+</div>
