@@ -36,6 +36,39 @@ export class ClubsController {
     return this.clubsService.getAllClubs();
   }
 
+  // ============ JOIN REQUEST ENDPOINTS (must be before :id routes) ============
+
+  // Get all clubs with join status for current user
+  @Get('join/status')
+  @UseGuards(JwtAccessGuard)
+  getAllClubsWithJoinStatus(@CurrentUser() user: { id: number }) {
+    return this.clubsService.getAllClubsWithJoinStatus(user.id);
+  }
+
+  // Approve a join request
+  @Post('join-requests/:requestId/approve')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  approveJoinRequest(
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.approveJoinRequest(requestId, user.id);
+  }
+
+  // Reject a join request
+  @Post('join-requests/:requestId/reject')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  rejectJoinRequest(
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.rejectJoinRequest(requestId, user.id);
+  }
+
+  // ============ PARAMETERIZED ROUTES ============
+
   @Get(':id')
   @UseGuards(OptionalAuth)
   async getClubById(
@@ -164,5 +197,26 @@ export class ClubsController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.clubsService.unfollowClub(req.user!.id, id);
+  }
+
+  // Submit a join request
+  @Post(':id/join')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  submitJoinRequest(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.submitJoinRequest(user.id, id);
+  }
+
+  // Get pending join requests for a club (for managers)
+  @Get(':id/join-requests')
+  @UseGuards(JwtAccessGuard)
+  getClubJoinRequests(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.getClubJoinRequests(id, user.id);
   }
 }

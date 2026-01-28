@@ -6,8 +6,9 @@ import { Event } from '../entities/event.entity';
 import { Registration } from '../entities/registration.entity';
 import { ClubFollower } from '../entities/club-follower.entity';
 import { ClubManager } from '../entities/club-manager.entity';
+import { ClubJoinRequest } from '../entities/club-join-request.entity';
 import { EventRating } from '../entities/event-rating.entity';
-import { RegistrationStatus, ClubStatus } from '../common/enums';
+import { RegistrationStatus, ClubStatus, JoinRequestStatus } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
 
@@ -23,6 +24,8 @@ export class ClubsService {
     private readonly clubFollowerRepository: Repository<ClubFollower>,
     @InjectRepository(ClubManager)
     private readonly clubManagerRepository: Repository<ClubManager>,
+    @InjectRepository(ClubJoinRequest)
+    private readonly joinRequestRepository: Repository<ClubJoinRequest>,
     @InjectRepository(EventRating)
     private readonly eventRatingRepository: Repository<EventRating>,
   ) { }
@@ -104,7 +107,7 @@ export class ClubsService {
 
       const newClub = this.clubRepository.create({
         ...createClubDto,
-        status: ClubStatus.PENDING, // All new clubs start as pending
+        status: ClubStatus.APPROVED, // Auto-approve clubs for now
       });
 
       const savedClub = await this.clubRepository.save(newClub);
@@ -347,5 +350,175 @@ export class ClubsService {
       isFollowing,
       upcomingEventsCount: upcomingEvents,
     };
+  }
+
+  // ============ JOIN REQUEST METHODS ============
+
+  // Submit a join request to a club
+  async submitJoinRequest(userId: number, clubId: number): Promise<ClubJoinRequest> {
+    // Check if club exists
+    const club = await this.clubRepository.findOne({ where: { id: clubId } });
+    if (!club) {
+      throw new NotFoundException(`Club with ID ${clubId} not found`);
+    }
+
+    // Check if user is already a manager
+    const isManager = await this.clubManagerRepository.findOne({
+      where: { userId, clubId },
+    });
+    if (isManager) {
+      throw new ConflictException('You are already a manager of this club');
+    }
+
+    // Check if request already exists
+    const existingRequest = await this.joinRequestRepository.findOne({
+      where: { userId, clubId },
+    });
+    if (existingRequest) {
+      if (existingRequest.status === JoinRequestStatus.PENDING) {
+        throw new ConflictException('You already have a pending request for this club');
+      }
+      if (existingRequest.status === JoinRequestStatus.APPROVED) {
+        throw new ConflictException('You are already a member of this club');
+      }
+      // If rejected, allow reapplication by updating the status
+      existingRequest.status = JoinRequestStatus.PENDING;
+      existingRequest.updatedAt = new Date();
+      return this.joinRequestRepository.save(existingRequest);
+    }
+
+    const joinRequest = this.joinRequestRepository.create({
+      userId,
+      clubId,
+      status: JoinRequestStatus.PENDING,
+    });
+
+    return this.joinRequestRepository.save(joinRequest);
+  }
+
+  // Get pending join requests for a club (for managers)
+  async getClubJoinRequests(clubId: number, userId: number): Promise<any[]> {
+    // Verify user is a manager of this club
+    const isManager = await this.clubManagerRepository.findOne({
+      where: { userId, clubId },
+    });
+    if (!isManager) {
+      throw new ForbiddenException('Only club managers can view join requests');
+    }
+
+    const requests = await this.joinRequestRepository.find({
+      where: { clubId, status: JoinRequestStatus.PENDING },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return requests.map(req => ({
+      id: req.id,
+      userId: req.userId,
+      clubId: req.clubId,
+      status: req.status,
+      createdAt: req.createdAt,
+      user: {
+        id: req.user.id,
+        fullName: req.user.fullName,
+        email: req.user.email,
+        avatarUrl: req.user.avatarUrl,
+      },
+    }));
+  }
+
+  // Approve a join request (add user as manager)
+  async approveJoinRequest(requestId: number, managerId: number): Promise<ClubJoinRequest> {
+    const request = await this.joinRequestRepository.findOne({
+      where: { id: requestId },
+      relations: ['club'],
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Join request with ID ${requestId} not found`);
+    }
+
+    // Verify the approver is a manager
+    const isManager = await this.clubManagerRepository.findOne({
+      where: { userId: managerId, clubId: request.clubId },
+    });
+    if (!isManager) {
+      throw new ForbiddenException('Only club managers can approve requests');
+    }
+
+    // Update request status
+    request.status = JoinRequestStatus.APPROVED;
+    await this.joinRequestRepository.save(request);
+
+    // Add user as a manager
+    const clubManager = this.clubManagerRepository.create({
+      userId: request.userId,
+      clubId: request.clubId,
+    });
+    await this.clubManagerRepository.save(clubManager);
+
+    return request;
+  }
+
+  // Reject a join request
+  async rejectJoinRequest(requestId: number, managerId: number): Promise<ClubJoinRequest> {
+    const request = await this.joinRequestRepository.findOne({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Join request with ID ${requestId} not found`);
+    }
+
+    // Verify the rejector is a manager
+    const isManager = await this.clubManagerRepository.findOne({
+      where: { userId: managerId, clubId: request.clubId },
+    });
+    if (!isManager) {
+      throw new ForbiddenException('Only club managers can reject requests');
+    }
+
+    request.status = JoinRequestStatus.REJECTED;
+    return this.joinRequestRepository.save(request);
+  }
+
+  // Get user's join request status for a club
+  async getUserJoinRequestStatus(userId: number, clubId: number): Promise<JoinRequestStatus | null> {
+    const request = await this.joinRequestRepository.findOne({
+      where: { userId, clubId },
+    });
+    return request?.status || null;
+  }
+
+  // Get all clubs with user's join status
+  async getAllClubsWithJoinStatus(userId: number): Promise<(ClubSummaryDto & { 
+    joinRequestStatus: JoinRequestStatus | null;
+    isManager: boolean;
+  })[]> {
+    const clubs = await this.clubRepository.find({
+      where: { status: ClubStatus.APPROVED },
+      select: ['id', 'name', 'shortDescription', 'logoUrl'],
+    });
+
+    // Get user's join requests
+    const userRequests = await this.joinRequestRepository.find({
+      where: { userId },
+    });
+    const requestMap = new Map(userRequests.map(r => [r.clubId, r.status]));
+
+    // Get user's managed clubs
+    const managedClubs = await this.clubManagerRepository.find({
+      where: { userId },
+    });
+    const managedClubIds = new Set(managedClubs.map(m => m.clubId));
+
+    return clubs.map(club => ({
+      id: club.id,
+      name: club.name,
+      shortDescription: club.shortDescription,
+      logoUrl: club.logoUrl,
+      joinRequestStatus: requestMap.get(club.id) || null,
+      isManager: managedClubIds.has(club.id),
+    }));
   }
 }
