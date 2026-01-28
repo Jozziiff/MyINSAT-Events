@@ -155,40 +155,6 @@ export class EventsService {
     }
   }
 
-  async markInterested(eventId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/interested`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to mark interest');
-      
-      // Update local state
-      this.updateEventInteraction(eventId, RegistrationStatus.INTERESTED);
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
-  }
-
-  async removeInterest(eventId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/interested`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok && response.status !== 204) throw new Error('Failed to remove interest');
-      
-      // Update local state
-      this.updateEventInteraction(eventId, null);
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
-  }
-
   async rateEvent(eventId: number, request: RateEventRequest): Promise<EventRating | null> {
     try {
       const response = await fetch(`${this.apiUrl}/events/${eventId}/rate`, {
@@ -224,7 +190,7 @@ export class EventsService {
         body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error('Failed to register for event');
-      
+
       this.updateEventInteraction(eventId, status);
       return true;
     } catch (err: any) {
@@ -241,7 +207,7 @@ export class EventsService {
         headers: this.getAuthHeaders(),
       });
       if (!response.ok && response.status !== 204) throw new Error('Failed to cancel registration');
-      
+
       this.updateEventInteraction(eventId, RegistrationStatus.CANCELLED);
       return true;
     } catch (err: any) {
@@ -264,8 +230,8 @@ export class EventsService {
           },
           stats: {
             ...event.stats,
-            interestedCount: status === RegistrationStatus.INTERESTED 
-              ? event.stats.interestedCount + 1 
+            interestedCount: status === RegistrationStatus.INTERESTED
+              ? event.stats.interestedCount + 1
               : Math.max(0, event.stats.interestedCount - 1),
           },
         };
@@ -287,8 +253,8 @@ export class EventsService {
           },
           stats: {
             ...event.stats,
-            interestedCount: status === RegistrationStatus.INTERESTED 
-              ? event.stats.interestedCount + 1 
+            interestedCount: status === RegistrationStatus.INTERESTED
+              ? event.stats.interestedCount + 1
               : Math.max(0, event.stats.interestedCount - 1),
           },
         };
@@ -309,8 +275,8 @@ export class EventsService {
         },
         stats: {
           ...selectedEvent.stats,
-          interestedCount: status === RegistrationStatus.INTERESTED 
-            ? selectedEvent.stats.interestedCount + 1 
+          interestedCount: status === RegistrationStatus.INTERESTED
+            ? selectedEvent.stats.interestedCount + 1
             : Math.max(0, selectedEvent.stats.interestedCount - 1),
         },
       });

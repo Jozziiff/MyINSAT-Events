@@ -1,12 +1,12 @@
-import { 
-  Controller, 
-  Get, 
+import {
+  Controller,
+  Get,
   Post,
   Delete,
-  Param, 
+  Param,
   Body,
   Query,
-  ParseIntPipe, 
+  ParseIntPipe,
   NotFoundException,
   UseGuards,
   Req,
@@ -28,7 +28,7 @@ interface AuthenticatedRequest extends Request {
 
 @Controller('events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(private readonly eventsService: EventsService) { }
 
   @Get()
   @UseGuards(OptionalAuth)
@@ -66,28 +66,6 @@ export class EventsController {
     return this.eventsService.getEventRatings(id);
   }
 
-  // User marks interest in an event
-  @Post(':id/interested')
-  @UseGuards(JwtAccessGuard)
-  @HttpCode(HttpStatus.OK)
-  markInterested(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    return this.eventsService.markInterested(id, req.user!.id);
-  }
-
-  // User removes their interest
-  @Delete(':id/interested')
-  @UseGuards(JwtAccessGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  removeInterest(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    return this.eventsService.removeInterest(id, req.user!.id);
-  }
-
   // User rates an event (only if attended)
   @Post(':id/rate')
   @UseGuards(JwtAccessGuard)
@@ -108,5 +86,29 @@ export class EventsController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.eventsService.getUserRegistration(id, req.user!.id);
+  }
+
+  // Register/update registration for an event
+  // Supports statuses: INTERESTED (initial), PENDING_PAYMENT (paid events), CONFIRMED (final)
+  @Post(':id/register')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  registerForEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { status: string },
+  ) {
+    return this.eventsService.registerForEvent(id, req.user!.id, body.status);
+  }
+
+  // Cancel registration for an event
+  @Delete(':id/register')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  cancelRegistration(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.eventsService.cancelRegistration(id, req.user!.id);
   }
 }
