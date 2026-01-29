@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Club } from '../entities/club.entity';
 import { Event } from '../entities/event.entity';
 import { Registration } from '../entities/registration.entity';
@@ -96,9 +96,12 @@ export class ClubsService {
     userId: number,
   ): Promise<ClubDto> {
     try {
-      // Check if club name already exists
+      // Check if club name already exists (only check APPROVED and PENDING clubs, allow reuse of REJECTED names)
       const existingClub = await this.clubRepository.findOne({
-        where: { name: createClubDto.name },
+        where: {
+          name: createClubDto.name,
+          status: In([ClubStatus.APPROVED, ClubStatus.PENDING]),
+        },
       });
 
       if (existingClub) {
@@ -121,7 +124,7 @@ export class ClubsService {
 
       return this.applyDefaultImages(savedClub);
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
 
@@ -491,7 +494,7 @@ export class ClubsService {
   }
 
   // Get all clubs with user's join status
-  async getAllClubsWithJoinStatus(userId: number): Promise<(ClubSummaryDto & { 
+  async getAllClubsWithJoinStatus(userId: number): Promise<(ClubSummaryDto & {
     joinRequestStatus: JoinRequestStatus | null;
     isManager: boolean;
   })[]> {
