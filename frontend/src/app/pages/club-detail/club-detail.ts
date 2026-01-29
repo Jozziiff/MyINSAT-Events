@@ -1,8 +1,10 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClubsService } from '../../services/clubs.service';
-import { Club, ClubSection, ClubWithStats } from '../../models/club.model';
+import { Club, ClubSection, ClubWithStats, ClubFollower, ClubStatus } from '../../models/club.model';
 import { TokenService } from '../../services/auth/token';
+import { AuthStateService } from '../../services/auth/auth-state';
+import { Role } from '../../models/auth.models';
 import { fadeSlideIn, fadeInRight } from '../../animations';
 
 @Component({
@@ -17,18 +19,28 @@ export class ClubDetailComponent implements OnInit {
   private router = inject(Router);
   private clubsService = inject(ClubsService);
   private tokenService = inject(TokenService);
+  private authState = inject(AuthStateService);
 
   club = signal<ClubWithStats | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   followLoading = signal(false);
 
+  // Followers popup
+  showFollowersPopup = signal(false);
+  followers = signal<ClubFollower[]>([]);
+  loadingFollowers = signal(false);
+
   // Computed
   isLoggedIn = computed(() => !!this.tokenService.getAccessToken());
   isFollowing = computed(() => this.club()?.isFollowing ?? false);
   followerCount = computed(() => this.club()?.followerCount ?? 0);
+  isManager = computed(() => this.club()?.isManager ?? false);
+  isAdmin = computed(() => this.authState.userRole() === Role.ADMIN);
+  canEdit = computed(() => this.isManager() || this.isAdmin());
+  isPending = computed(() => this.club()?.status === ClubStatus.PENDING);
+  ClubStatus = ClubStatus;
 
-  // Sections to display (in order, alternating layout)
   sections = signal<{ key: string; section: ClubSection; imageLeft: boolean }[]>([]);
 
   async ngOnInit() {
@@ -56,7 +68,6 @@ export class ClubDetailComponent implements OnInit {
     const sectionKeys: (keyof Club)[] = ['history', 'mission', 'activities', 'achievements', 'joinUs'];
     const builtSections: { key: string; section: ClubSection; imageLeft: boolean }[] = [];
     
-    // Start with image on RIGHT (since About section has image on left)
     let imageLeft = false;
 
     for (const key of sectionKeys) {
@@ -67,7 +78,7 @@ export class ClubDetailComponent implements OnInit {
           section,
           imageLeft
         });
-        imageLeft = !imageLeft; // Alternate
+        imageLeft = !imageLeft;
       }
     }
 
@@ -118,6 +129,29 @@ export class ClubDetailComponent implements OnInit {
     const clubId = this.club()?.id;
     if (clubId) {
       this.router.navigate([`/clubs/${clubId}/events`]);
+    }
+  }
+
+  async openFollowersPopup(): Promise<void> {
+    const clubData = this.club();
+    if (!clubData) return;
+
+    this.showFollowersPopup.set(true);
+    this.loadingFollowers.set(true);
+    
+    const followers = await this.clubsService.getFollowers(clubData.id);
+    this.followers.set(followers);
+    this.loadingFollowers.set(false);
+  }
+
+  closeFollowersPopup(): void {
+    this.showFollowersPopup.set(false);
+    this.followers.set([]);
+  }
+
+  onPopupBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('popup-overlay')) {
+      this.closeFollowersPopup();
     }
   }
 }

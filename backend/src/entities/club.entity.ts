@@ -7,16 +7,17 @@ import {
     OneToMany,
 } from 'typeorm';
 import { ClubManager } from './club-manager.entity';
+import { ClubJoinRequest } from './club-join-request.entity';
 import { Event } from './event.entity';
 import { ClubFollower } from './club-follower.entity';
+import { ClubStatus } from '../common/enums/club-status.enum';
 
 @Entity('clubs')
 export class Club {
     @PrimaryGeneratedColumn()
     id: number;
 
-
-    @Column({ type: 'varchar', unique: true, nullable: false })
+    @Column({ type: 'varchar', nullable: false })
     name: string;
 
     @Column({ type: 'varchar', nullable: true, name: 'short_description' })
@@ -52,8 +53,8 @@ export class Club {
     @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
     coverImageUrl: string;
 
-    @Column({ type: 'int', nullable: true, name: 'owner_id' })
-    ownerId: number;
+    @Column({ type: 'enum', enum: ClubStatus, default: ClubStatus.PENDING })
+    status: ClubStatus;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
@@ -69,4 +70,7 @@ export class Club {
 
     @OneToMany(() => ClubFollower, (follower) => follower.club)
     followers: ClubFollower[];
+
+    @OneToMany(() => ClubJoinRequest, (joinRequest) => joinRequest.club)
+    joinRequests: ClubJoinRequest[];
 }

@@ -15,7 +15,10 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ManagerService } from './manager.service';
-import { MockManagerGuard } from './guards/mock-manager.guard';
+import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../common/enums';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
@@ -31,9 +34,49 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('manager')
-@UseGuards(MockManagerGuard)
+@UseGuards(JwtAccessGuard, RolesGuard)
+@Roles(UserRole.MANAGER, UserRole.ADMIN)
 export class ManagerController {
     constructor(private readonly managerService: ManagerService) { }
+
+    @Get('clubs')
+    getAllManagedClubs(@Req() req: AuthenticatedRequest) {
+        return this.managerService.getAllManagedClubs(req.user.id);
+    }
+
+    @Get('clubs/:clubId')
+    getManagedClubById(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getManagedClubById(req.user.id, clubId);
+    }
+
+    @Get('clubs/:clubId/events')
+    getClubEvents(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getClubEvents(req.user.id, clubId);
+    }
+
+    @Get('clubs/:clubId/managers')
+    getClubManagers(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getClubManagers(req.user.id, clubId);
+    }
+
+    @Delete('clubs/:clubId/managers/:managerId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    removeManager(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+        @Param('managerId', ParseIntPipe) managerId: number,
+    ) {
+        return this.managerService.removeManager(req.user.id, clubId, managerId);
+    }
 
     @Get('club')
     getClub(@Req() req: AuthenticatedRequest) {

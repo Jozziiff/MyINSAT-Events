@@ -1,14 +1,23 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { getApiUrl } from '../utils/image.utils';
 
 export interface Club {
     id: number;
     name: string;
     description: string;
     paymentInfo: string;
+    logoUrl: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface ClubManager {
+    id: number;
+    fullName: string;
+    email: string;
+    avatarUrl: string;
 }
 
 export interface EventSection {
@@ -60,7 +69,7 @@ export interface EventRegistrations {
     providedIn: 'root'
 })
 export class ManagerApiService {
-    private apiUrl = 'http://localhost:3000/manager';
+    private apiUrl = `${getApiUrl()}/manager`;
 
     constructor(private http: HttpClient) { }
 
@@ -98,5 +107,26 @@ export class ManagerApiService {
 
     updateRegistrationStatus(registrationId: number, status: string): Observable<Registration> {
         return this.http.patch<Registration>(`${this.apiUrl}/registrations/${registrationId}/status`, { status });
+    }
+
+    // Multi-club management
+    getAllManagedClubs(): Observable<Club[]> {
+        return this.http.get<Club[]>(`${this.apiUrl}/clubs`);
+    }
+
+    getManagedClubById(clubId: number): Observable<Club> {
+        return this.http.get<Club>(`${this.apiUrl}/clubs/${clubId}`);
+    }
+
+    getClubEvents(clubId: number): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}/clubs/${clubId}/events`);
+    }
+
+    getClubManagers(clubId: number): Observable<ClubManager[]> {
+        return this.http.get<ClubManager[]>(`${this.apiUrl}/clubs/${clubId}/managers`);
+    }
+
+    removeManager(clubId: number, managerId: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/managers/${managerId}`);
     }
 }

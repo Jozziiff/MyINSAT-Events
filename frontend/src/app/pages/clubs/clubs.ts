@@ -1,6 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import { ClubsService } from '../../services/clubs.service';
 import { ClubSummary } from '../../models/club.model';
 import { TokenService } from '../../services/auth/token';
@@ -13,7 +12,7 @@ interface ClubWithFollow extends ClubSummary {
 
 @Component({
   selector: 'app-clubs',
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink],
   templateUrl: './clubs.html',
   styleUrl: './clubs.css',
   animations: [fadeSlideIn]

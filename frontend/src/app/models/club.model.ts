@@ -48,6 +48,8 @@ export interface ClubWithStats extends Club {
   followerCount: number;
   isFollowing: boolean;
   upcomingEventsCount: number;
+  isManager?: boolean;
+  status?: ClubStatus;
 }
 
 // Club follower info
@@ -57,16 +59,61 @@ export interface ClubFollower {
   avatarUrl: string | null;
 }
 
+// Join request status
+export enum JoinRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+// Club with join status for browse page
+export interface ClubWithJoinStatus extends ClubSummary {
+  joinRequestStatus: JoinRequestStatus | null;
+  isManager: boolean;
+}
+
+// Join request info (for managers)
+export interface JoinRequest {
+  id: number;
+  userId: number;
+  clubId: number;
+  status: JoinRequestStatus;
+  createdAt: Date;
+  user: {
+    id: number;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+  };
+}
+
+// Club status for admin approval
+export enum ClubStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+// Managed club with status (for profile page)
+export interface ManagedClub {
+  id: number;
+  name: string;
+  shortDescription: string;
+  logoUrl: string;
+  status: ClubStatus;
+  createdAt: Date;
+}
+
 // DTO for creating a new club
 export interface CreateClubDto {
   // Required fields
   name: string;
   shortDescription: string;
-  logoUrl?: string;
+  logoUrl: string; // Required - club logo
 
   // Required sections
   about: string;
-  aboutImageUrl?: string;
+  aboutImageUrl?: string; // Optional
 
   // Optional sections
   history?: ClubSection;
@@ -78,6 +125,6 @@ export interface CreateClubDto {
   // Contact information
   contact?: ClubContact;
 
-  // Cover image
-  coverImageUrl?: string;
+  // Cover image - required
+  coverImageUrl: string;
 }

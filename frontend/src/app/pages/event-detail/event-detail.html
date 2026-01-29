@@ -3,7 +3,7 @@
     <header class="event-header">
         <button type="button" class="btn-back" (click)="goBack()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back to Events
         </button>
@@ -31,31 +31,35 @@
         <!-- Hero Section -->
         <div class="hero-section" [class.no-image]="!event()!.photoUrl">
             @if (event()!.photoUrl) {
-                <img [src]="event()!.photoUrl" [alt]="event()!.title" class="hero-image">
-                <div class="hero-overlay"></div>
+            <img [src]="event()!.photoUrl" [alt]="event()!.title" class="hero-image">
+            <div class="hero-overlay"></div>
             }
             <div class="hero-content">
                 <h1 class="event-title">{{ event()!.title }}</h1>
-                
+
                 <!-- Event Stats Pills -->
                 <div class="event-stats-pills">
                     @if (event()!.stats.averageRating > 0) {
-                        <span class="stat-pill rating">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            {{ event()!.stats.averageRating.toFixed(1) }}
-                        </span>
+                    <span class="stat-pill rating">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        {{ event()!.stats.averageRating.toFixed(1) }}
+                    </span>
                     }
                     <span class="stat-pill interested">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                         {{ event()!.stats.interestedCount }} interested
                     </span>
                     <span class="stat-pill confirmed">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"/>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="20 6 9 17 4 12" />
                         </svg>
                         {{ event()!.stats.confirmedCount }} going
                     </span>
@@ -70,61 +74,61 @@
                 <div class="event-main">
                     <!-- Hosted By Section -->
                     @if (event()!.club) {
-                        <div class="hosted-by-card glass-card">
-                            <div class="hosted-by-header">
-                                <span class="hosted-label">Hosted by</span>
-                            </div>
-                            <div class="hosted-by-content">
-                                <a [routerLink]="['/clubs', event()!.club!.id]" class="club-link">
-                                    <div class="club-logo-wrapper">
-                                        @if (event()!.club!.logoUrl) {
-                                            <img [src]="event()!.club!.logoUrl" [alt]="event()!.club!.name" class="club-logo">
-                                        } @else {
-                                            <div class="club-logo club-logo-placeholder">
-                                                {{ event()!.club!.name.charAt(0).toUpperCase() }}
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="club-info">
-                                        <span class="club-name">{{ event()!.club!.name }}</span>
-                                        <span class="view-club">View club profile →</span>
-                                    </div>
-                                </a>
-                                @if (isLoggedIn()) {
-                                    <button 
-                                        class="follow-btn" 
-                                        [class.following]="isFollowingClub()"
-                                        [disabled]="followLoading()"
-                                        (click)="toggleFollowClub()">
-                                        @if (followLoading()) {
-                                            <span class="btn-spinner"></span>
-                                        } @else if (isFollowingClub()) {
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="20 6 9 17 4 12"/>
-                                            </svg>
-                                            Following
-                                        } @else {
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                            </svg>
-                                            Follow
-                                        }
-                                    </button>
-                                }
-                            </div>
+                    <div class="hosted-by-card glass-card">
+                        <div class="hosted-by-header">
+                            <span class="hosted-label">Hosted by</span>
                         </div>
+                        <div class="hosted-by-content">
+                            <a [routerLink]="['/clubs', event()!.club!.id]" class="club-link">
+                                <div class="club-logo-wrapper">
+                                    @if (event()!.club!.logoUrl) {
+                                    <img [src]="event()!.club!.logoUrl" [alt]="event()!.club!.name" class="club-logo">
+                                    } @else {
+                                    <div class="club-logo club-logo-placeholder">
+                                        {{ event()!.club!.name.charAt(0).toUpperCase() }}
+                                    </div>
+                                    }
+                                </div>
+                                <div class="club-info">
+                                    <span class="club-name">{{ event()!.club!.name }}</span>
+                                    <span class="view-club">View club profile →</span>
+                                </div>
+                            </a>
+                            @if (isLoggedIn()) {
+                            <button class="follow-btn" [class.following]="isFollowingClub()"
+                                [disabled]="followLoading()" (click)="toggleFollowClub()">
+                                @if (followLoading()) {
+                                <span class="btn-spinner"></span>
+                                } @else if (isFollowingClub()) {
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                Following
+                                } @else {
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Follow
+                                }
+                            </button>
+                            }
+                        </div>
+                    </div>
                     }
 
                     <!-- Event Description -->
                     @if (event()!.description) {
                     <div class="event-description glass-card">
                         <h2>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
                             </svg>
                             About This Event
                         </h2>
@@ -136,7 +140,8 @@
                     @if (sections().length > 0) {
                     <div class="event-sections">
                         @for (section of sections(); let i = $index; track i) {
-                        <div class="section-block glass-card" [class.image-left]="i % 2 === 0" [class.image-right]="i % 2 === 1">
+                        <div class="section-block glass-card" [class.image-left]="i % 2 === 0"
+                            [class.image-right]="i % 2 === 1">
                             <div class="section-text">
                                 <h3>{{ section.title }}</h3>
                                 <p>{{ section.description }}</p>
@@ -157,10 +162,11 @@
                     <!-- Registration Card -->
                     <div class="registration-card glass-card">
                         <h3>Event Details</h3>
-                        
+
                         <div class="detail-row">
                             <div class="detail-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                     <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -175,20 +181,23 @@
 
                         <div class="detail-row">
                             <div class="detail-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                             </div>
                             <div class="detail-content">
                                 <span class="detail-label">Time</span>
-                                <span class="detail-value">{{ formatTime(event()!.startTime) }} - {{ formatTime(event()!.endTime) }}</span>
+                                <span class="detail-value">{{ formatTime(event()!.startTime) }} - {{
+                                    formatTime(event()!.endTime) }}</span>
                             </div>
                         </div>
 
                         <div class="detail-row">
                             <div class="detail-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                     <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
@@ -202,7 +211,8 @@
                         @if (event()!.capacity) {
                         <div class="detail-row">
                             <div class="detail-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="9" cy="7" r="4"></circle>
                                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -218,66 +228,95 @@
 
                         <div class="detail-row price-row">
                             <div class="detail-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <line x1="12" y1="1" x2="12" y2="23"></line>
                                     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                                 </svg>
                             </div>
                             <div class="detail-content">
                                 <span class="detail-label">Price</span>
-                                <span class="detail-value price">{{ event()!.price ? formatPrice(event()!.price) : 'Free' }}</span>
+                                <span class="detail-value price">{{ event()!.price ? formatPrice(event()!.price) :
+                                    'Free' }}</span>
                             </div>
                         </div>
 
                         <!-- Registration Actions -->
                         @if (isLoggedIn() && isUpcoming()) {
-                            <div class="registration-actions">
-                                @if (userStatus(); as status) {
-                                    <div class="current-status">
-                                        <span class="status-badge" [class]="'status-' + status.toLowerCase()">
-                                            {{ getStatusLabel(status) }}
-                                        </span>
-                                    </div>
-                                    @if (status === 'INTERESTED') {
-                                        <button class="btn-confirm" (click)="confirmAttendance()" [disabled]="registrationLoading()">
-                                            @if (registrationLoading()) {
-                                                <span class="btn-spinner"></span>
-                                            } @else {
-                                                Confirm Attendance
-                                            }
-                                        </button>
-                                    }
-                                    @if (status !== 'CANCELLED') {
-                                        <button class="btn-cancel" (click)="cancelRegistration()" [disabled]="registrationLoading()">
-                                            Cancel Registration
-                                        </button>
-                                    }
+                        <div class="registration-actions">
+                            @if (userStatus(); as status) {
+                            <div class="current-status">
+                                <span class="status-badge" [class]="'status-' + status.toLowerCase()">
+                                    {{ getStatusLabel(status) }}
+                                </span>
+                            </div>
+
+                            @if (status === 'INTERESTED' || status === 'CANCELLED') {
+                            <!-- Toggle interested button -->
+                            <button class="btn-interested" [class.active]="status === 'INTERESTED'"
+                                (click)="toggleInterest()" [disabled]="registrationLoading()">
+                                @if (registrationLoading()) {
+                                <span class="btn-spinner"></span>
                                 } @else {
-                                    <button class="btn-interested" (click)="registerInterest()" [disabled]="registrationLoading()">
-                                        @if (registrationLoading()) {
-                                            <span class="btn-spinner"></span>
-                                        } @else {
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                                            </svg>
-                                            I'm Interested
-                                        }
-                                    </button>
-                                    <button class="btn-confirm" (click)="confirmAttendance()" [disabled]="registrationLoading()">
-                                        Confirm Attendance
-                                    </button>
+                                <svg width="18" height="18" viewBox="0 0 24 24"
+                                    [attr.fill]="status === 'INTERESTED' ? 'currentColor' : 'none'"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                                {{ status === 'INTERESTED' ? 'Interested' : "I'm Interested" }}
                                 }
-                            </div>
+                            </button>
+
+                            <!-- Confirm attendance button -->
+                            <button class="btn-confirm" (click)="confirmAttendance()"
+                                [disabled]="registrationLoading()">
+                                @if (registrationLoading()) {
+                                <span class="btn-spinner"></span>
+                                } @else {
+                                Confirm Attendance
+                                }
+                            </button>
+                            }
+
+                            @if (status === 'CONFIRMED' || status === 'PENDING_PAYMENT') {
+                            <!-- Cancel button for confirmed registrations -->
+                            <button class="btn-cancel" (click)="cancelRegistration()"
+                                [disabled]="registrationLoading()">
+                                Cancel Registration
+                            </button>
+                            }
+                            } @else {
+                            <!-- No status - show both buttons -->
+                            <button class="btn-interested" (click)="toggleInterest()"
+                                [disabled]="registrationLoading()">
+                                @if (registrationLoading()) {
+                                <span class="btn-spinner"></span>
+                                } @else {
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                                I'm Interested
+                                }
+                            </button>
+                            <button class="btn-confirm" (click)="confirmAttendance()"
+                                [disabled]="registrationLoading()">
+                                Confirm Attendance
+                            </button>
+                            }
+                        </div>
                         } @else if (!isLoggedIn()) {
-                            <div class="login-prompt">
-                                <p>Log in to register for this event</p>
-                                <a routerLink="/login" class="btn-login">Log In</a>
-                            </div>
+                        <div class="login-prompt">
+                            <p>Log in to register for this event</p>
+                            <a routerLink="/login" class="btn-login">Log In</a>
+                        </div>
                         } @else if (isPast()) {
-                            <div class="past-event-notice">
-                                <span class="notice-badge">Event Ended</span>
-                                <p>This event has already taken place</p>
-                            </div>
+                        <div class="past-event-notice">
+                            <span class="notice-badge">Event Ended</span>
+                            <p>This event has already taken place</p>
+                        </div>
                         }
                     </div>
                 </aside>

@@ -30,26 +30,6 @@
   }
 }
 
-.btn-create {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  color: white;
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-md);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow);
-  }
-}
-
 /* Loading State */
 .loading-container {
   display: flex;

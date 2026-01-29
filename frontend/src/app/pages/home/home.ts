@@ -65,7 +65,7 @@ export class HomeComponent implements OnInit {
 
   async toggleInterest(event: EventSummary, e: MouseEvent) {
     e.stopPropagation();
-    
+
     if (!this.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
@@ -80,9 +80,11 @@ export class HomeComponent implements OnInit {
 
     try {
       if (this.isInterested(event)) {
-        await this.eventsService.removeInterest(event.id);
+        // User is already interested, so cancel/remove the registration
+        await this.eventsService.cancelRegistration(event.id);
       } else {
-        await this.eventsService.markInterested(event.id);
+        // User is not interested, so register with INTERESTED status
+        await this.eventsService.registerForEvent(event.id, RegistrationStatus.INTERESTED);
       }
     } finally {
       // Remove from processing

@@ -10,7 +10,11 @@
       <a routerLink="/clubs" routerLinkActive="active">Clubs</a>
 
       @if (isManager()) {
-        <a routerLink="/manager" routerLinkActive="active">Manager</a>
+      <a routerLink="/manager" routerLinkActive="active">Manager</a>
+      }
+
+      @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active">Admin</a>
       }
     </div>
 
@@ -23,10 +27,10 @@
           <button class="btn-logout" (click)="logout()">Log Out</button>
         </div>
       } @else {
-        <div class="auth-buttons">
-          <button class="btn-login" routerLink="/login">Log In</button>
-          <button class="btn-signup" routerLink="/register">Sign Up</button>
-        </div>
+      <div class="auth-buttons">
+        <button class="btn-login" routerLink="/login">Log In</button>
+        <button class="btn-signup" routerLink="/register">Sign Up</button>
+      </div>
       }
     </div>
 
@@ -46,11 +50,11 @@
       @if (isManager()) {
         <a routerLink="/manager" routerLinkActive="active" (click)="toggleMenu()">Manager</a>
       }
-
+      @if (isAdmin()) {
+        <a routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
+      }
       @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active" class="profile-link" [@nameHoverAnimation]="nameHoverState" (mouseenter)="onNameMouseEnter()" (mouseleave)="onNameMouseLeave()" (click)="toggleMenu()">
-          {{ currentUser()?.fullName }}
-        </a>
+        <a routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">Profile</a>
         <button class="btn-mobile-logout" (click)="logout()">Log Out</button>
       } @else {
         <a routerLink="/login" routerLinkActive="active" (click)="toggleMenu()">Log In</a>

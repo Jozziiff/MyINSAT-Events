@@ -163,7 +163,7 @@ export class EventsService {
 
   async getTrendingEvents(userId?: number, limit: number = 3): Promise<EventWithStats[]> {
     const now = new Date();
-    
+
     // Get all published events (including recent past ones for rating consideration)
     const events = await this.eventRepository.find({
       where: {
@@ -183,9 +183,9 @@ export class EventsService {
       const isPast = eventDate < now;
       const daysUntil = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
       const daysSince = isPast ? Math.abs(daysUntil) : 0;
-      
+
       let score = 0;
-      
+
       if (isPast) {
         // Past events: penalize heavily based on age, boost by rating
         const agePenalty = Math.max(0, 100 - (daysSince * 5)); // Lose 5 points per day old
@@ -195,16 +195,16 @@ export class EventsService {
         // Upcoming events
         // Urgency boost: closer events get higher score (max 50 points for events within 7 days)
         const urgencyBoost = daysUntil <= 7 ? (50 - (daysUntil * 7)) : 0;
-        
+
         // Interest boost: 2 points per interested person
         const interestBoost = event.stats.interestedCount * 2;
-        
+
         // Confirmation boost: 3 points per confirmed person
         const confirmBoost = event.stats.confirmedCount * 3;
-        
+
         // Rating boost: average rating * count
         const ratingBoost = event.stats.averageRating * event.stats.ratingCount;
-        
+
         // Availability boost: events with remaining capacity get a bonus
         let availabilityBoost = 10; // Default bonus for unlimited capacity
         if (event.capacity) {
@@ -221,10 +221,10 @@ export class EventsService {
             availabilityBoost = -20; // Full, deprioritize
           }
         }
-        
+
         score = urgencyBoost + interestBoost + confirmBoost + ratingBoost + availabilityBoost + 50; // Base score for upcoming
       }
-      
+
       return { event, score };
     });
 
@@ -247,8 +247,16 @@ export class EventsService {
     return this.enrichEventWithStats(event, userId);
   }
 
-  // User marks interest in an event
-  async markInterested(eventId: number, userId: number): Promise<Registration> {
+  /**
+   * Register or update registration for an event
+   * Status flow: INTERESTED → PENDING_PAYMENT (if paid) → CONFIRMED
+   * 
+   * Valid statuses:
+   * - INTERESTED: User shows casual interest ("I'm Interested" button)
+   * - PENDING_PAYMENT: User wants to register but payment required (paid events only)
+   * - CONFIRMED: User is officially registered ("Confirm Attendance" button for free events)
+   */
+  async registerForEvent(eventId: number, userId: number, status: string): Promise<Registration> {
     const event = await this.eventRepository.findOne({ where: { id: eventId } });
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -258,14 +266,38 @@ export class EventsService {
       throw new BadRequestException('Cannot register for unpublished events');
     }
 
+    // Validate status - only allow user-initiated statuses
+    const validStatuses = [
+      RegistrationStatus.INTERESTED,
+      RegistrationStatus.PENDING_PAYMENT,
+      RegistrationStatus.CONFIRMED
+    ];
+    if (!validStatuses.includes(status as RegistrationStatus)) {
+      throw new BadRequestException('Invalid registration status');
+    }
+
     // Check if user already has a registration
     let registration = await this.registrationRepository.findOne({
       where: { eventId, userId },
     });
 
     if (registration) {
-      // Update existing registration to INTERESTED
-      registration.status = RegistrationStatus.INTERESTED;
+      // Only validate status transitions for active registrations
+      // Allow re-registration after CANCELLED or REJECTED
+      if (registration.status === RegistrationStatus.CANCELLED || registration.status === RegistrationStatus.REJECTED) {
+        // Allow fresh start after cancellation/rejection
+        registration.status = status as RegistrationStatus;
+        return this.registrationRepository.save(registration);
+      }
+
+      // Validate status transitions for active registrations
+      // Can't go backwards from CONFIRMED to INTERESTED
+      if (registration.status === RegistrationStatus.CONFIRMED && status === RegistrationStatus.INTERESTED) {
+        throw new BadRequestException('Cannot downgrade from confirmed to interested. Cancel registration instead.');
+      }
+
+      // Update existing registration
+      registration.status = status as RegistrationStatus;
       return this.registrationRepository.save(registration);
     }
 
@@ -273,20 +305,33 @@ export class EventsService {
     registration = this.registrationRepository.create({
       eventId,
       userId,
-      status: RegistrationStatus.INTERESTED,
+      status: status as RegistrationStatus,
     });
 
     return this.registrationRepository.save(registration);
   }
 
-  // User removes their interest
-  async removeInterest(eventId: number, userId: number): Promise<void> {
+  // Cancel registration
+  async cancelRegistration(eventId: number, userId: number): Promise<void> {
     const registration = await this.registrationRepository.findOne({
       where: { eventId, userId },
     });
 
-    if (registration && registration.status === RegistrationStatus.INTERESTED) {
+    if (!registration) {
+      throw new NotFoundException('Registration not found');
+    }
+
+    if (registration.status === RegistrationStatus.CANCELLED) {
+      throw new BadRequestException('Registration already cancelled');
+    }
+
+    // For INTERESTED status, delete the registration completely (allows clean toggle)
+    // For CONFIRMED/PENDING_PAYMENT, mark as CANCELLED (keeps history for analytics)
+    if (registration.status === RegistrationStatus.INTERESTED) {
       await this.registrationRepository.delete(registration.id);
+    } else {
+      registration.status = RegistrationStatus.CANCELLED;
+      await this.registrationRepository.save(registration);
     }
   }
 

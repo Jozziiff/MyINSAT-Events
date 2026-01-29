@@ -7,18 +7,18 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  Headers,
-  NotFoundException,
   UseGuards,
+  NotFoundException,
   Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { ClubsService } from './clubs.service';
-import { CreateClubDto } from './dto/create-club.dto';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ClubsService } from './clubs.service';
+import { CreateClubDto } from './dto/create-club.dto';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -31,54 +31,92 @@ interface AuthenticatedRequest extends Request {
 export class ClubsController {
   constructor(private readonly clubsService: ClubsService) { }
 
-  // Get all clubs (summary for list page)
   @Get()
   getAllClubs() {
     return this.clubsService.getAllClubs();
   }
 
-  // Get full club details (with optional user context for follow status)
+  // ============ JOIN REQUEST ENDPOINTS (must be before :id routes) ============
+
+  // Get all clubs with join status for current user
+  @Get('join/status')
+  @UseGuards(JwtAccessGuard)
+  getAllClubsWithJoinStatus(@CurrentUser() user: { id: number }) {
+    return this.clubsService.getAllClubsWithJoinStatus(user.id);
+  }
+
+  // Get current user's managed clubs with status
+  @Get('managed/me')
+  @UseGuards(JwtAccessGuard)
+  getUserManagedClubs(@CurrentUser() user: { id: number }) {
+    return this.clubsService.getUserManagedClubs(user.id);
+  }
+
+  // Approve a join request
+  @Post('join-requests/:requestId/approve')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  approveJoinRequest(
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.approveJoinRequest(requestId, user.id);
+  }
+
+  // Reject a join request
+  @Post('join-requests/:requestId/reject')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  rejectJoinRequest(
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.rejectJoinRequest(requestId, user.id);
+  }
+
+  // ============ PARAMETERIZED ROUTES ============
+
   @Get(':id')
   @UseGuards(OptionalAuth)
   async getClubById(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const club = await this.clubsService.getClubWithStats(id, req.user?.id);
+    const club = await this.clubsService.getClubWithAccessCheck(
+      id,
+      req.user?.id,
+      (req.user as any)?.role,
+    );
     if (!club) {
       throw new NotFoundException(`Club with ID ${id} not found`);
     }
     return club;
   }
 
-  // Create a new club (owner only)
-  // Note: In production, use proper auth guards instead of headers
   @Post()
+  @UseGuards(JwtAccessGuard)
   createClub(
     @Body() createClubDto: CreateClubDto,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     return this.clubsService.createClub(
       createClubDto,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id
     );
   }
 
-  // Update a club (owner only)
   @Put(':id')
+  @UseGuards(JwtAccessGuard)
   async updateClub(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateData: Partial<CreateClubDto>,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     const club = await this.clubsService.updateClub(
       id,
       updateData,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id,
+      user.role,
     );
     if (!club) {
       throw new NotFoundException(`Club with ID ${id} not found`);
@@ -86,17 +124,16 @@ export class ClubsController {
     return club;
   }
 
-  // Delete a club (owner only)
   @Delete(':id')
+  @UseGuards(JwtAccessGuard)
   async deleteClub(
     @Param('id', ParseIntPipe) id: number,
-    @Headers('x-user-id') userId: string,
-    @Headers('x-user-role') userRole: string,
+    @CurrentUser() user: { id: number; role: string },
   ) {
     const deleted = await this.clubsService.deleteClub(
       id,
-      parseInt(userId) || 0,
-      userRole || '',
+      user.id,
+      user.role,
     );
     if (!deleted) {
       throw new NotFoundException(`Club with ID ${id} not found`);
@@ -104,7 +141,6 @@ export class ClubsController {
     return { deleted: true };
   }
 
-  // Get club events with statistics
   @Get(':id/events')
   async getClubEvents(@Param('id', ParseIntPipe) id: number): Promise<{
     events: any[];
@@ -172,5 +208,26 @@ export class ClubsController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.clubsService.unfollowClub(req.user!.id, id);
+  }
+
+  // Submit a join request
+  @Post(':id/join')
+  @UseGuards(JwtAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  submitJoinRequest(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.submitJoinRequest(user.id, id);
+  }
+
+  // Get pending join requests for a club (for managers)
+  @Get(':id/join-requests')
+  @UseGuards(JwtAccessGuard)
+  getClubJoinRequests(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: { id: number },
+  ) {
+    return this.clubsService.getClubJoinRequests(id, user.id);
   }
 }

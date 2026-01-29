@@ -1,0 +1,107 @@
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage club submissions and approvals</p>
+    </div>
+
+    @if (loading()) {
+    <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading clubs...</p>
+    </div>
+    } @else if (error()) {
+    <div class="error glass-card">
+        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>{{ error() }}</p>
+        <button class="retry-btn" (click)="loadClubs()">Try Again</button>
+    </div>
+    } @else {
+    <div class="tabs">
+        <button class="tab" [class.active]="activeTab() === 'PENDING'" (click)="setActiveTab('PENDING')">
+            <span class="tab-icon">⏳</span>
+            Pending
+            <span class="tab-count">{{ pendingClubs().length }}</span>
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'APPROVED'" (click)="setActiveTab('APPROVED')">
+            <span class="tab-icon">✓</span>
+            Approved
+            <span class="tab-count">{{ approvedClubs().length }}</span>
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'REJECTED'" (click)="setActiveTab('REJECTED')">
+            <span class="tab-icon">✗</span>
+            Rejected
+            <span class="tab-count">{{ rejectedClubs().length }}</span>
+        </button>
+    </div>
+
+    <div class="clubs-list">
+        @if (getClubsByTab().length === 0) {
+        <div class="empty-state glass-card">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <p>No {{ activeTab().toLowerCase() }} clubs</p>
+        </div>
+        } @else {
+        @for (club of getClubsByTab(); track club.id) {
+        <div class="club-card glass-card">
+            <div class="club-info">
+                <a [routerLink]="['/clubs', club.id]" class="club-logo-link">
+                    @if (club.logoUrl) {
+                    <img [src]="club.logoUrl" [alt]="club.name" class="club-logo">
+                    } @else {
+                    <div class="club-logo placeholder">{{ club.name.charAt(0) }}</div>
+                    }
+                </a>
+                <div class="club-details">
+                    <a [routerLink]="['/clubs', club.id]" class="club-name-link">
+                        <h3>{{ club.name }}</h3>
+                    </a>
+                    <p class="club-description">{{ club.shortDescription }}</p>
+                    @if (club.owner) {
+                    <a [routerLink]="['/users', club.owner.id]" class="club-owner">
+                        <span class="owner-label">Submitted by:</span>
+                        <span class="owner-name">{{ club.owner.fullName }}</span>
+                        <span class="owner-email">({{ club.owner.email }})</span>
+                    </a>
+                    }
+                    <span class="club-date">Created: {{ club.createdAt | date:'short' }}</span>
+                </div>
+            </div>
+
+            @if (activeTab() === 'PENDING') {
+            <div class="club-actions">
+                <button class="btn-approve" (click)="approveClub(club.id)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Approve
+                </button>
+                <button class="btn-reject" (click)="rejectClub(club.id)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Reject
+                </button>
+            </div>
+            } @else {
+            <div class="club-status">
+                <span class="status-badge" [class]="activeTab().toLowerCase()">
+                    {{ activeTab() }}
+                </span>
+            </div>
+            }
+        </div>
+        }
+        }
+    </div>
+    }
+</div>

@@ -116,22 +116,38 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-md);
     color: white;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
     transition: all var(--transition-base);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.25);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
   }
+}
+
+/* Pending Banner */
+.pending-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.pending-banner svg {
+  flex-shrink: 0;
 }
 
 
@@ -175,20 +191,6 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-.follower-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-full);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 
 .follow-btn {
@@ -397,84 +399,6 @@
   }
 }
 
-/* Events CTA Section */
-.events-cta-section {
-  padding: 3rem 0;
-  margin-bottom: 3rem;
-}
-
-.cta-card {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  border-radius: 16px;
-  padding: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  color: white;
-
-  .cta-content {
-    flex: 1;
-
-    h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 0 0 0.5rem 0;
-      color: white;
-
-      &::after {
-        display: none;
-      }
-    }
-
-    p {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-    }
-  }
-}
-
-.btn-large {
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  white-space: nowrap;
-  background: white;
-  color: var(--color-primary);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .cta-card {
-    flex-direction: column;
-    text-align: center;
-
-    .cta-content {
-      h2 {
-        font-size: 1.4rem;
-      }
-    }
-
-    .btn-large {
-      width: 100%;
-    }
-  }
-}
-
 /* View Events CTA Button */
 .cta-button-top {
   position: relative;
@@ -527,5 +451,212 @@
   .cta-button-top .btn-primary {
     width: 100%;
     padding: 0.9rem 1.5rem;
+  }
+}
+
+/* Follower Count Button */
+.follower-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.follower-count:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Popup Modal */
+.popup-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.popup-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.popup-close:hover {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.popup-content {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Loading & Empty States */
+.popup-loading,
+.popup-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 1rem;
+  color: var(--color-text-muted);
+}
+
+.popup-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.popup-empty svg {
+  opacity: 0.5;
+}
+
+.popup-empty p,
+.popup-loading p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Followers List */
+.followers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.follower-item {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
+  overflow: hidden;
+}
+
+.follower-item:hover {
+  border-color: var(--color-primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.follower-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  width: 100%;
+  color: inherit;
+}
+
+.follower-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+
+.follower-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.follower-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 480px) {
+  .popup-modal {
+    max-height: 90vh;
+  }
+  
+  .popup-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .follower-item {
+    padding: 0.625rem 0.875rem;
+  }
+  
+  .follower-avatar {
+    width: 36px;
+    height: 36px;
   }
 }

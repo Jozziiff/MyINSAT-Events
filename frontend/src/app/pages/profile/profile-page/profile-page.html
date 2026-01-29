@@ -1,160 +1,209 @@
 <section class="profile-page" [@staggerCards]>
   <!-- Loading State -->
   @if (loading()) {
-    <div class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Loading your profile...</p>
-    </div>
+  <div class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading your profile...</p>
+  </div>
   } @else if (error()) {
-    <div class="error-container glass-card">
-      <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-      <p>{{ error() }}</p>
-      <button class="retry-btn" (click)="loadDashboard()">Try Again</button>
-    </div>
+  <div class="error-container glass-card">
+    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <p>{{ error() }}</p>
+    <button class="retry-btn" (click)="loadDashboard()">Try Again</button>
+  </div>
   } @else if (profile()) {
-    <!-- Profile Header -->
-    <div class="profile-header-wrapper glass-card animate-card" [@fadeInUp]>
-      <app-profile-header
-        [profile]="profile()!"
-        [isEditing]="isEditing()"
-        (editToggle)="toggleEditMode()"
-        (profileUpdated)="onProfileUpdated()">
-      </app-profile-header>
+  <!-- Profile Header -->
+  <div class="profile-header-wrapper glass-card animate-card" [@fadeInUp]>
+    <app-profile-header [profile]="profile()!" [isEditing]="isEditing()" (editToggle)="toggleEditMode()"
+      (profileUpdated)="onProfileUpdated()">
+    </app-profile-header>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row animate-card" [@fadeInUp]>
+    <app-stats-card icon="calendar-check" label="Events Attended" [value]="stats().eventsAttended" color="success">
+    </app-stats-card>
+    <app-stats-card icon="calendar-clock" label="Upcoming Events" [value]="stats().eventsUpcoming" color="primary">
+    </app-stats-card>
+    <app-stats-card icon="users" label="Clubs Followed" [value]="stats().clubsFollowed" color="accent">
+    </app-stats-card>
+    <app-stats-card icon="star" label="Ratings Given" [value]="stats().ratingsGiven" color="warning">
+    </app-stats-card>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="profile-content-grid">
+    <!-- Left Column - Events -->
+    <div class="profile-events">
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Upcoming Events
+          </h2>
+          <a routerLink="/events" class="view-all-link">View All →</a>
+        </div>
+        <app-event-section [events]="upcomingEvents()"></app-event-section>
+      </div>
+
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Past Events
+          </h2>
+        </div>
+        <app-event-section [events]="pastEvents()"></app-event-section>
+      </div>
+
+      <!-- Ratings Section -->
+      @if (userRatings().length > 0) {
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+              </polygon>
+            </svg>
+            My Ratings
+          </h2>
+        </div>
+        <app-ratings-section [ratings]="userRatings()"></app-ratings-section>
+      </div>
+      }
     </div>
 
-    <!-- Stats Row -->
-    <div class="stats-row animate-card" [@fadeInUp]>
-      <app-stats-card
-        icon="calendar-check"
-        label="Events Attended"
-        [value]="stats().eventsAttended"
-        color="success">
-      </app-stats-card>
-      <app-stats-card
-        icon="calendar-clock"
-        label="Upcoming Events"
-        [value]="stats().eventsUpcoming"
-        color="primary">
-      </app-stats-card>
-      <app-stats-card
-        icon="users"
-        label="Clubs Followed"
-        [value]="stats().clubsFollowed"
-        color="accent">
-      </app-stats-card>
-      <app-stats-card
-        icon="star"
-        label="Ratings Given"
-        [value]="stats().ratingsGiven"
-        color="warning">
-      </app-stats-card>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="profile-content-grid">
-      <!-- Left Column - Events -->
-      <div class="profile-events">
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
-          <div class="section-header">
-            <h2 class="section-title">
-              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              Upcoming Events
-            </h2>
-            <a routerLink="/events" class="view-all-link">View All →</a>
-          </div>
-          <app-event-section [events]="upcomingEvents()"></app-event-section>
+    <!-- Right Column - Clubs & Account -->
+    <div class="profile-sidebar">
+      <!-- Manage Clubs Section - Available to all users -->
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            @if (managedClubs().length > 0) {
+              My Clubs
+            } @else {
+              Become a Manager
+            }
+          </h2>
+        </div>
+        @if (managedClubs().length === 0) {
+          <p class="section-description">Start your own club or join an existing one as a manager.</p>
+        }
+        <div class="club-actions-row">
+          <a routerLink="/clubs/new" class="btn-action btn-primary-action">Create Club</a>
+          <button class="btn-action btn-secondary-action" (click)="openJoinClubPopup()">Join Club</button>
         </div>
 
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
-          <div class="section-header">
-            <h2 class="section-title">
-              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              Past Events
-            </h2>
-          </div>
-          <app-event-section [events]="pastEvents()"></app-event-section>
-        </div>
-
-        <!-- Ratings Section -->
-        @if (userRatings().length > 0) {
-          <div class="section-card glass-card animate-card" [@fadeInUp]>
-            <div class="section-header">
-              <h2 class="section-title">
-                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-                My Ratings
-              </h2>
+        <!-- Show managed clubs if any -->
+        @if (managedClubs().length > 0) {
+          <div class="managed-clubs-section">
+            <h3 class="managed-clubs-title">Your Clubs</h3>
+            <div class="managed-clubs-list">
+              @for (club of managedClubs(); track club.id) {
+                <a [routerLink]="['/clubs', club.id]" class="managed-club-item">
+                  <div class="managed-club-logo">
+                    @if (club.logoUrl) {
+                      <img [src]="club.logoUrl" [alt]="club.name">
+                    } @else {
+                      <div class="logo-placeholder">{{ club.name.charAt(0) }}</div>
+                    }
+                  </div>
+                  <div class="managed-club-info">
+                    <span class="managed-club-name">{{ club.name }}</span>
+                    <span class="managed-club-status" [class]="club.status.toLowerCase()">
+                      @if (club.status === ClubStatus.PENDING) {
+                        ⏳ Pending Approval
+                      } @else if (club.status === ClubStatus.APPROVED) {
+                        ✓ Active
+                      } @else {
+                        ✗ Rejected
+                      }
+                    </span>
+                  </div>
+                  <a [routerLink]="['/clubs', club.id, 'edit']" class="managed-club-edit" (click)="$event.stopPropagation()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </a>
+                </a>
+              }
             </div>
-            <app-ratings-section [ratings]="userRatings()"></app-ratings-section>
           </div>
         }
       </div>
 
-      <!-- Right Column - Clubs & Account -->
-      <div class="profile-sidebar">
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
-          <div class="section-header">
-            <h2 class="section-title">
-              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Followed Clubs
-            </h2>
-            <a routerLink="/clubs" class="view-all-link">Explore →</a>
-          </div>
-          <app-club-list
-            [clubs]="followedClubs()"
-            [showUnfollow]="true"
-            (unfollowClub)="unfollowClub($event)">
-          </app-club-list>
-        </div>
-
-        <!-- Account Info Card -->
-        <div class="section-card glass-card animate-card account-card" [@fadeInUp]>
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
           <h2 class="section-title">
             <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            Account
+            Followed Clubs
           </h2>
-          <div class="account-info">
-            <div class="info-row">
-              <span class="info-label">Email</span>
-              <span class="info-value">{{ profile()!.email }}</span>
-              @if (profile()!.emailVerified) {
-                <span class="verified-badge" title="Verified">✓</span>
-              }
-            </div>
-            <div class="info-row">
-              <span class="info-label">Member Since</span>
-              <span class="info-value">{{ profile()!.createdAt | date:'MMMM yyyy' }}</span>
-            </div>
-            @if (profile()!.phoneNumber) {
-              <div class="info-row">
-                <span class="info-label">Phone</span>
-                <span class="info-value">{{ profile()!.phoneNumber }}</span>
-              </div>
+          <a routerLink="/clubs" class="view-all-link">Explore →</a>
+        </div>
+        <app-club-list [clubs]="followedClubs()" [showUnfollow]="true" (unfollowClub)="unfollowClub($event)">
+        </app-club-list>
+      </div>
+
+      <!-- Account Info Card -->
+      <div class="section-card glass-card animate-card account-card" [@fadeInUp]>
+        <h2 class="section-title">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Account
+        </h2>
+        <div class="account-info">
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ profile()!.email }}</span>
+            @if (profile()!.emailVerified) {
+            <span class="verified-badge" title="Verified">✓</span>
             }
           </div>
+          <div class="info-row">
+            <span class="info-label">Member Since</span>
+            <span class="info-value">{{ profile()!.createdAt | date:'MMMM yyyy' }}</span>
+          </div>
+          @if (profile()!.phoneNumber) {
+          <div class="info-row">
+            <span class="info-label">Phone</span>
+            <span class="info-value">{{ profile()!.phoneNumber }}</span>
+          </div>
+          }
         </div>
       </div>
     </div>
+  </div>
   }
 </section>
+
+<!-- Join Club Popup -->
+@if (showJoinClubPopup()) {
+  <app-join-club-popup (close)="closeJoinClubPopup()"></app-join-club-popup>
+}

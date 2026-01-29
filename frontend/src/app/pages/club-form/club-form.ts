@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ClubsService } from '../../services/clubs.service';
 import { CreateClubDto, ClubSection, ClubContact, Club } from '../../models/club.model';
 import { fadeSlideIn } from '../../animations';
+import { getApiUrl } from '../../utils/image.utils';
 
 interface SectionForm {
   enabled: boolean;
@@ -18,6 +19,17 @@ interface EnabledSection extends SectionForm {
   key: string;
 }
 
+// Default images for preview (should match backend defaults)
+const API_URL = getApiUrl();
+const DEFAULT_IMAGES = {
+  about: `${API_URL}/uploads/defaults/about-default.jpg`,
+  history: `${API_URL}/uploads/defaults/history-default.jpg`,
+  mission: `${API_URL}/uploads/defaults/mission-default.jpg`,
+  activities: `${API_URL}/uploads/defaults/activities-default.jpg`,
+  achievements: `${API_URL}/uploads/defaults/achievements-default.jpg`,
+  joinUs: `${API_URL}/uploads/defaults/join-default.jpg`,
+};
+
 @Component({
   selector: 'app-club-form',
   imports: [FormsModule, RouterLink],
@@ -26,6 +38,9 @@ interface EnabledSection extends SectionForm {
   animations: [fadeSlideIn]
 })
 export class ClubFormComponent implements OnInit {
+  // Default images for preview
+  defaultImages = DEFAULT_IMAGES;
+
   // Edit mode
   isEditMode = false;
   clubId: number | null = null;
@@ -160,14 +175,19 @@ export class ClubFormComponent implements OnInit {
   }
 
   hasAnyContact(): boolean {
-    return Object.values(this.contact).some(v => v && v.trim());
+    return Object.values(this.contact).some(v => !!v?.trim());
   }
 
   hasAnyContent(): boolean {
-    return !!(this.name || this.shortDescription || this.about || 
-              this.getPreviewLogo() || this.getPreviewCover() ||
-              this.getEnabledSections().length > 0 ||
-              this.hasAnyContact());
+    return !!(
+      this.name || 
+      this.shortDescription || 
+      this.about || 
+      this.getPreviewLogo() || 
+      this.getPreviewCover() ||
+      this.getEnabledSections().length > 0 ||
+      this.hasAnyContact()
+    );
   }
 
   // Handle file selection
@@ -224,6 +244,14 @@ export class ClubFormComponent implements OnInit {
       this.error.set('About section is required');
       return;
     }
+    if (!this.logoFile && !this.logoUrl.trim()) {
+      this.error.set('Club logo is required');
+      return;
+    }
+    if (!this.coverFile && !this.coverUrl.trim()) {
+      this.error.set('Cover image is required');
+      return;
+    }
 
     this.submitting.set(true);
     this.error.set(null);
@@ -234,14 +262,14 @@ export class ClubFormComponent implements OnInit {
       const coverUrl = await this.uploadIfNeeded(this.coverFile, this.coverUrl);
       const aboutImageUrl = await this.uploadIfNeeded(this.aboutImageFile, this.aboutImageUrl);
 
-      // Build club data
+      // Build club data (logoUrl and coverImageUrl are required, validated above)
       const clubData: CreateClubDto = {
         name: this.name.trim(),
         shortDescription: this.shortDescription.trim(),
         about: this.about.trim(),
-        logoUrl: logoUrl || undefined,
-        coverImageUrl: coverUrl || undefined,
-        aboutImageUrl: aboutImageUrl || undefined,
+        logoUrl: logoUrl, // Required
+        coverImageUrl: coverUrl, // Required
+        aboutImageUrl: aboutImageUrl || undefined, // Optional
       };
 
       // Add enabled sections
@@ -267,12 +295,12 @@ export class ClubFormComponent implements OnInit {
         }
       }
 
-      // Create or update club (mock user ID 1 for now)
+      // Create or update club
       let result: Club | null;
       if (this.isEditMode && this.clubId) {
-        result = await this.clubsService.updateClub(this.clubId, clubData, 1);
+        result = await this.clubsService.updateClub(this.clubId, clubData);
       } else {
-        result = await this.clubsService.createClub(clubData, 1);
+        result = await this.clubsService.createClub(clubData);
       }
 
       if (result) {
@@ -303,5 +331,9 @@ export class ClubFormComponent implements OnInit {
       joinUs: 'Join Us',
     };
     return labels[key] || key;
+  }
+
+  getDefaultImageForSection(key: string): string {
+    return (DEFAULT_IMAGES as any)[key] || DEFAULT_IMAGES.about;
   }
 }

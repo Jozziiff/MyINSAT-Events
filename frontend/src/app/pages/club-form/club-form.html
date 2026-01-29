@@ -15,7 +15,11 @@
     } @else if (success()) {
       <div class="success-message">
         <span class="success-icon">✓</span>
-        <p>{{ isEditMode ? 'Club updated successfully!' : 'Club created successfully!' }} Redirecting...</p>
+        @if (isEditMode) {
+          <p>Club updated successfully! Redirecting...</p>
+        } @else {
+          <p>Club created successfully! It is now pending admin approval. Redirecting...</p>
+        }
       </div>
     } @else {
       <form class="club-form" (ngSubmit)="onSubmit()">
@@ -74,7 +78,7 @@
 
           <!-- Logo -->
           <div class="image-upload-group">
-            <label>Club Logo</label>
+            <label>Club Logo *</label>
             <div class="upload-row">
               <div class="file-upload">
                 <input 
@@ -104,7 +108,7 @@
 
           <!-- Cover Image -->
           <div class="image-upload-group">
-            <label>Cover Image</label>
+            <label>Cover Image *</label>
             <div class="upload-row">
               <div class="file-upload wide">
                 <input 
@@ -364,13 +368,7 @@
       <section class="preview-section about-section">
         <div class="section-row">
           <div class="section-image">
-            @if (getPreviewAboutImage()) {
-              <img [src]="getPreviewAboutImage()" alt="About">
-            } @else {
-              <div class="image-placeholder">
-                <span>About Image</span>
-              </div>
-            }
+            <img [src]="getPreviewAboutImage() || defaultImages.about" alt="About">
           </div>
           <div class="section-content">
             <h2>About Us</h2>
@@ -386,13 +384,7 @@
         <section class="preview-section">
           <div class="section-row" [class.reversed]="i % 2 === 0">
             <div class="section-image">
-              @if (item.imagePreview || item.imageUrl) {
-                <img [src]="item.imagePreview || item.imageUrl" [alt]="item.title">
-              } @else {
-                <div class="image-placeholder">
-                  <span>{{ getSectionLabel(item.key) }} Image</span>
-                </div>
-              }
+              <img [src]="item.imagePreview || item.imageUrl || getDefaultImageForSection(item.key)" [alt]="item.title">
             </div>
             <div class="section-content">
               <h2>{{ item.title || getSectionLabel(item.key) }}</h2>
@@ -423,25 +415,21 @@
             }
             @if (contact.website) {
               <span class="contact-item">
-                <span class="contact-icon">🌐</span>
                 <span>Website</span>
               </span>
             }
             @if (contact.facebook) {
               <span class="contact-item">
-                <span class="contact-icon">📘</span>
                 <span>Facebook</span>
               </span>
             }
             @if (contact.instagram) {
               <span class="contact-item">
-                <span class="contact-icon">📸</span>
                 <span>Instagram</span>
               </span>
             }
             @if (contact.linkedin) {
               <span class="contact-item">
-                <span class="contact-icon">💼</span>
                 <span>LinkedIn</span>
               </span>
             }
