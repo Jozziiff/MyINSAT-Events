@@ -181,11 +181,11 @@ export class EventDetailComponent implements OnInit {
 
         try {
             const currentStatus = this.userStatus();
-            const success = await this.eventsService.registerForEvent(evt.id, RegistrationStatus.CONFIRMED);
+            const success = await this.eventsService.registerForEvent(evt.id, RegistrationStatus.PENDING_PAYMENT);
 
             if (success) {
-                this.updateEventState(RegistrationStatus.CONFIRMED, currentStatus);
-                alert('✓ Registration confirmed! The club will contact you if needed.');
+                this.updateEventState(RegistrationStatus.PENDING_PAYMENT, currentStatus);
+                alert('✓ Registration confirmed! Please contact the club manager for payment details.');
             }
         } catch (error) {
             console.error('Failed to confirm attendance:', error);

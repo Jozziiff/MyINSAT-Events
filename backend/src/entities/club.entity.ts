@@ -17,8 +17,7 @@ export class Club {
     @PrimaryGeneratedColumn()
     id: number;
 
-
-    @Column({ type: 'varchar', unique: true, nullable: false })
+    @Column({ type: 'varchar', nullable: false })
     name: string;
 
     @Column({ type: 'varchar', nullable: true, name: 'short_description' })
