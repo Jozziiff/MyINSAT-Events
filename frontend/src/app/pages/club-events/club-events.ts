@@ -1,6 +1,5 @@
 import { Component, computed, effect, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import { Location } from '@angular/common';
 import { ClubsService } from '../../services/clubs.service';
 import { fadeSlideIn } from '../../animations';
@@ -34,10 +33,9 @@ interface ClubEventsData {
 
 @Component({
   selector: 'app-club-events',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './club-events.html',
-  styleUrls: ['./club-events.css'],
+  styleUrl: './club-events.css',
   animations: [fadeSlideIn],
 })
 export class ClubEventsComponent implements OnInit {

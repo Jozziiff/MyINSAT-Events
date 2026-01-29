@@ -1,0 +1,67 @@
+<div class="popup-overlay" (click)="onBackdropClick($event)">
+  <div class="popup-modal">
+    <div class="popup-header">
+      <h3>Join a Club</h3>
+      <button class="popup-close" (click)="closePopup()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="popup-content">
+      @if (loading()) {
+        <div class="popup-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading clubs...</p>
+        </div>
+      } @else if (clubs().length === 0) {
+        <div class="popup-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <p>No clubs available</p>
+        </div>
+      } @else {
+        <ul class="clubs-list">
+          @for (club of clubs(); track club.id) {
+            <li class="club-item">
+              <a [routerLink]="['/clubs', club.id]" class="club-link" (click)="closePopup()">
+                <div class="club-avatar">
+                  @if (club.logoUrl) {
+                    <img [src]="club.logoUrl" [alt]="club.name">
+                  } @else {
+                    <div class="avatar-placeholder">
+                      {{ club.name.charAt(0).toUpperCase() }}
+                    </div>
+                  }
+                </div>
+                <div class="club-info">
+                  <span class="club-name">{{ club.name }}</span>
+                  <span class="club-desc">{{ club.shortDescription }}</span>
+                </div>
+              </a>
+              <button 
+                class="apply-btn"
+                [class.pending]="club.joinRequestStatus === JoinRequestStatus.PENDING"
+                [class.member]="club.isManager || club.joinRequestStatus === JoinRequestStatus.APPROVED"
+                [disabled]="!canApply(club) || applyingTo() === club.id"
+                (click)="applyToClub(club.id)"
+              >
+                @if (applyingTo() === club.id) {
+                  <span class="btn-spinner"></span>
+                } @else {
+                  {{ getButtonText(club) }}
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</div>

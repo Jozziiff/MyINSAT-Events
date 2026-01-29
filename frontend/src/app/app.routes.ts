@@ -30,9 +30,9 @@ export const routes: Routes = [
   { path: 'events/:id', component: EventDetailComponent },
   { path: 'clubs', component: ClubsComponent },
   { path: 'clubs/new', component: ClubFormComponent, canActivate: [authGuard] },
+  { path: 'clubs/:id/edit', component: ClubFormComponent, canActivate: [authGuard] },
   { path: 'clubs/:id/events', component: ClubEventsComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
-  { path: 'clubs/:id/edit', component: ClubFormComponent, canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])] },
   { path: 'users/:id', component: UserProfileComponent },
 
   // Auth routes (guest only)

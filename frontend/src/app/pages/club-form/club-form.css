@@ -602,20 +602,6 @@
   }
 }
 
-.image-placeholder {
-  width: 100%;
-  height: 180px;
-  border-radius: var(--radius-lg);
-  background: var(--color-bg);
-  border: 2px dashed var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
 .preview-section .section-content {
   h2 {
     font-size: 1.25rem;

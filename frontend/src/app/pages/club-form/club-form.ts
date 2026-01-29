@@ -173,14 +173,19 @@ export class ClubFormComponent implements OnInit {
   }
 
   hasAnyContact(): boolean {
-    return Object.values(this.contact).some(v => v && v.trim());
+    return Object.values(this.contact).some(v => !!v?.trim());
   }
 
   hasAnyContent(): boolean {
-    return !!(this.name || this.shortDescription || this.about || 
-              this.getPreviewLogo() || this.getPreviewCover() ||
-              this.getEnabledSections().length > 0 ||
-              this.hasAnyContact());
+    return !!(
+      this.name || 
+      this.shortDescription || 
+      this.about || 
+      this.getPreviewLogo() || 
+      this.getPreviewCover() ||
+      this.getEnabledSections().length > 0 ||
+      this.hasAnyContact()
+    );
   }
 
   // Handle file selection
@@ -288,12 +293,12 @@ export class ClubFormComponent implements OnInit {
         }
       }
 
-      // Create or update club (mock user ID 1 for now)
+      // Create or update club
       let result: Club | null;
       if (this.isEditMode && this.clubId) {
-        result = await this.clubsService.updateClub(this.clubId, clubData, 1);
+        result = await this.clubsService.updateClub(this.clubId, clubData);
       } else {
-        result = await this.clubsService.createClub(clubData, 1);
+        result = await this.clubsService.createClub(clubData);
       }
 
       if (result) {

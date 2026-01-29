@@ -88,24 +88,69 @@
 
     <!-- Right Column - Clubs & Account -->
     <div class="profile-sidebar">
-      <!-- Create Club Section -->
-      @if (userRole() === Role.USER || userRole() === Role.ADMIN) {
-      <div class="create-club-card glass-card animate-card" [@fadeInUp]>
-        <div class="create-club-content">
-          <div class="create-club-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- Manage Clubs Section - Available to all users -->
+      <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-          </div>
-          <h3>Become a Club Manager</h3>
-          <p>Start your own club and build a community around your passion.</p>
-          <a routerLink="/clubs/new" class="btn-create-club">Create Your Club</a>
+            @if (managedClubs().length > 0) {
+              My Clubs
+            } @else {
+              Become a Manager
+            }
+          </h2>
         </div>
+        @if (managedClubs().length === 0) {
+          <p class="section-description">Start your own club or join an existing one as a manager.</p>
+        }
+        <div class="club-actions-row">
+          <a routerLink="/clubs/new" class="btn-action btn-primary-action">Create Club</a>
+          <button class="btn-action btn-secondary-action" (click)="openJoinClubPopup()">Join Club</button>
+        </div>
+
+        <!-- Show managed clubs if any -->
+        @if (managedClubs().length > 0) {
+          <div class="managed-clubs-section">
+            <h3 class="managed-clubs-title">Your Clubs</h3>
+            <div class="managed-clubs-list">
+              @for (club of managedClubs(); track club.id) {
+                <a [routerLink]="['/clubs', club.id]" class="managed-club-item">
+                  <div class="managed-club-logo">
+                    @if (club.logoUrl) {
+                      <img [src]="club.logoUrl" [alt]="club.name">
+                    } @else {
+                      <div class="logo-placeholder">{{ club.name.charAt(0) }}</div>
+                    }
+                  </div>
+                  <div class="managed-club-info">
+                    <span class="managed-club-name">{{ club.name }}</span>
+                    <span class="managed-club-status" [class]="club.status.toLowerCase()">
+                      @if (club.status === ClubStatus.PENDING) {
+                        ⏳ Pending Approval
+                      } @else if (club.status === ClubStatus.APPROVED) {
+                        ✓ Active
+                      } @else {
+                        ✗ Rejected
+                      }
+                    </span>
+                  </div>
+                  <a [routerLink]="['/clubs', club.id, 'edit']" class="managed-club-edit" (click)="$event.stopPropagation()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </a>
+                </a>
+              }
+            </div>
+          </div>
+        }
       </div>
-      }
 
       <div class="section-card glass-card animate-card" [@fadeInUp]>
         <div class="section-header">
@@ -157,3 +202,8 @@
   </div>
   }
 </section>
+
+<!-- Join Club Popup -->
+@if (showJoinClubPopup()) {
+  <app-join-club-popup (close)="closeJoinClubPopup()"></app-join-club-popup>
+}

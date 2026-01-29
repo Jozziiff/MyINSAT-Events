@@ -15,7 +15,11 @@
     } @else if (success()) {
       <div class="success-message">
         <span class="success-icon">✓</span>
-        <p>{{ isEditMode ? 'Club updated successfully!' : 'Club created successfully!' }} Redirecting...</p>
+        @if (isEditMode) {
+          <p>Club updated successfully! Redirecting...</p>
+        } @else {
+          <p>Club created successfully! It is now pending admin approval. Redirecting...</p>
+        }
       </div>
     } @else {
       <form class="club-form" (ngSubmit)="onSubmit()">
