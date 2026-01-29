@@ -233,4 +233,73 @@ export class ManagerService {
         Object.assign(club, updateClubDto);
         return this.clubRepository.save(club);
     }
+
+    async getAllManagedClubs(userId: number): Promise<Club[]> {
+        const managerRecords = await this.clubManagerRepository.find({
+            where: { userId },
+            relations: ['club'],
+        });
+
+        return managerRecords.map(record => record.club);
+    }
+
+    async getClubManagers(userId: number, clubId: number): Promise<{ id: number; fullName: string; email: string; avatarUrl: string }[]> {
+        // Verify the user has access to this club
+        await this.verifyManagerAccess(userId, clubId);
+
+        const managers = await this.clubManagerRepository.find({
+            where: { clubId },
+            relations: ['user'],
+        });
+
+        return managers.map(m => ({
+            id: m.user.id,
+            fullName: m.user.fullName,
+            email: m.user.email,
+            avatarUrl: m.user.avatarUrl,
+        }));
+    }
+
+    async removeManager(userId: number, clubId: number, managerUserId: number): Promise<void> {
+        // Verify the user has access to this club
+        await this.verifyManagerAccess(userId, clubId);
+
+        // Prevent removing yourself
+        if (userId === managerUserId) {
+            throw new BadRequestException('You cannot remove yourself as a manager');
+        }
+
+        const managerRecord = await this.clubManagerRepository.findOne({
+            where: { clubId, userId: managerUserId },
+        });
+
+        if (!managerRecord) {
+            throw new NotFoundException('Manager not found');
+        }
+
+        await this.clubManagerRepository.delete(managerRecord.id);
+    }
+
+    async getManagedClubById(userId: number, clubId: number): Promise<Club> {
+        await this.verifyManagerAccess(userId, clubId);
+        
+        const club = await this.clubRepository.findOne({
+            where: { id: clubId },
+        });
+
+        if (!club) {
+            throw new NotFoundException('Club not found');
+        }
+
+        return club;
+    }
+
+    async getClubEvents(userId: number, clubId: number): Promise<Event[]> {
+        await this.verifyManagerAccess(userId, clubId);
+
+        return this.eventRepository.find({
+            where: { clubId },
+            order: { startTime: 'ASC' },
+        });
+    }
 }
