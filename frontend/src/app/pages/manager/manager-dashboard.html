@@ -44,7 +44,41 @@
             <div class="stat-value">{{ draftCount() }}</div>
             <div class="stat-label">Drafts</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ joinRequests().length }}</div>
+            <div class="stat-label">Pending Requests</div>
+        </div>
     </div>
+
+    @if (joinRequests().length > 0) {
+    <div class="section-header">
+        <h2>Join Requests ({{ joinRequests().length }})</h2>
+    </div>
+    <div class="join-requests-list">
+        @for (request of joinRequests(); track request.id) {
+        <div class="join-request-card">
+            <div class="request-user">
+                @if (request.user.avatarUrl) {
+                <img [src]="request.user.avatarUrl" alt="Avatar" class="user-avatar" />
+                } @else {
+                <div class="user-avatar-placeholder">{{ request.user.fullName.charAt(0) }}</div>
+                }
+                <div class="user-info">
+                    <span class="user-name">{{ request.user.fullName }}</span>
+                    <span class="user-email">{{ request.user.email }}</span>
+                </div>
+            </div>
+            <div class="request-date">
+                {{ formatDate(request.createdAt.toString()) }}
+            </div>
+            <div class="request-actions">
+                <button class="btn-approve" (click)="approveRequest(request)">Approve</button>
+                <button class="btn-reject" (click)="rejectRequest(request)">Reject</button>
+            </div>
+        </div>
+        }
+    </div>
+    }
 
     @if (events().length === 0) {
     <div class="empty-state">

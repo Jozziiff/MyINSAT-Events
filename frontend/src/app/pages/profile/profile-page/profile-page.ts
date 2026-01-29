@@ -6,7 +6,9 @@ import { EventSection } from '../components/event-section/event-section';
 import { ClubList } from '../components/club-list/club-list';
 import { StatsCard } from '../components/stats-card/stats-card';
 import { RatingsSection } from '../components/ratings-section/ratings-section';
+import { JoinClubPopup } from '../components/join-club-popup/join-club-popup';
 import { UserService } from '../../../services/user.service';
+import { ClubsService } from '../../../services/clubs.service';
 import { AuthStateService } from '../../../services/auth/auth-state';
 import { Role } from '../../../models/auth.models';
 import {
@@ -18,6 +20,7 @@ import {
   UserStats,
   UserRole,
 } from '../../../models/profile.models';
+import { ManagedClub, ClubStatus } from '../../../models/club.model';
 import { RegistrationStatus } from '../../../models/event.model';
 import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
 
@@ -31,6 +34,7 @@ import { trigger, transition, style, animate, stagger, query } from '@angular/an
     ClubList,
     StatsCard,
     RatingsSection,
+    JoinClubPopup,
   ],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.css'],
@@ -55,13 +59,16 @@ import { trigger, transition, style, animate, stagger, query } from '@angular/an
 })
 export class ProfilePage implements OnInit {
   private userService = inject(UserService);
+  private clubsService = inject(ClubsService);
   private authState = inject(AuthStateService);
 
   readonly userRole = this.authState.userRole;
   readonly Role = Role;
+  readonly ClubStatus = ClubStatus;
 
   loading = signal(true);
   error = signal<string | null>(null);
+  showJoinClubPopup = signal(false);
 
   profile = signal<UserProfile | null>(null);
   stats = signal<UserStats>({
@@ -74,6 +81,7 @@ export class ProfilePage implements OnInit {
   pastEvents = signal<ProfileEvent[]>([]);
   followedClubs = signal<FollowedClub[]>([]);
   userRatings = signal<UserRating[]>([]);
+  managedClubs = signal<ManagedClub[]>([]);
 
   // Edit mode
   isEditing = signal(false);
@@ -87,7 +95,11 @@ export class ProfilePage implements OnInit {
     this.error.set(null);
 
     try {
-      const dashboard = await this.userService.getDashboard();
+      const [dashboard, ratings, managed] = await Promise.all([
+        this.userService.getDashboard(),
+        this.userService.getUserRatings(),
+        this.clubsService.getManagedClubs(),
+      ]);
 
       if (dashboard) {
         this.profile.set(dashboard.profile);
@@ -97,9 +109,8 @@ export class ProfilePage implements OnInit {
         this.followedClubs.set(dashboard.followedClubs);
       }
 
-      // Also load ratings
-      const ratings = await this.userService.getUserRatings();
       this.userRatings.set(ratings);
+      this.managedClubs.set(managed as ManagedClub[]);
     } catch (err: any) {
       this.error.set(err?.message || 'Failed to load profile');
     } finally {
@@ -122,5 +133,13 @@ export class ProfilePage implements OnInit {
       this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
       this.stats.update(s => ({ ...s, clubsFollowed: s.clubsFollowed - 1 }));
     }
+  }
+
+  openJoinClubPopup() {
+    this.showJoinClubPopup.set(true);
+  }
+
+  closeJoinClubPopup() {
+    this.showJoinClubPopup.set(false);
   }
 }

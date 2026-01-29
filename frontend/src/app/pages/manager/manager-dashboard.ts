@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService, Event } from '../../services/manager-api.service';
+import { ClubsService } from '../../services/clubs.service';
+import { JoinRequest } from '../../models/club.model';
 
 @Component({
     selector: 'app-manager-dashboard',
@@ -14,8 +16,10 @@ import { ManagerApiService, Event } from '../../services/manager-api.service';
 export class ManagerDashboardComponent implements OnInit {
     events = signal<Event[]>([]);
     clubName = signal('Loading...');
+    clubId = signal<number | null>(null);
     loading = signal(true);
     error = signal('');
+    joinRequests = signal<JoinRequest[]>([]);
 
     private now = () => new Date();
     private compareByStartTime = (a: Event, b: Event) =>
@@ -38,6 +42,7 @@ export class ManagerDashboardComponent implements OnInit {
 
     constructor(
         private managerApi: ManagerApiService,
+        private clubsService: ClubsService,
         private router: Router
     ) { }
 
@@ -50,7 +55,11 @@ export class ManagerDashboardComponent implements OnInit {
         this.error.set('');
 
         this.managerApi.getClub().subscribe({
-            next: (club) => this.clubName.set(club.name),
+            next: (club) => {
+                this.clubName.set(club.name);
+                this.clubId.set(club.id);
+                this.loadJoinRequests(club.id);
+            },
             error: (err) => console.error('Failed to load club:', err)
         });
 
@@ -65,6 +74,33 @@ export class ManagerDashboardComponent implements OnInit {
                 console.error(err);
             }
         });
+    }
+
+    async loadJoinRequests(clubId: number) {
+        const requests = await this.clubsService.getClubJoinRequests(clubId);
+        this.joinRequests.set(requests);
+    }
+
+    async approveRequest(request: JoinRequest) {
+        if (!confirm(`Approve ${request.user.fullName}'s request to join the club?`)) return;
+        
+        const success = await this.clubsService.approveJoinRequest(request.id);
+        if (success) {
+            this.joinRequests.update(requests => requests.filter(r => r.id !== request.id));
+        } else {
+            alert('Failed to approve request');
+        }
+    }
+
+    async rejectRequest(request: JoinRequest) {
+        if (!confirm(`Reject ${request.user.fullName}'s request?`)) return;
+        
+        const success = await this.clubsService.rejectJoinRequest(request.id);
+        if (success) {
+            this.joinRequests.update(requests => requests.filter(r => r.id !== request.id));
+        } else {
+            alert('Failed to reject request');
+        }
     }
 
     getStatusClass(status: string): string {

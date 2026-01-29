@@ -11,6 +11,17 @@
   </div>
 } @else if (club(); as clubData) {
   <div class="club-detail-page">
+    <!-- Pending Status Banner -->
+    @if (isPending()) {
+      <div class="pending-banner" @fadeSlideIn>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>This club is pending admin approval and is only visible to you.</span>
+      </div>
+    }
+
     <!-- Hero Section with Cover Image (no animation on wrapper) -->
     <header class="club-hero" [style.backgroundImage]="'url(' + clubData.coverImageUrl + ')'">
       <div class="hero-overlay"></div>
@@ -22,6 +33,15 @@
             </svg>
             Back to Clubs
           </a>
+          @if (canEdit()) {
+            <a [routerLink]="['/clubs', clubData.id, 'edit']" class="btn-edit">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Edit Club
+            </a>
+          }
         </div>
         <div class="club-identity">
           <img [src]="clubData.logoUrl" [alt]="clubData.name + ' logo'" class="club-logo">
@@ -120,37 +140,31 @@
           @if (clubData.contact?.email) {
             <a [href]="'mailto:' + clubData.contact!.email" class="contact-item">
               <span class="contact-label">Email</span>
-              <span>{{ clubData.contact!.email }}</span>
             </a>
           }
           @if (clubData.contact?.phone) {
             <a [href]="'tel:' + clubData.contact!.phone" class="contact-item">
               <span class="contact-label">Phone</span>
-              <span>{{ clubData.contact!.phone }}</span>
             </a>
           }
           @if (clubData.contact?.website) {
             <a [href]="clubData.contact!.website" target="_blank" rel="noopener" class="contact-item">
               <span class="contact-label">Website</span>
-              <span>Website</span>
             </a>
           }
           @if (clubData.contact?.facebook) {
             <a [href]="clubData.contact!.facebook" target="_blank" rel="noopener" class="contact-item">
               <span class="contact-label">Facebook</span>
-              <span>Facebook</span>
             </a>
           }
           @if (clubData.contact?.instagram) {
             <a [href]="clubData.contact!.instagram" target="_blank" rel="noopener" class="contact-item">
               <span class="contact-label">Instagram</span>
-              <span>Instagram</span>
             </a>
           }
           @if (clubData.contact?.linkedin) {
             <a [href]="clubData.contact!.linkedin" target="_blank" rel="noopener" class="contact-item">
               <span class="contact-label">LinkedIn</span>
-              <span>LinkedIn</span>
             </a>
           }
         </div>

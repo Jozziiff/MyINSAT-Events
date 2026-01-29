@@ -116,22 +116,38 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-md);
     color: white;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
     transition: all var(--transition-base);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.25);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
   }
+}
+
+/* Pending Banner */
+.pending-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.pending-banner svg {
+  flex-shrink: 0;
 }
 
 
@@ -175,20 +191,6 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-.follower-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-full);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 
 .follow-btn {
@@ -393,84 +395,6 @@
     h2::after {
       left: 50%;
       transform: translateX(-50%);
-    }
-  }
-}
-
-/* Events CTA Section */
-.events-cta-section {
-  padding: 3rem 0;
-  margin-bottom: 3rem;
-}
-
-.cta-card {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  border-radius: 16px;
-  padding: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  color: white;
-
-  .cta-content {
-    flex: 1;
-
-    h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 0 0 0.5rem 0;
-      color: white;
-
-      &::after {
-        display: none;
-      }
-    }
-
-    p {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1rem;
-    }
-  }
-}
-
-.btn-large {
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  white-space: nowrap;
-  background: white;
-  color: var(--color-primary);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .cta-card {
-    flex-direction: column;
-    text-align: center;
-
-    .cta-content {
-      h2 {
-        font-size: 1.4rem;
-      }
-    }
-
-    .btn-large {
-      width: 100%;
     }
   }
 }
