@@ -265,7 +265,7 @@
                         @if (manager.avatarUrl) {
                         <img [src]="manager.avatarUrl" alt="Avatar" class="manager-avatar" />
                         } @else {
-                        <div class="manager-avatar-placeholder">{{ manager.fullName?.charAt(0) || 'M' }}</div>
+                        <div class="manager-avatar-placeholder">{{ (manager.fullName && manager.fullName.charAt(0)) || 'M' }}</div>
                         }
                         <div class="manager-details">
                             <span class="manager-name">{{ manager.fullName || 'Unknown' }}</span>
