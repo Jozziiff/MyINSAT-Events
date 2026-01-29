@@ -1,3 +1,71 @@
+/* Avatar upload overlay and animation */
+.avatar-wrapper.avatar-editable {
+  cursor: pointer;
+  position: relative;
+  transition: box-shadow 0.18s;
+}
+.avatar-wrapper.avatar-editable:hover .avatar-edit-overlay,
+.avatar-wrapper.avatar-editable:focus .avatar-edit-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.avatar-edit-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  padding: 0.25rem;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.18);
+  opacity: 0.85;
+  transition: opacity 0.18s, transform 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.avatar-wrapper.avatar-editable:hover .avatar-edit-overlay {
+  opacity: 1;
+  transform: scale(1.08);
+}
+.avatar-uploading-spinner {
+  margin-top: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--color-primary-light);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+/* Clear (X) button for phone number */
+.clear-btn {
+  background: rgba(99, 102, 241, 0.08);
+  border: none;
+  color: var(--color-primary-light);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
+  box-shadow: none;
+  outline: none;
+  margin-left: 0.2rem;
+}
+.clear-btn:hover, .clear-btn:focus {
+  background: var(--color-primary);
+  color: #fff;
+  transform: scale(1.13) rotate(12deg);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+}
 .modern-profile-header {
   display: flex;
   align-items: center;

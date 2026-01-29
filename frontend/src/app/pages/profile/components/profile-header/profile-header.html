@@ -1,6 +1,7 @@
 <div class="profile-header modern-profile-header">
   <div class="avatar-section">
-    <div class="avatar-wrapper">
+    <div class="avatar-wrapper" [class.avatar-editable]="isEditing" (click)="onAvatarClick(fileInput)">
+      <input #fileInput type="file" accept="image/*" style="display:none" (change)="onAvatarSelected($event)" />
       @if (profile.avatarUrl) {
         <img [src]="profile.avatarUrl" alt="Profile avatar" class="avatar" />
       } @else {
@@ -8,7 +9,14 @@
           {{ profile.fullName.charAt(0).toUpperCase() }}
         </div>
       }
+      @if (isEditing) {
+        <div class="avatar-edit-overlay">
+          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </div>
+      }
     </div>
+    <div *ngIf="avatarUploadError" class="error-message" style="color:#ef4444; font-size:0.92em; margin-top:0.2rem;">{{ avatarUploadError }}</div>
+    <div *ngIf="uploadingAvatar()" class="avatar-uploading-spinner"></div>
   </div>
 
   <div class="profile-info">
@@ -28,26 +36,26 @@
       <div class="edit-form">
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input 
-            type="text" 
-            class="form-input" 
+          <input
+            type="text"
+            class="form-input"
             [(ngModel)]="editForm.fullName"
             placeholder="Your full name"
           />
         </div>
         <div class="form-group">
           <label class="form-label">Student Year</label>
-          <input 
-            type="text" 
-            class="form-input" 
+          <input
+            type="text"
+            class="form-input"
             [(ngModel)]="editForm.studentYear"
             placeholder="e.g., 3rd year"
           />
         </div>
         <div class="form-group">
           <label class="form-label">Bio</label>
-          <textarea 
-            class="form-input form-textarea" 
+          <textarea
+            class="form-input form-textarea"
             [(ngModel)]="editForm.bio"
             placeholder="Tell us about yourself..."
             rows="3"
@@ -55,12 +63,27 @@
         </div>
         <div class="form-group">
           <label class="form-label">Phone Number</label>
-          <input 
-            type="tel" 
-            class="form-input" 
-            [(ngModel)]="editForm.phoneNumber"
-            placeholder="+216 XX XXX XXX"
-          />
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input
+              type="tel"
+              class="form-input"
+              [(ngModel)]="editForm.phoneNumber"
+              placeholder="+216 XX XXX XXX"
+              (blur)="validatePhoneNumber()"
+              maxlength="8"
+              pattern="[0-9]{8}"
+              style="flex: 1;"
+            />
+            <button type="button" class="clear-btn" (click)="clearPhoneNumber()" title="Remove number" aria-label="Remove phone number">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div *ngIf="phoneNumberError" class="error-message" style="color: #ef4444; font-size: 0.92em; margin-top: 0.2rem;">
+            {{ phoneNumberError }}
+          </div>
         </div>
       </div>
     }
