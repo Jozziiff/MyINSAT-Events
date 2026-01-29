@@ -107,7 +107,7 @@ export class ClubsService {
 
       const newClub = this.clubRepository.create({
         ...createClubDto,
-        status: ClubStatus.APPROVED, // Auto-approve clubs for now
+        status: ClubStatus.PENDING, // Clubs need admin approval
       });
 
       const savedClub = await this.clubRepository.save(newClub);
@@ -520,5 +520,95 @@ export class ClubsService {
       joinRequestStatus: requestMap.get(club.id) || null,
       isManager: managedClubIds.has(club.id),
     }));
+  }
+
+  // Get user's managed clubs with their status (for profile page)
+  async getUserManagedClubs(userId: number): Promise<{
+    id: number;
+    name: string;
+    shortDescription: string;
+    logoUrl: string;
+    status: ClubStatus;
+    createdAt: Date;
+  }[]> {
+    const managedClubs = await this.clubManagerRepository.find({
+      where: { userId },
+      relations: ['club'],
+    });
+
+    // Sort by club's createdAt descending
+    return managedClubs
+      .sort((a, b) => new Date(b.club.createdAt).getTime() - new Date(a.club.createdAt).getTime())
+      .map(m => ({
+        id: m.club.id,
+        name: m.club.name,
+        shortDescription: m.club.shortDescription,
+        logoUrl: m.club.logoUrl,
+        status: m.club.status,
+        createdAt: m.club.createdAt,
+      }));
+  }
+
+  // Check if user can view a club (for pending clubs, only admin/manager can view)
+  async canUserViewClub(clubId: number, userId?: number, userRole?: string): Promise<boolean> {
+    const club = await this.clubRepository.findOne({ where: { id: clubId } });
+    if (!club) return false;
+
+    // Approved clubs are visible to everyone
+    if (club.status === ClubStatus.APPROVED) return true;
+
+    // If no user, cannot view pending/rejected clubs
+    if (!userId) return false;
+
+    // Admin can view all clubs
+    if (userRole === 'ADMIN') return true;
+
+    // Manager of the club can view it
+    const isManager = await this.clubManagerRepository.findOne({
+      where: { userId, clubId },
+    });
+    return !!isManager;
+  }
+
+  // Get club with access check
+  async getClubWithAccessCheck(
+    clubId: number,
+    userId?: number,
+    userRole?: string,
+  ): Promise<(ClubDto & {
+    followerCount: number;
+    isFollowing: boolean;
+    upcomingEventsCount: number;
+    isManager: boolean;
+  }) | null> {
+    const club = await this.clubRepository.findOne({ where: { id: clubId } });
+    if (!club) return null;
+
+    // Check access for non-approved clubs
+    if (club.status !== ClubStatus.APPROVED) {
+      const canView = await this.canUserViewClub(clubId, userId, userRole);
+      if (!canView) return null;
+    }
+
+    const now = new Date();
+    const [followerCount, isFollowing, upcomingEvents, isManager] = await Promise.all([
+      this.getFollowerCount(clubId),
+      userId ? this.isFollowing(userId, clubId) : false,
+      this.eventRepository.count({
+        where: {
+          clubId,
+          startTime: new Date(now.getTime()),
+        },
+      }),
+      userId ? this.clubManagerRepository.findOne({ where: { userId, clubId } }).then(m => !!m) : false,
+    ]);
+
+    return {
+      ...this.applyDefaultImages(club),
+      followerCount,
+      isFollowing,
+      upcomingEventsCount: upcomingEvents,
+      isManager,
+    };
   }
 }

@@ -45,6 +45,13 @@ export class ClubsController {
     return this.clubsService.getAllClubsWithJoinStatus(user.id);
   }
 
+  // Get current user's managed clubs with status
+  @Get('managed/me')
+  @UseGuards(JwtAccessGuard)
+  getUserManagedClubs(@CurrentUser() user: { id: number }) {
+    return this.clubsService.getUserManagedClubs(user.id);
+  }
+
   // Approve a join request
   @Post('join-requests/:requestId/approve')
   @UseGuards(JwtAccessGuard)
@@ -75,7 +82,11 @@ export class ClubsController {
     @Param('id', ParseIntPipe) id: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const club = await this.clubsService.getClubWithStats(id, req.user?.id);
+    const club = await this.clubsService.getClubWithAccessCheck(
+      id,
+      req.user?.id,
+      (req.user as any)?.role,
+    );
     if (!club) {
       throw new NotFoundException(`Club with ID ${id} not found`);
     }
