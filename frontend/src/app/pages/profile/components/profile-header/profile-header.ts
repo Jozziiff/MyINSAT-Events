@@ -28,7 +28,7 @@ export class ProfileHeader {
     if (this.isEditing) fileInput.click();
   }
 
-  async onAvatarSelected(event: Event) {
+  onAvatarSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
@@ -38,23 +38,30 @@ export class ProfileHeader {
     }
     this.avatarUploadError = null;
     this.uploadingAvatar.set(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      // Send the old avatar URL to backend for deletion
-      if (this.profile.avatarUrl) {
-        formData.append('oldAvatarUrl', this.profile.avatarUrl);
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post('/upload/image', formData, { withCredentials: true }).subscribe({
+      next: async (data: any) => {
+        if (!data || !data.url) {
+          this.avatarUploadError = 'No URL returned';
+          this.uploadingAvatar.set(false);
+          return;
+        }
+        try {
+          await this.userService.updateProfile({ avatarUrl: data.url });
+          this.profile.avatarUrl = data.url;
+          this.profileUpdated.emit();
+        } catch (e) {
+          this.avatarUploadError = 'Failed to update profile.';
+        } finally {
+          this.uploadingAvatar.set(false);
+        }
+      },
+      error: () => {
+        this.avatarUploadError = 'Failed to upload image.';
+        this.uploadingAvatar.set(false);
       }
-      const data: any = await this.http.post('/upload/image', formData, { withCredentials: true }).toPromise();
-      if (!data || !data.url) throw new Error('No URL returned');
-      await this.userService.updateProfile({ avatarUrl: data.url });
-      this.profile.avatarUrl = data.url;
-      this.profileUpdated.emit();
-    } catch (e) {
-      this.avatarUploadError = 'Failed to upload image.';
-    } finally {
-      this.uploadingAvatar.set(false);
-    }
+    });
   }
 
   saving = signal(false);
