@@ -8,13 +8,13 @@ import {
   FollowedClub, 
   UserRating 
 } from '../models/profile.models';
-import { resolveImageUrl } from '../utils/image.utils';
+import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = getApiUrl();
   private readonly tokenService = inject(TokenService);
 
   // Signals for state management

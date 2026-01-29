@@ -4,7 +4,9 @@ import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } 
 import { Router, ActivatedRoute } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService } from '../../services/manager-api.service';
-import { resolveImageUrl } from '../../utils/image.utils';
+import { resolveImageUrl, getApiUrl } from '../../utils/image.utils';
+
+const API_URL = getApiUrl();
 
 interface EventSection {
     title: string;
@@ -177,7 +179,7 @@ export class EventFormComponent implements OnInit {
         formData.append('file', file);
         formData.append('event', 'event');
 
-        fetch('http://localhost:3000/upload/image', {
+        fetch(`${API_URL}/upload/image`, {
             method: 'POST',
             body: formData
         })
@@ -189,7 +191,7 @@ export class EventFormComponent implements OnInit {
                 let imageUrl = data.url;
                 // Make sure URL is absolute if it's relative
                 if (imageUrl && !imageUrl.startsWith('http')) {
-                    imageUrl = `http://localhost:3000${imageUrl}`;
+                    imageUrl = `${API_URL}${imageUrl}`;
                 }
                 this.sections.update(s => {
                     const updated = [...s];
@@ -247,7 +249,7 @@ export class EventFormComponent implements OnInit {
         formData.append('file', file);
         formData.append('event', 'event');
 
-        fetch('http://localhost:3000/upload/image', {
+        fetch(`${API_URL}/upload/image`, {
             method: 'POST',
             body: formData
         })
@@ -259,7 +261,7 @@ export class EventFormComponent implements OnInit {
                 let imageUrl = data.url;
                 // Make sure URL is absolute if it's relative
                 if (imageUrl && !imageUrl.startsWith('http')) {
-                    imageUrl = `http://localhost:3000${imageUrl}`;
+                    imageUrl = `${API_URL}${imageUrl}`;
                 }
                 this.coverImageUrl.set(imageUrl);
                 this.uploadingCoverImage.set(false);
@@ -313,8 +315,8 @@ export class EventFormComponent implements OnInit {
 
         // Get the relative URL for the cover image (remove base URL if present)
         let photoUrl = this.coverImageUrl();
-        if (photoUrl && photoUrl.startsWith('http://localhost:3000')) {
-            photoUrl = photoUrl.replace('http://localhost:3000', '');
+        if (photoUrl && photoUrl.startsWith(API_URL)) {
+            photoUrl = photoUrl.replace(API_URL, '');
         }
 
         const eventData = {

@@ -1,12 +1,13 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Club, ClubSection, ClubSummary, CreateClubDto, ClubWithStats, ClubFollower, ClubWithJoinStatus, JoinRequest, JoinRequestStatus, ManagedClub, ClubStatus } from '../models/club.model';
 import { TokenService } from './auth/token';
+import { getApiUrl } from '../utils/image.utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClubsService {
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = getApiUrl();
   private readonly tokenService = inject(TokenService);
 
   clubs = signal<ClubSummary[]>([]);

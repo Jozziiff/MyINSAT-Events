@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { TokenService } from './auth/token';
+import { getApiUrl } from '../utils/image.utils';
 
 export interface ClubForApproval {
     id: number;
@@ -20,7 +21,7 @@ export interface ClubForApproval {
     providedIn: 'root'
 })
 export class AdminApiService {
-    private readonly apiUrl = 'http://localhost:3000';
+    private readonly apiUrl = getApiUrl();
     private readonly tokenService = inject(TokenService);
 
     private getAuthHeaders(): HeadersInit {

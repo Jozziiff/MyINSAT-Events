@@ -2,7 +2,9 @@
  * Utility functions for handling image URLs
  */
 
-const API_URL = 'http://localhost:3000';
+import { environment } from '../../environments/environment';
+
+const API_URL = environment.apiUrl;
 
 /**
  * Resolves a potentially relative image URL to an absolute URL
