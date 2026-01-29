@@ -401,13 +401,7 @@ export class ClubsService {
 
   // Get pending join requests for a club (for managers)
   async getClubJoinRequests(clubId: number, userId: number): Promise<any[]> {
-    // Verify user is a manager of this club
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId, clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can view join requests');
-    }
+    // Access check is handled by ClubAccessGuard
 
     const requests = await this.joinRequestRepository.find({
       where: { clubId, status: JoinRequestStatus.PENDING },

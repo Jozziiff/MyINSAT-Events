@@ -20,7 +20,10 @@ export class ManagerService {
         private clubManagerRepository: Repository<ClubManager>,
     ) { }
 
-    private async verifyManagerAccess(userId: number, clubId: number): Promise<void> {
+    private async verifyManagerAccess(userId: number, clubId: number, userRole?: string): Promise<void> {
+        // Admins have access to all clubs
+        if (userRole === 'ADMIN') return;
+
         const managerRecord = await this.clubManagerRepository.findOne({
             where: { userId, clubId },
         });
@@ -37,7 +40,7 @@ export class ManagerService {
             throw new NotFoundException('Event not found');
         }
 
-        await this.verifyManagerAccess(userId, event.clubId);
+        // Access check is handled by ClubAccessGuard
         return event;
     }
 
@@ -196,7 +199,7 @@ export class ManagerService {
             throw new NotFoundException('Registration not found');
         }
 
-        await this.verifyManagerAccess(userId, registration.event.clubId);
+        // Access check is handled by ClubAccessGuard
 
         // Validate attendance marking can only happen on or after event day
         if ((newStatus === RegistrationStatus.ATTENDED || newStatus === RegistrationStatus.NO_SHOW)) {
@@ -234,7 +237,24 @@ export class ManagerService {
         return this.clubRepository.save(club);
     }
 
-    async getAllManagedClubs(userId: number): Promise<Club[]> {
+    /**
+     * Returns the list of clubs managed by the given user.
+     *
+     * When `userRole` is `'ADMIN'`, this method returns all clubs in the system.
+     * For any other role value, or when `userRole` is omitted, it only returns
+     * the clubs for which the user is registered as a manager.
+     *
+     * @param userId   The ID of the user whose managed clubs should be retrieved.
+     * @param userRole Optional role of the user. Pass `'ADMIN'` to retrieve all clubs;
+     *                 otherwise, only clubs managed by the user are returned.
+     * @returns A promise resolving to the list of clubs visible to the user.
+     */
+    async getAllManagedClubs(userId: number, userRole?: string): Promise<Club[]> {
+        // If user is admin, return all clubs
+        if (userRole === 'ADMIN') {
+            return this.clubRepository.find();
+        }
+
         const managerRecords = await this.clubManagerRepository.find({
             where: { userId },
             relations: ['club'],
@@ -244,8 +264,7 @@ export class ManagerService {
     }
 
     async getClubManagers(userId: number, clubId: number): Promise<{ id: number; fullName: string; email: string; avatarUrl: string }[]> {
-        // Verify the user has access to this club
-        await this.verifyManagerAccess(userId, clubId);
+        // Access check is handled by ClubAccessGuard
 
         const managers = await this.clubManagerRepository.find({
             where: { clubId },
@@ -261,8 +280,7 @@ export class ManagerService {
     }
 
     async removeManager(userId: number, clubId: number, managerUserId: number): Promise<void> {
-        // Verify the user has access to this club
-        await this.verifyManagerAccess(userId, clubId);
+        // Access check is handled by ClubAccessGuard
 
         // Prevent removing yourself
         if (userId === managerUserId) {
@@ -281,7 +299,7 @@ export class ManagerService {
     }
 
     async getManagedClubById(userId: number, clubId: number): Promise<Club> {
-        await this.verifyManagerAccess(userId, clubId);
+        // Access check is handled by ClubAccessGuard
         
         const club = await this.clubRepository.findOne({
             where: { id: clubId },
@@ -294,8 +312,8 @@ export class ManagerService {
         return club;
     }
 
-    async getClubEvents(userId: number, clubId: number): Promise<Event[]> {
-        await this.verifyManagerAccess(userId, clubId);
+    async getClubEvents(userId: number, clubId: number, userRole?: string): Promise<Event[]> {
+        // Access check is handled by ClubAccessGuard
 
         return this.eventRepository.find({
             where: { clubId },

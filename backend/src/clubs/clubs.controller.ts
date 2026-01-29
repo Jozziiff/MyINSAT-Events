@@ -19,6 +19,7 @@ import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ClubsService } from './clubs.service';
 import { CreateClubDto } from './dto/create-club.dto';
+import { ClubAccessGuard } from '../manager/guards/club-access.guard';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -223,10 +224,10 @@ export class ClubsController {
 
   // Get pending join requests for a club (for managers)
   @Get(':id/join-requests')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   getClubJoinRequests(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: { id: number },
+    @CurrentUser() user: { id: number; role: string },
   ) {
     return this.clubsService.getClubJoinRequests(id, user.id);
   }
