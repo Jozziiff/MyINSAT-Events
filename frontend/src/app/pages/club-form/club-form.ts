@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ClubsService } from '../../services/clubs.service';
 import { CreateClubDto, ClubSection, ClubContact, Club } from '../../models/club.model';
 import { fadeSlideIn } from '../../animations';
+import { getApiUrl } from '../../utils/image.utils';
 
 interface SectionForm {
   enabled: boolean;
@@ -19,13 +20,14 @@ interface EnabledSection extends SectionForm {
 }
 
 // Default images for preview (should match backend defaults)
+const API_URL = getApiUrl();
 const DEFAULT_IMAGES = {
-  about: 'http://localhost:3000/uploads/defaults/about-default.jpg',
-  history: 'http://localhost:3000/uploads/defaults/history-default.jpg',
-  mission: 'http://localhost:3000/uploads/defaults/mission-default.jpg',
-  activities: 'http://localhost:3000/uploads/defaults/activities-default.jpg',
-  achievements: 'http://localhost:3000/uploads/defaults/achievements-default.jpg',
-  joinUs: 'http://localhost:3000/uploads/defaults/join-default.jpg',
+  about: `${API_URL}/uploads/defaults/about-default.jpg`,
+  history: `${API_URL}/uploads/defaults/history-default.jpg`,
+  mission: `${API_URL}/uploads/defaults/mission-default.jpg`,
+  activities: `${API_URL}/uploads/defaults/activities-default.jpg`,
+  achievements: `${API_URL}/uploads/defaults/achievements-default.jpg`,
+  joinUs: `${API_URL}/uploads/defaults/join-default.jpg`,
 };
 
 @Component({

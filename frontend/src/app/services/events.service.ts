@@ -1,13 +1,13 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Event, EventSummary, RateEventRequest, EventRating, RegistrationStatus } from '../models/event.model';
-import { resolveImageUrl } from '../utils/image.utils';
+import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 import { TokenService } from './auth/token';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventsService {
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = getApiUrl();
   private readonly tokenService = inject(TokenService);
 
   events = signal<EventSummary[]>([]);

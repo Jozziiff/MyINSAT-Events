@@ -1,4 +1,4 @@
-<section class="user-profile-page" [@staggerCards]>
+<section class="user-profile-page" @fadeSlideIn>
   <!-- Loading State -->
   @if (loading()) {
     <div class="loading-container">
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Profile Header Card -->
-    <div class="profile-card glass-card animate-card" [@fadeInUp]>
+    <div class="profile-card glass-card animate-card" @fadeSlideIn>
       <div class="profile-header">
         <div class="avatar-section">
           <div class="avatar-wrapper">
@@ -73,7 +73,7 @@
       <!-- Left Column - Events -->
       <div class="profile-events">
         <!-- Upcoming Events -->
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-card glass-card animate-card" @fadeSlideIn>
           <div class="section-header">
             <h2 class="section-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -128,7 +128,7 @@
         </div>
 
         <!-- Past Events -->
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-card glass-card animate-card" @fadeSlideIn>
           <div class="section-header">
             <h2 class="section-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,7 +180,7 @@
       <!-- Right Column - Clubs -->
       <div class="profile-sidebar">
         <!-- Managed Clubs -->
-        <div class="section-card glass-card animate-card manager-card" [@fadeInUp]>
+        <div class="section-card glass-card animate-card manager-card" @fadeSlideIn>
           <div class="section-header">
             <h2 class="section-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -221,7 +221,7 @@
         </div>
 
         <!-- Followed Clubs -->
-        <div class="section-card glass-card animate-card" [@fadeInUp]>
+        <div class="section-card glass-card animate-card" @fadeSlideIn>
           <div class="section-header">
             <h2 class="section-title">
               <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

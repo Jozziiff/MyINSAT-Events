@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { getApiUrl } from '../utils/image.utils';
 
 export interface Club {
     id: number;
@@ -68,7 +69,7 @@ export interface EventRegistrations {
     providedIn: 'root'
 })
 export class ManagerApiService {
-    private apiUrl = 'http://localhost:3000/manager';
+    private apiUrl = `${getApiUrl()}/manager`;
 
     constructor(private http: HttpClient) { }
 

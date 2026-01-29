@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { UserService } from '../../services/user.service';
-import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
+import { fadeSlideIn } from '../../animations';
 
 export interface PublicUserProfile {
   id: number;
@@ -22,24 +22,7 @@ export interface PublicUserProfile {
   imports: [CommonModule, RouterModule],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.css'],
-  animations: [
-    trigger('fadeInUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(30px)' }),
-        animate('600ms cubic-bezier(0.35, 0, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
-    ]),
-    trigger('staggerCards', [
-      transition(':enter', [
-        query('.animate-card', [
-          style({ opacity: 0, transform: 'translateY(20px)' }),
-          stagger(100, [
-            animate('500ms cubic-bezier(0.35, 0, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-          ])
-        ], { optional: true })
-      ])
-    ])
-  ]
+  animations: [fadeSlideIn]
 })
 export class UserProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
