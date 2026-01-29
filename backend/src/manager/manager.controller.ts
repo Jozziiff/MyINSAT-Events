@@ -39,6 +39,45 @@ interface AuthenticatedRequest extends Request {
 export class ManagerController {
     constructor(private readonly managerService: ManagerService) { }
 
+    @Get('clubs')
+    getAllManagedClubs(@Req() req: AuthenticatedRequest) {
+        return this.managerService.getAllManagedClubs(req.user.id);
+    }
+
+    @Get('clubs/:clubId')
+    getManagedClubById(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getManagedClubById(req.user.id, clubId);
+    }
+
+    @Get('clubs/:clubId/events')
+    getClubEvents(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getClubEvents(req.user.id, clubId);
+    }
+
+    @Get('clubs/:clubId/managers')
+    getClubManagers(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+    ) {
+        return this.managerService.getClubManagers(req.user.id, clubId);
+    }
+
+    @Delete('clubs/:clubId/managers/:managerId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    removeManager(
+        @Req() req: AuthenticatedRequest,
+        @Param('clubId', ParseIntPipe) clubId: number,
+        @Param('managerId', ParseIntPipe) managerId: number,
+    ) {
+        return this.managerService.removeManager(req.user.id, clubId, managerId);
+    }
+
     @Get('club')
     getClub(@Req() req: AuthenticatedRequest) {
         return this.managerService.getManagedClub(req.user.id);
