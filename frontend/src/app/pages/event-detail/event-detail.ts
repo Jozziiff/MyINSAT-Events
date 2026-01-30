@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { EventsService } from '../../services/events.service';
 import { ClubsService } from '../../services/clubs.service';
-import { Event, RegistrationStatus } from '../../models/event.model';
+import { Event, RegistrationStatus, EventRating } from '../../models/event.model';
 import { TokenService } from '../../services/auth/token';
 import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeUntilEventEnds, formatRemainingTime, TimeUntil } from '../../utils/time.utils';
 
@@ -42,6 +42,11 @@ export class EventDetailComponent implements OnInit {
     hoverRating = signal(0);
     ratingComment = signal('');
 
+    // Event ratings list
+    eventRatings = signal<EventRating[]>([]);
+    ratingsLoading = signal(false);
+    showAllRatings = signal(false);
+
     // Computed properties
     isLoggedIn = computed(() => !!this.tokenService.getAccessToken());
 
@@ -70,6 +75,11 @@ export class EventDetailComponent implements OnInit {
         return new Date(evt.startTime) <= now && new Date(evt.endTime) >= now;
     });
 
+    displayedRatings = computed(() => {
+        const ratings = this.eventRatings();
+        return this.showAllRatings() ? ratings : ratings.slice(0, 3);
+    });
+
     async ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
@@ -89,11 +99,26 @@ export class EventDetailComponent implements OnInit {
             if (event.club && this.isLoggedIn()) {
                 this.isFollowingClub.set(await this.clubsService.isFollowing(event.club.id));
             }
+            // Load ratings if event has ended
+            if (new Date(event.endTime) < new Date()) {
+                await this.loadEventRatings(id);
+            }
         } else {
             this.error.set(this.eventsService.error() || 'Event not found');
         }
 
         this.loading.set(false);
+    }
+
+    async loadEventRatings(eventId: number) {
+        this.ratingsLoading.set(true);
+        const ratings = await this.eventsService.getEventRatings(eventId);
+        this.eventRatings.set(ratings);
+        this.ratingsLoading.set(false);
+    }
+
+    toggleShowAllRatings() {
+        this.showAllRatings.set(!this.showAllRatings());
     }
 
     async toggleFollowClub() {

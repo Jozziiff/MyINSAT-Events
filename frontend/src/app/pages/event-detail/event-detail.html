@@ -259,6 +259,79 @@
                         }
                     </div>
                     }
+
+                    <!-- Event Ratings Section (for ended events) -->
+                    @if (isPast() && (eventRatings().length > 0 || ratingsLoading())) {
+                    <div class="event-ratings-section glass-card">
+                        <div class="section-header">
+                            <h2>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                Event Ratings
+                            </h2>
+                            @if (event()!.stats.ratingCount > 0) {
+                            <div class="ratings-summary">
+                                <span class="average-rating">{{ event()!.stats.averageRating.toFixed(1) }}</span>
+                                <div class="rating-stars-display">
+                                    @for (star of [1,2,3,4,5]; track star) {
+                                    <svg class="star-icon" [class.filled]="star <= event()!.stats.averageRating" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    }
+                                </div>
+                                <span class="rating-count">({{ event()!.stats.ratingCount }} {{ event()!.stats.ratingCount === 1 ? 'rating' : 'ratings' }})</span>
+                            </div>
+                            }
+                        </div>
+
+                        @if (ratingsLoading()) {
+                        <div class="ratings-loading">
+                            <div class="spinner"></div>
+                            <p>Loading ratings...</p>
+                        </div>
+                        } @else if (eventRatings().length > 0) {
+                        <div class="ratings-list">
+                            @for (rating of displayedRatings(); track rating.id) {
+                            <div class="rating-card">
+                                <div class="rating-card-header">
+                                    <div class="user-info">
+                                        @if (rating.user?.avatarUrl) {
+                                        <img [src]="rating.user?.avatarUrl" [alt]="rating.user?.fullName" class="user-avatar">
+                                        } @else {
+                                        <div class="user-avatar user-avatar-placeholder">
+                                            {{ rating.user?.fullName?.charAt(0)?.toUpperCase() || '?' }}
+                                        </div>
+                                        }
+                                        <div class="user-details">
+                                            <span class="user-name">{{ rating.user?.fullName || 'Anonymous' }}</span>
+                                            <span class="rating-date">{{ rating.createdAt | date:'mediumDate' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="rating-stars">
+                                        @for (star of [1,2,3,4,5]; track star) {
+                                        <svg class="star-icon" [class.filled]="star <= rating.rating" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                        }
+                                    </div>
+                                </div>
+                                @if (rating.comment) {
+                                <p class="rating-comment">"{{ rating.comment }}"</p>
+                                }
+                            </div>
+                            }
+                        </div>
+                        @if (eventRatings().length > 3) {
+                        <button type="button" class="show-more-btn" (click)="toggleShowAllRatings()">
+                            {{ showAllRatings() ? 'Show Less' : 'Show All (' + eventRatings().length + ')' }}
+                        </button>
+                        }
+                        } @else {
+                        <p class="no-ratings">No ratings yet for this event.</p>
+                        }
+                    </div>
+                    }
                 </div>
 
                 <!-- Sidebar -->
