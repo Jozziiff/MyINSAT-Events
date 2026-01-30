@@ -442,3 +442,192 @@
   background: var(--color-primary);
   color: white;
 }
+
+/* Events Controls */
+.events-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.search-wrapper-profile {
+  position: relative;
+  flex: 1;
+
+  input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    transition: all var(--transition-base);
+
+    &::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: rgba(15, 23, 42, 0.6);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1em;
+    opacity: 0.6;
+  }
+}
+
+.controls-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filter-dropdown,
+.sort-dropdown {
+  position: relative;
+  flex: 1;
+}
+
+.filter-button,
+.sort-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.4);
+  color: var(--color-text-body);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+  white-space: nowrap;
+
+  span {
+    flex: 1;
+    text-align: left;
+  }
+}
+
+.filter-button:hover,
+.sort-button:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--color-primary);
+}
+
+.filter-button .chevron,
+.sort-button .chevron {
+  transition: transform 0.3s;
+  flex-shrink: 0;
+}
+
+.filter-dropdown.open .filter-button .chevron,
+.sort-dropdown.open .sort-button .chevron {
+  transform: rotate(180deg);
+}
+
+.filter-menu,
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 180px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  padding: 6px;
+  z-index: 100;
+  animation: dropdown-slide 0.2s ease-out;
+}
+
+@keyframes dropdown-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-option,
+.sort-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--color-text-body);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.filter-option .option-icon,
+.sort-option .option-icon {
+  font-size: 1em;
+  flex-shrink: 0;
+}
+
+.filter-option .option-label,
+.sort-option .option-label {
+  flex: 1;
+}
+
+.filter-option .check-icon,
+.sort-option .check-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.filter-option:hover,
+.sort-option:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.filter-option.active,
+.sort-option.active {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--color-primary-light);
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .events-controls {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .search-wrapper-profile {
+    flex: 2;
+  }
+
+  .filter-dropdown,
+  .sort-dropdown {
+    flex: 0 0 auto;
+    min-width: 150px;
+  }
+}

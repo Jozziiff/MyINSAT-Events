@@ -4,6 +4,49 @@
       <h1>Our Clubs</h1>
       <p>Find your family. Join a club that matches your passion.</p>
     </div>
+
+    <div class="controls">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search clubs..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        >
+      </div>
+
+      <div class="sort-dropdown" [class.open]="showSortDropdown()">
+        <button class="sort-button" (click)="showSortDropdown.set(!showSortDropdown())">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M7 12h10M11 18h2"></path>
+          </svg>
+          <span>{{ currentSortLabel }}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        @if (showSortDropdown()) {
+          <div class="sort-menu">
+            @for (option of sortOptions; track option.value) {
+              <button
+                class="sort-option"
+                [class.active]="selectedSort() === option.value"
+                (click)="applySort(option.value)">
+                <span class="option-icon">{{ option.icon }}</span>
+                <span class="option-label">{{ option.label }}</span>
+                @if (selectedSort() === option.value) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
   </header>
 
   @if (loading()) {
@@ -17,49 +60,117 @@
     <button class="btn-retry" (click)="ngOnInit()">Try Again</button>
   </div>
   } @else {
-  <div class="clubs-list">
-    @for (club of clubs(); track club.id) {
-    <div class="club-item-wrapper">
-      <a [routerLink]="['/clubs', club.id]" class="club-item">
-        <div class="club-image">
-          @if (club.logoUrl) {
-          <img [src]="club.logoUrl" [alt]="club.name + ' logo'">
+  <div class="clubs-grid">
+    @for (club of filteredClubs(); track club.id) {
+      <div class="club-card" (click)="navigateToClub(club.id)">
+        <!-- Club Banner -->
+        <div class="club-banner">
+          @if (club.coverImageUrl) {
+            <img [src]="club.coverImageUrl" [alt]="club.name + ' cover'" class="banner-image" />
           } @else {
-          <div class="club-logo-placeholder">
-            {{ club.name.charAt(0).toUpperCase() }}
-          </div>
+            <div class="banner-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="9" cy="9" r="2"></circle>
+                <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+              </svg>
+            </div>
+          }
+          <div class="banner-overlay"></div>
+        </div>
+
+        <!-- Club Profile Picture -->
+        <div class="club-profile">
+          @if (club.logoUrl) {
+            <img [src]="club.logoUrl" [alt]="club.name + ' logo'" class="profile-picture" />
+          } @else {
+            <div class="profile-picture profile-placeholder">
+              {{ club.name.charAt(0).toUpperCase() }}
+            </div>
           }
         </div>
-        <div class="club-info">
-          <h2>{{ club.name }}</h2>
-          <p class="description">{{ club.shortDescription }}</p>
-          <span class="view-details">View Details →</span>
+
+        <!-- Club Content -->
+        <div class="club-content">
+          <div class="club-header">
+            <h3 class="club-name">{{ club.name }}</h3>
+            <p class="club-tagline">{{ club.shortDescription }}</p>
+          </div>
+
+          <div class="club-bio">
+            <p>{{ club.about }}</p>
+          </div>
+
+          <!-- Club Stats -->
+          <div class="club-stats">
+            <div class="stat-item">
+              <div class="stat-value">{{ club.followerCount || 0 }}</div>
+              <div class="stat-label">Members</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-value">{{ formatFoundedDate(club.createdAt) }}</div>
+              <div class="stat-label">Founded</div>
+            </div>
+          </div>
         </div>
-      </a>
-      @if (isLoggedIn()) {
-      <button class="quick-follow-btn" [class.following]="club.isFollowing" [disabled]="club.followLoading"
-        (click)="toggleFollow(club, $event)" [title]="club.isFollowing ? 'Unfollow' : 'Follow'">
-        @if (club.followLoading) {
-        <span class="btn-spinner"></span>
-        } @else if (club.isFollowing) {
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-        <span class="btn-text">Following</span>
-        } @else {
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        <span class="btn-text">Follow</span>
-        }
-      </button>
-      }
-    </div>
+
+        <!-- Club Actions -->
+        <div class="club-actions">
+          @if (isLoggedIn()) {
+            <button
+              class="btn-follow"
+              [class.following]="club.isFollowing"
+              [class.loading]="club.followLoading"
+              (click)="toggleFollow(club, $event)"
+              [disabled]="club.followLoading"
+            >
+              @if (club.followLoading) {
+                <div class="btn-spinner"></div>
+              } @else if (club.isFollowing) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Following
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Follow
+              }
+            </button>
+          } @else {
+            <button class="btn-follow btn-login" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+              </svg>
+              Login to Follow
+            </button>
+          }
+
+          <button class="btn-view" (click)="navigateToClub(club.id)">
+            View Club
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
     } @empty {
-    <div class="empty-state">
-      <p>No clubs available yet. Check back soon!</p>
-    </div>
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <h3>No clubs available yet</h3>
+        <p>Check back soon for exciting clubs to join!</p>
+        <button class="btn-outline" routerLink="/events">Browse Events Instead</button>
+      </div>
     }
   </div>
   }

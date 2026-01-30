@@ -48,11 +48,91 @@
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            Upcoming Events
+            My Events
           </h2>
-          <a routerLink="/events" class="view-all-link">View All →</a>
+          <a routerLink="/events" class="view-all-link">Discover More →</a>
         </div>
-        <app-event-section [events]="upcomingEvents()"></app-event-section>
+
+        <!-- Search and Controls -->
+        <div class="events-controls">
+          <div class="search-wrapper-profile">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search your events..."
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+            >
+          </div>
+
+          <div class="controls-actions">
+            <!-- Filter Dropdown -->
+            <div class="filter-dropdown" [class.open]="showFilterDropdown()">
+              <button class="filter-button" (click)="showFilterDropdown.set(!showFilterDropdown())">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>{{ currentFilterLabel }}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              @if (showFilterDropdown()) {
+                <div class="filter-menu">
+                  @for (option of filterOptions; track option.value) {
+                    <button
+                      class="filter-option"
+                      [class.active]="selectedFilter() === option.value"
+                      (click)="applyFilter(option.value)">
+                      <span class="option-icon">{{ option.icon }}</span>
+                      <span class="option-label">{{ option.label }}</span>
+                      @if (selectedFilter() === option.value) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="sort-dropdown" [class.open]="showSortDropdown()">
+              <button class="sort-button" (click)="showSortDropdown.set(!showSortDropdown())">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M7 12h10M11 18h2"></path>
+                </svg>
+                <span>{{ currentSortLabel }}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              @if (showSortDropdown()) {
+                <div class="sort-menu">
+                  @for (option of sortOptions; track option.value) {
+                    <button
+                      class="sort-option"
+                      [class.active]="selectedSort() === option.value"
+                      (click)="applySort(option.value)">
+                      <span class="option-icon">{{ option.icon }}</span>
+                      <span class="option-label">{{ option.label }}</span>
+                      @if (selectedSort() === option.value) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <app-event-section [events]="filteredEvents()"></app-event-section>
       </div>
 
       <div class="section-card glass-card animate-card" [@fadeInUp]>

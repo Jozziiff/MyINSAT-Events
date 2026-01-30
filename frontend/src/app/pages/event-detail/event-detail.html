@@ -245,30 +245,28 @@
                         @if (isLoggedIn() && isUpcoming()) {
                         <div class="registration-actions">
                             @if (userStatus(); as status) {
+                            <!-- Show current status -->
+                            @if (status === 'INTERESTED') {
                             <div class="current-status">
-                                <span class="status-badge" [class]="'status-' + status.toLowerCase()">
-                                    {{ getStatusLabel(status) }}
+                                <span class="status-badge status-interested">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    Interested
                                 </span>
                             </div>
 
-                            @if (status === 'INTERESTED' || status === 'CANCELLED') {
-                            <!-- Toggle interested button -->
-                            <button class="btn-interested" [class.active]="status === 'INTERESTED'"
-                                (click)="toggleInterest()" [disabled]="registrationLoading()">
+                            <!-- Remove Interest button -->
+                            <button class="btn-secondary" (click)="toggleInterest()"
+                                [disabled]="registrationLoading()">
                                 @if (registrationLoading()) {
                                 <span class="btn-spinner"></span>
                                 } @else {
-                                <svg width="18" height="18" viewBox="0 0 24 24"
-                                    [attr.fill]="status === 'INTERESTED' ? 'currentColor' : 'none'"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                </svg>
-                                {{ status === 'INTERESTED' ? 'Interested' : "I'm Interested" }}
+                                Remove Interest
                                 }
                             </button>
 
-                            <!-- Confirm attendance button -->
+                            <!-- Confirm attendance button (only when interested) -->
                             <button class="btn-confirm" (click)="confirmAttendance()"
                                 [disabled]="registrationLoading()">
                                 @if (registrationLoading()) {
@@ -277,17 +275,8 @@
                                 Confirm Attendance
                                 }
                             </button>
-                            }
-
-                            @if (status === 'CONFIRMED' || status === 'PENDING_PAYMENT') {
-                            <!-- Cancel button for confirmed registrations -->
-                            <button class="btn-cancel" (click)="cancelRegistration()"
-                                [disabled]="registrationLoading()">
-                                Cancel Registration
-                            </button>
-                            }
-                            } @else {
-                            <!-- No status - show both buttons -->
+                            } @else if (status === 'CANCELLED') {
+                            <!-- Show interest button again for cancelled registrations -->
                             <button class="btn-interested" (click)="toggleInterest()"
                                 [disabled]="registrationLoading()">
                                 @if (registrationLoading()) {
@@ -301,9 +290,39 @@
                                 I'm Interested
                                 }
                             </button>
-                            <button class="btn-confirm" (click)="confirmAttendance()"
+                            } @else if (status === 'CONFIRMED' || status === 'PENDING_PAYMENT') {
+                            <div class="current-status">
+                                <span class="status-badge" [class]="'status-' + status.toLowerCase()">
+                                    {{ getStatusLabel(status) }}
+                                </span>
+                            </div>
+                            <!-- Cancel button for confirmed registrations -->
+                            <button class="btn-cancel" (click)="cancelRegistration()"
                                 [disabled]="registrationLoading()">
-                                Confirm Attendance
+                                Cancel Registration
+                            </button>
+                            } @else {
+                            <!-- Other statuses -->
+                            <div class="current-status">
+                                <span class="status-badge" [class]="'status-' + status.toLowerCase()">
+                                    {{ getStatusLabel(status) }}
+                                </span>
+                            </div>
+                            }
+                            } @else {
+                            <!-- No status - show only interested button -->
+                            <button class="btn-interested" (click)="toggleInterest()"
+                                [disabled]="registrationLoading()">
+                                @if (registrationLoading()) {
+                                <span class="btn-spinner"></span>
+                                } @else {
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                                I'm Interested
+                                }
                             </button>
                             }
                         </div>
@@ -312,10 +331,58 @@
                             <p>Log in to register for this event</p>
                             <a routerLink="/login" class="btn-login">Log In</a>
                         </div>
+                        } @else if (isLive()) {
+                        <div class="live-event-notice">
+                            <div class="status-display live">
+                                <div class="live-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="12" r="8"></circle>
+                                    </svg>
+                                    <span class="live-pulse"></span>
+                                </div>
+                                <div class="status-text">
+                                    <span class="status-label">Live Now</span>
+                                    <p>This event is currently happening</p>
+                                </div>
+                            </div>
+                        </div>
                         } @else if (isPast()) {
                         <div class="past-event-notice">
-                            <span class="notice-badge">Event Ended</span>
-                            <p>This event has already taken place</p>
+                            @if (userStatus() === 'ATTENDED') {
+                                <div class="status-display attended">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                    <div class="status-text">
+                                        <span class="status-label">You Attended</span>
+                                        <p>Thanks for participating in this event!</p>
+                                    </div>
+                                </div>
+                            } @else if (userStatus() === 'NO_SHOW') {
+                                <div class="status-display not-attended">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                                    </svg>
+                                    <div class="status-text">
+                                        <span class="status-label">Did Not Attend</span>
+                                        <p>You were registered but didn't attend this event</p>
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="status-display ended">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <div class="status-text">
+                                        <span class="status-label">Event Ended</span>
+                                        <p>This event has already taken place</p>
+                                    </div>
+                                </div>
+                            }
                         </div>
                         }
                     </div>
