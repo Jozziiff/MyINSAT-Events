@@ -22,8 +22,17 @@
       @if (isAuthenticated()) {
         <div class="user-menu">
           <a routerLink="/profile" routerLinkActive="active" class="profile-link" [@nameHoverAnimation]="nameHoverState" (mouseenter)="onNameMouseEnter()" (mouseleave)="onNameMouseLeave()">
-          {{ currentUser()?.fullName }}
-        </a>
+            <div class="profile-avatar-wrapper">
+              @if (currentUser()?.avatarUrl) {
+                <img [src]="currentUser()?.avatarUrl" alt="Profile" class="profile-avatar" />
+              } @else {
+                <div class="profile-avatar profile-avatar-placeholder">
+                  {{ currentUser()?.fullName?.charAt(0)?.toUpperCase() }}
+                </div>
+              }
+            </div>
+            <span class="profile-name">{{ currentUser()?.fullName }}</span>
+          </a>
           <button class="btn-logout" (click)="logout()">Log Out</button>
         </div>
       } @else {
@@ -54,7 +63,18 @@
         <a routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
       }
       @if (isAuthenticated()) {
-        <a routerLink="/profile" routerLinkActive="active" (click)="toggleMenu()">Profile</a>
+        <a routerLink="/profile" routerLinkActive="active" class="mobile-profile-link" (click)="toggleMenu()">
+          <div class="profile-avatar-wrapper profile-avatar-wrapper--mobile">
+            @if (currentUser()?.avatarUrl) {
+              <img [src]="currentUser()?.avatarUrl" alt="Profile" class="profile-avatar" />
+            } @else {
+              <div class="profile-avatar profile-avatar-placeholder">
+                {{ currentUser()?.fullName?.charAt(0)?.toUpperCase() }}
+              </div>
+            }
+          </div>
+          <span class="mobile-profile-name">{{ currentUser()?.fullName }}</span>
+        </a>
         <button class="btn-mobile-logout" (click)="logout()">Log Out</button>
       } @else {
         <a routerLink="/login" routerLinkActive="active" (click)="toggleMenu()">Log In</a>

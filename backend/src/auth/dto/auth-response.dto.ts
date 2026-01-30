@@ -22,6 +22,13 @@ export class UserResponseDto {
   fullName: string;
 
   @ApiProperty({
+    description: 'Avatar URL of the user',
+    required: false,
+    nullable: true,
+  })
+  avatarUrl: string | null;
+
+  @ApiProperty({
     description: 'Role of the user in the system',
     enum: UserRole,
   })
