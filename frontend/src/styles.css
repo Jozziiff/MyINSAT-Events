@@ -50,6 +50,27 @@
   --color-warning: #F59E0B;
   --color-error: #EF4444;
 
+  /* Registration Status Colors - Centralized */
+  --status-interested-bg: rgba(236, 72, 153, 0.15);
+  --status-interested-color: #ec4899;
+  --status-interested-border: rgba(236, 72, 153, 0.4);
+
+  --status-confirmed-bg: rgba(251, 191, 36, 0.15);
+  --status-confirmed-color: #f59e0b;
+  --status-confirmed-border: rgba(251, 191, 36, 0.4);
+
+  --status-pending-bg: rgba(16, 185, 129, 0.15);
+  --status-pending-color: #10b981;
+  --status-pending-border: rgba(16, 185, 129, 0.4);
+
+  --status-rejected-bg: rgba(239, 68, 68, 0.15);
+  --status-rejected-color: #ef4444;
+  --status-rejected-border: rgba(239, 68, 68, 0.4);
+
+  --status-attended-bg: rgba(168, 85, 247, 0.15);
+  --status-attended-color: #a855f7;
+  --status-attended-border: rgba(168, 85, 247, 0.4);
+
   /* Spacing System */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -285,4 +306,81 @@ button:active {
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* =====================================================
+   REGISTRATION STATUS BADGES - Global Styles
+   ===================================================== */
+
+/* Base Badge Style */
+.registration-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4em 0.85em;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all var(--transition-base);
+}
+
+.registration-badge svg,
+.status-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Interested Status - Pink */
+.registration-badge.status-INTERESTED,
+.status-badge.status-INTERESTED{
+  background: var(--status-interested-bg);
+  color: var(--status-interested-color);
+  border: 1.5px solid var(--status-interested-border);
+}
+
+/* Confirmed Status - Golden */
+.registration-badge.status-CONFIRMED,
+.status-badge.status-CONFIRMED {
+  background: var(--status-confirmed-bg);
+  color: var(--status-confirmed-color);
+  border: 1.5px solid var(--status-confirmed-border);
+}
+
+/* Pending Payment Status - Green */
+.registration-badge.status-PENDING_PAYMENT,
+.status-badge.status-PENDING_PAYMENT{
+  background: var(--status-pending-bg);
+  color: var(--status-pending-color);
+  border: 1.5px solid var(--status-pending-border);
+}
+
+/* Rejected Status - Red */
+.registration-badge.status-REJECTED,
+.status-badge.status-REJECTED{
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-color);
+  border: 1.5px solid var(--status-rejected-border);
+}
+
+/* Attended Status - Green (Stronger) */
+.registration-badge.status-ATTENDED,
+.status-badge.status-attended {
+  background: var(--status-attended-bg);
+  color: var(--status-attended-color);
+  border: 1.5px solid var(--status-attended-border);
+}
+
+/* Button States */
+.btn-interest.confirmed,
+.btn-interest.rejected {
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+
+.btn-interest.confirmed:hover,
+.btn-interest.rejected:hover {
+  transform: none;
 }

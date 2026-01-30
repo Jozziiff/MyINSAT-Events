@@ -24,8 +24,9 @@ import {
 import { ManagedClub, ClubStatus } from '../../../models/club.model';
 import { RegistrationStatus } from '../../../models/event.model';
 import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
+import { isEventLive } from '../../../utils/time.utils';
 
-type EventFilterType = 'all' | 'confirmed' | 'pending' | 'interested';
+type EventFilterType = 'all' | 'confirmed' | 'pending' | 'interested' | 'rejected' | 'live' | 'attended';
 type EventSortType = 'date-asc' | 'date-desc';
 
 @Component({
@@ -100,9 +101,12 @@ export class ProfilePage implements OnInit {
 
   filterOptions = [
     { value: 'all' as EventFilterType, label: 'All Events', icon: '📋' },
+    { value: 'live' as EventFilterType, label: 'Live Now', icon: '🔴' },
     { value: 'confirmed' as EventFilterType, label: 'Confirmed', icon: '✓' },
     { value: 'pending' as EventFilterType, label: 'Pending Payment', icon: '⏳' },
-    { value: 'interested' as EventFilterType, label: 'Interested', icon: '❤️' }
+    { value: 'interested' as EventFilterType, label: 'Interested', icon: '❤️' },
+    { value: 'attended' as EventFilterType, label: 'Attended', icon: '🎯' },
+    { value: 'rejected' as EventFilterType, label: 'Rejected', icon: '❌' }
   ];
 
   sortOptions = [
@@ -122,8 +126,11 @@ export class ProfilePage implements OnInit {
       );
     }
 
-    // Apply filter by registration status
+    // Apply filter by registration status or live status
     switch (this.selectedFilter()) {
+      case 'live':
+        filtered = filtered.filter(e => isEventLive(e.startTime, e.endTime));
+        break;
       case 'confirmed':
         filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.CONFIRMED);
         break;
@@ -132,6 +139,12 @@ export class ProfilePage implements OnInit {
         break;
       case 'interested':
         filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.INTERESTED);
+        break;
+      case 'attended':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.ATTENDED);
+        break;
+      case 'rejected':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.REJECTED);
         break;
     }
 
@@ -173,26 +186,22 @@ export class ProfilePage implements OnInit {
 
       if (dashboard) {
         this.profile.set(dashboard.profile);
+        this.upcomingEvents.set(dashboard.upcomingEvents);
+        this.pastEvents.set(dashboard.recentEvents);
+        this.followedClubs.set(dashboard.followedClubs);
 
-        // Combine upcoming and recent events to show all registered events
-        const allEvents = [...dashboard.upcomingEvents, ...dashboard.recentEvents];
-        this.allRegisteredEvents.set(allEvents);
+        // Combine for filtering/searching UI
+        this.allRegisteredEvents.set([...dashboard.upcomingEvents, ...dashboard.recentEvents]);
 
-        // Update stats - count all events with any registration status
-        const upcomingCount = allEvents.filter(e => {
-          const eventDate = new Date(e.startTime).getTime();
-          const now = new Date().getTime();
-          return eventDate >= now;
-        }).length;
+        // Adjust upcoming count to exclude live events
+        const upcomingCount = dashboard.upcomingEvents.filter(e =>
+          !isEventLive(e.startTime, e.endTime)
+        ).length;
 
         this.stats.set({
           ...dashboard.stats,
           eventsUpcoming: upcomingCount
         });
-
-        this.upcomingEvents.set(dashboard.upcomingEvents);
-        this.pastEvents.set(dashboard.recentEvents);
-        this.followedClubs.set(dashboard.followedClubs);
       }
 
       this.userRatings.set(ratings);
@@ -234,8 +243,9 @@ export class ProfilePage implements OnInit {
   async unfollowClub(clubId: number) {
     const success = await this.userService.unfollowClub(clubId);
     if (success) {
+      // Update local state without reloading
       this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
-      this.stats.update(s => ({ ...s, clubsFollowed: s.clubsFollowed - 1 }));
+      this.stats.update(s => ({ ...s, clubsFollowed: Math.max(0, s.clubsFollowed - 1) }));
     }
   }
 

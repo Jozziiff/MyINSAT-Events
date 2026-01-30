@@ -4,18 +4,41 @@
       @for (event of events; track event.id) {
         <a [routerLink]="['/events', event.id]" class="event-card">
           <div class="event-header">
-            <span class="event-title">{{ event.title }}</span>
-            <span 
-              class="event-status" 
-              [class.upcoming]="event.status === 'upcoming'" 
+            <div class="event-title-row">
+              <span class="event-title">{{ event.title }}</span>
+              @if ((event.status === 'upcoming' || event.registrationStatus === RegistrationStatus.ATTENDED) && !isLive(event) && getTimeUntil(event)) {
+                <span class="countdown-badge"
+                      [class.urgent]="getTimeUntil(event)!.unit === 'hours' || (getTimeUntil(event)!.unit === 'days' && getTimeUntil(event)!.value <= 1)"
+                      [class.very-urgent]="getTimeUntil(event)!.unit === 'minutes'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  {{ formatCountdown(getTimeUntil(event)) }}
+                </span>
+              } @else if (isLive(event)) {
+                <span class="live-badge pulsing">
+                  <span class="live-dot"></span>
+                  {{ formatRemainingTime(getTimeUntilEventEnds(event)) }}
+                </span>
+              }
+            </div>
+            <span
+              class="event-status"
+              [class.live]="isLive(event)"
+              [class.upcoming]="event.status === 'upcoming' && !isLive(event)"
               [class.past]="event.status === 'past'"
               [class.attended]="event.status === 'attended'"
             >
-              @switch (event.status) {
-                @case ('upcoming') { Upcoming }
-                @case ('past') { Past }
-                @case ('attended') { ✓ Attended }
-                @default { {{ event.status }} }
+              @if (isLive(event)) {
+                Live
+              } @else {
+                @switch (event.status) {
+                  @case ('upcoming') { Upcoming }
+                  @case ('past') { Past }
+                  @case ('attended') { ✓ Attended }
+                  @default { {{ event.status }} }
+                }
               }
             </span>
           </div>
@@ -44,8 +67,41 @@
           @if (event.registrationStatus) {
             <div class="event-registration">
               <span class="registration-badge" [class]="'status-' + event.registrationStatus">
-                {{ event.registrationStatus }}
+                @if (event.registrationStatus === RegistrationStatus.CONFIRMED) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                } @else if (event.registrationStatus === RegistrationStatus.PENDING_PAYMENT) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                } @else if (event.registrationStatus === RegistrationStatus.INTERESTED) {
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                } @else if (event.registrationStatus === RegistrationStatus.REJECTED) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                } @else if (event.registrationStatus === RegistrationStatus.ATTENDED) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                }
+                <span>{{ event.registrationStatus === RegistrationStatus.PENDING_PAYMENT ? 'Pending Payment' : (event.registrationStatus | titlecase) }}</span>
               </span>
+              @if (event.registrationStatus === RegistrationStatus.ATTENDED && event.userRating) {
+                <span class="user-rating">
+                  <svg class="star-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span>{{ event.userRating }}/5</span>
+                </span>
+              }
             </div>
           }
         </a>

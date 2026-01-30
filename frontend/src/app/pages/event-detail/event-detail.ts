@@ -1,15 +1,17 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { EventsService } from '../../services/events.service';
 import { ClubsService } from '../../services/clubs.service';
 import { Event, RegistrationStatus } from '../../models/event.model';
 import { TokenService } from '../../services/auth/token';
+import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeUntilEventEnds, formatRemainingTime, TimeUntil } from '../../utils/time.utils';
 
 @Component({
     selector: 'app-event-detail',
-    imports: [CommonModule, RouterModule],
+    imports: [CommonModule, RouterModule, FormsModule],
     templateUrl: './event-detail.html',
     styleUrl: './event-detail.css',
     animations: [fadeSlideIn]
@@ -33,10 +35,21 @@ export class EventDetailComponent implements OnInit {
     // Registration state
     registrationLoading = signal(false);
 
+    // Rating state
+    showRatingModal = signal(false);
+    ratingLoading = signal(false);
+    selectedRating = signal(0);
+    hoverRating = signal(0);
+    ratingComment = signal('');
+
     // Computed properties
     isLoggedIn = computed(() => !!this.tokenService.getAccessToken());
 
     userStatus = computed(() => this.event()?.userInteraction?.status ?? null);
+
+    hasAttended = computed(() => this.userStatus() === RegistrationStatus.ATTENDED);
+
+    currentUserRating = computed(() => this.event()?.userInteraction?.userRating ?? 0);
 
     isUpcoming = computed(() => {
         const evt = this.event();
@@ -257,6 +270,82 @@ export class EventDetailComponent implements OnInit {
             [RegistrationStatus.NO_SHOW]: 'No Show',
         };
         return labels[status] || status;
+    }
+
+    // Time utilities
+    getTimeUntil(): TimeUntil | null {
+        const evt = this.event();
+        if (!evt) return null;
+        return getTimeUntilEvent(evt.startTime);
+    }
+
+    formatCountdown(timeUntil: TimeUntil | null): string {
+        return formatCountdown(timeUntil);
+    }
+
+    getTimeUntilEventEnds(): TimeUntil | null {
+        const evt = this.event();
+        if (!evt) return null;
+        return getTimeUntilEventEnds(evt.endTime);
+    }
+
+    formatRemainingTime(timeUntil: TimeUntil | null): string {
+        return formatRemainingTime(timeUntil);
+    }
+
+    openRatingModal() {
+        const current = this.currentUserRating();
+        this.selectedRating.set(current);
+        this.showRatingModal.set(true);
+    }
+
+    closeRatingModal() {
+        this.showRatingModal.set(false);
+        this.selectedRating.set(0);
+        this.hoverRating.set(0);
+        this.ratingComment.set('');
+    }
+
+    setRating(rating: number) {
+        this.selectedRating.set(rating);
+    }
+
+    setHoverRating(rating: number) {
+        this.hoverRating.set(rating);
+    }
+
+    async submitRating() {
+        const evt = this.event();
+        if (!evt || this.selectedRating() === 0) return;
+
+        this.ratingLoading.set(true);
+
+        try {
+            const result = await this.eventsService.rateEvent(evt.id, {
+                rating: this.selectedRating(),
+                comment: this.ratingComment() || undefined
+            });
+
+            if (result) {
+                // Update local event with new rating
+                const updated = { ...evt };
+                if (updated.userInteraction) {
+                    updated.userInteraction = {
+                        ...updated.userInteraction,
+                        hasRated: true,
+                        userRating: this.selectedRating()
+                    };
+                }
+                this.event.set(updated);
+                this.closeRatingModal();
+                // Reload to get updated average rating
+                await this.loadEvent(evt.id);
+            }
+        } catch (error) {
+            console.error('Failed to submit rating:', error);
+        } finally {
+            this.ratingLoading.set(false);
+        }
     }
 
     goBack() {

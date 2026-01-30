@@ -244,7 +244,7 @@ export class UsersService {
       this.registrationRepository.count({
         where: {
           userId,
-          status: In([RegistrationStatus.INTERESTED, RegistrationStatus.CONFIRMED]),
+          status: In([RegistrationStatus.INTERESTED, RegistrationStatus.CONFIRMED, RegistrationStatus.PENDING_PAYMENT]),
         },
       }),
       this.clubFollowerRepository.count({ where: { userId } }),
@@ -281,15 +281,15 @@ export class UsersService {
     const registrations = await this.registrationRepository.find({
       where: {
         userId,
-        status: In([RegistrationStatus.INTERESTED, RegistrationStatus.CONFIRMED, RegistrationStatus.PENDING_PAYMENT]),
+        status: In([RegistrationStatus.INTERESTED, RegistrationStatus.CONFIRMED, RegistrationStatus.PENDING_PAYMENT, RegistrationStatus.REJECTED]),
       },
-      relations: ['event', 'event.club'],
+      relations: ['event', 'event.club', 'userRating'],
       order: { createdAt: 'DESC' },
     });
 
-    // Filter to only upcoming events and map
+    // Filter to include upcoming events and live events (not ended yet)
     return registrations
-      .filter(reg => reg.event && new Date(reg.event.startTime) >= now)
+      .filter(reg => reg.event && new Date(reg.event.endTime) >= now)
       .slice(0, limit)
       .map(reg => this.mapToUserEventDto(reg, 'upcoming'));
   }
@@ -303,13 +303,14 @@ export class UsersService {
         userId,
         status: In([RegistrationStatus.ATTENDED, RegistrationStatus.CONFIRMED]),
       },
-      relations: ['event', 'event.club'],
+      relations: ['event', 'event.club', 'userRating'],
       order: { updatedAt: 'DESC' },
     });
 
-    // Filter to past events
+    // Filter to events that have started (includes live events)
+    // Changed from endTime < now to startTime <= now to include live attended events
     return registrations
-      .filter(reg => reg.event && new Date(reg.event.endTime) < now)
+      .filter(reg => reg.event && new Date(reg.event.startTime) <= now)
       .slice(0, limit)
       .map(reg => this.mapToUserEventDto(reg, 'past'));
   }
@@ -324,6 +325,7 @@ export class UsersService {
       status,
       registrationStatus: registration.status,
       photoUrl: event.photoUrl,
+      userRating: registration.userRating?.rating, // Include user's rating if exists
       club: event.club ? {
         id: event.club.id,
         name: event.club.name,
