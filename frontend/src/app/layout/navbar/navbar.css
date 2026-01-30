@@ -112,8 +112,9 @@
     border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: var(--radius-full);
     text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     cursor: pointer;
+    will-change: transform;
   }
 
   .profile-link:hover,
