@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ProfileHeader } from '../components/profile-header/profile-header';
 import { EventSection } from '../components/event-section/event-section';
 import { ClubList } from '../components/club-list/club-list';
@@ -23,12 +24,17 @@ import {
 import { ManagedClub, ClubStatus } from '../../../models/club.model';
 import { RegistrationStatus } from '../../../models/event.model';
 import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
+import { isEventLive } from '../../../utils/time.utils';
+
+type EventFilterType = 'all' | 'confirmed' | 'pending' | 'interested' | 'rejected' | 'live' | 'attended';
+type EventSortType = 'date-asc' | 'date-desc';
 
 @Component({
   selector: 'app-profile-page',
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ProfileHeader,
     EventSection,
     ClubList,
@@ -83,6 +89,83 @@ export class ProfilePage implements OnInit {
   userRatings = signal<UserRating[]>([]);
   managedClubs = signal<ManagedClub[]>([]);
 
+  // All registered events (including past)
+  allRegisteredEvents = signal<ProfileEvent[]>([]);
+
+  // Filter and sort for upcoming events
+  searchQuery = signal('');
+  selectedFilter = signal<EventFilterType>('all');
+  selectedSort = signal<EventSortType>('date-asc');
+  showFilterDropdown = signal(false);
+  showSortDropdown = signal(false);
+
+  filterOptions = [
+    { value: 'all' as EventFilterType, label: 'All Events', icon: '📋' },
+    { value: 'live' as EventFilterType, label: 'Live Now', icon: '🔴' },
+    { value: 'confirmed' as EventFilterType, label: 'Confirmed', icon: '✓' },
+    { value: 'pending' as EventFilterType, label: 'Pending Payment', icon: '⏳' },
+    { value: 'interested' as EventFilterType, label: 'Interested', icon: '❤️' },
+    { value: 'attended' as EventFilterType, label: 'Attended', icon: '🎯' },
+    { value: 'rejected' as EventFilterType, label: 'Rejected', icon: '❌' }
+  ];
+
+  sortOptions = [
+    { value: 'date-asc' as EventSortType, label: 'Closest First', icon: '📅↑' },
+    { value: 'date-desc' as EventSortType, label: 'Furthest First', icon: '📅↓' }
+  ];
+
+  filteredEvents = computed(() => {
+    let filtered = this.allRegisteredEvents();
+    const query = this.searchQuery().toLowerCase();
+
+    // Apply search
+    if (query) {
+      filtered = filtered.filter(event =>
+        event.title.toLowerCase().includes(query) ||
+        event.clubName?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply filter by registration status or live status
+    switch (this.selectedFilter()) {
+      case 'live':
+        filtered = filtered.filter(e => isEventLive(e.startTime, e.endTime));
+        break;
+      case 'confirmed':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.CONFIRMED);
+        break;
+      case 'pending':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.PENDING_PAYMENT);
+        break;
+      case 'interested':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.INTERESTED);
+        break;
+      case 'attended':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.ATTENDED);
+        break;
+      case 'rejected':
+        filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.REJECTED);
+        break;
+    }
+
+    // Apply sort
+    const sorted = [...filtered];
+    const now = new Date().getTime();
+
+    sorted.sort((a, b) => {
+      const dateA = new Date(a.startTime).getTime();
+      const dateB = new Date(b.startTime).getTime();
+
+      if (this.selectedSort() === 'date-asc') {
+        return dateA - dateB; // Closest first
+      } else {
+        return dateB - dateA; // Furthest first
+      }
+    });
+
+    return sorted;
+  });
+
   // Edit mode
   isEditing = signal(false);
 
@@ -103,10 +186,22 @@ export class ProfilePage implements OnInit {
 
       if (dashboard) {
         this.profile.set(dashboard.profile);
-        this.stats.set(dashboard.stats);
         this.upcomingEvents.set(dashboard.upcomingEvents);
         this.pastEvents.set(dashboard.recentEvents);
         this.followedClubs.set(dashboard.followedClubs);
+
+        // Combine for filtering/searching UI
+        this.allRegisteredEvents.set([...dashboard.upcomingEvents, ...dashboard.recentEvents]);
+
+        // Adjust upcoming count to exclude live events
+        const upcomingCount = dashboard.upcomingEvents.filter(e =>
+          !isEventLive(e.startTime, e.endTime)
+        ).length;
+
+        this.stats.set({
+          ...dashboard.stats,
+          eventsUpcoming: upcomingCount
+        });
       }
 
       this.userRatings.set(ratings);
@@ -122,6 +217,24 @@ export class ProfilePage implements OnInit {
     this.isEditing.update(v => !v);
   }
 
+  applyFilter(filter: EventFilterType) {
+    this.selectedFilter.set(filter);
+    this.showFilterDropdown.set(false);
+  }
+
+  applySort(sort: EventSortType) {
+    this.selectedSort.set(sort);
+    this.showSortDropdown.set(false);
+  }
+
+  get currentFilterLabel(): string {
+    return this.filterOptions.find(opt => opt.value === this.selectedFilter())?.label || 'Filter';
+  }
+
+  get currentSortLabel(): string {
+    return this.sortOptions.find(opt => opt.value === this.selectedSort())?.label || 'Sort';
+  }
+
   async onProfileUpdated() {
     this.isEditing.set(false);
     await this.loadDashboard();
@@ -130,8 +243,9 @@ export class ProfilePage implements OnInit {
   async unfollowClub(clubId: number) {
     const success = await this.userService.unfollowClub(clubId);
     if (success) {
+      // Update local state without reloading
       this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
-      this.stats.update(s => ({ ...s, clubsFollowed: s.clubsFollowed - 1 }));
+      this.stats.update(s => ({ ...s, clubsFollowed: Math.max(0, s.clubsFollowed - 1) }));
     }
   }
 

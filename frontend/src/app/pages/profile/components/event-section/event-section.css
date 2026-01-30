@@ -48,10 +48,16 @@
 
 .event-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 0.7rem;
+}
+
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .event-title {
@@ -62,14 +68,95 @@
   transition: color 0.3s ease;
 }
 
+/* Countdown Badge */
+.countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-full);
+  color: #10b981;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.countdown-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.countdown-badge.urgent {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.3);
+  color: #f97316;
+}
+
+.countdown-badge.very-urgent {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-weight: 700;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Live Badge */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-full);
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.live-badge.pulsing {
+  animation: pulse-live-badge 2s ease-in-out infinite;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-live-badge {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px 3px rgba(239, 68, 68, 0.3);
+    transform: scale(1.02);
+  }
+}
+
 .event-card:hover .event-title {
   color: var(--color-primary-light);
 }
 
 .event-status {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.3em 0.9em;
+  padding: 0.25em 0.7em;
   border-radius: var(--radius-full);
   text-transform: capitalize;
   transition: all 0.3s ease;
@@ -80,6 +167,13 @@
   background: rgba(16, 185, 129, 0.15);
   color: var(--color-success);
   border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.event-status.live {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-weight: 700;
 }
 
 .event-status.past {
@@ -127,42 +221,34 @@
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.registration-badge {
+.user-rating {
   display: inline-flex;
   align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25em 0.7em;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
   border-radius: var(--radius-full);
-  text-transform: capitalize;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.registration-badge.status-interested {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--color-primary-light);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+.user-rating .star-icon {
+  width: 14px;
+  height: 14px;
 }
 
-.registration-badge.status-confirmed {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--color-success);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+.user-rating span {
+  color: var(--color-text-body);
 }
 
-.registration-badge.status-attended {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--color-success);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-
-/* Status attended badge */
-.event-status.attended {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--color-success);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
 
 /* Empty state */
 .empty-state {

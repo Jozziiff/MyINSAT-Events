@@ -72,14 +72,19 @@ export class ClubsService {
   async getAllClubs(): Promise<ClubSummaryDto[]> {
     const clubs = await this.clubRepository.find({
       where: { status: ClubStatus.APPROVED },
-      select: ['id', 'name', 'shortDescription', 'logoUrl'],
+      select: ['id', 'name', 'shortDescription', 'logoUrl', 'coverImageUrl', 'about', 'createdAt'],
+      relations: ['followers'],
     });
 
     return clubs.map((club) => ({
       id: club.id,
       name: club.name,
       shortDescription: club.shortDescription,
-      logoUrl: club.logoUrl
+      logoUrl: club.logoUrl,
+      coverImageUrl: club.coverImageUrl,
+      about: club.about,
+      createdAt: club.createdAt,
+      followerCount: club.followers?.length || 0
     }));
   }
 
@@ -478,7 +483,8 @@ export class ClubsService {
   })[]> {
     const clubs = await this.clubRepository.find({
       where: { status: ClubStatus.APPROVED },
-      select: ['id', 'name', 'shortDescription', 'logoUrl'],
+      select: ['id', 'name', 'shortDescription', 'logoUrl', 'coverImageUrl', 'about', 'createdAt'],
+      relations: ['followers'],
     });
 
     // Get user's join requests
@@ -498,6 +504,10 @@ export class ClubsService {
       name: club.name,
       shortDescription: club.shortDescription,
       logoUrl: club.logoUrl,
+      coverImageUrl: club.coverImageUrl,
+      about: club.about,
+      createdAt: club.createdAt,
+      followerCount: club.followers?.length || 0,
       joinRequestStatus: requestMap.get(club.id) || null,
       isManager: managedClubIds.has(club.id),
     }));

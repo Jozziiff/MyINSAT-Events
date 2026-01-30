@@ -26,4 +26,8 @@ export class ClubSummaryDto {
   name: string;
   shortDescription: string;
   logoUrl: string;
+  coverImageUrl?: string;
+  about: string;
+  createdAt: Date;
+  followerCount?: number;
 }

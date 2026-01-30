@@ -21,6 +21,10 @@ export interface ClubSummary {
   name: string;
   shortDescription: string;
   logoUrl: string;
+  coverImageUrl?: string;
+  about: string;
+  followerCount?: number;
+  createdAt: Date;
 }
 
 // Full club details
