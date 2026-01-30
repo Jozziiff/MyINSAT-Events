@@ -406,13 +406,7 @@ export class ClubsService {
 
   // Get pending join requests for a club (for managers)
   async getClubJoinRequests(clubId: number, userId: number): Promise<any[]> {
-    // Verify user is a manager of this club
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId, clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can view join requests');
-    }
+    // Access check is handled by ClubAccessGuard
 
     const requests = await this.joinRequestRepository.find({
       where: { clubId, status: JoinRequestStatus.PENDING },
@@ -446,14 +440,6 @@ export class ClubsService {
       throw new NotFoundException(`Join request with ID ${requestId} not found`);
     }
 
-    // Verify the approver is a manager
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId: managerId, clubId: request.clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can approve requests');
-    }
-
     // Update request status
     request.status = JoinRequestStatus.APPROVED;
     await this.joinRequestRepository.save(request);
@@ -476,14 +462,6 @@ export class ClubsService {
 
     if (!request) {
       throw new NotFoundException(`Join request with ID ${requestId} not found`);
-    }
-
-    // Verify the rejector is a manager
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId: managerId, clubId: request.clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can reject requests');
     }
 
     request.status = JoinRequestStatus.REJECTED;

@@ -16,6 +16,10 @@ export class EventSectionDto {
 }
 
 export class CreateEventDto {
+    @IsNumber()
+    @IsNotEmpty()
+    clubId: number;
+
     @IsString()
     @IsNotEmpty()
     title: string;

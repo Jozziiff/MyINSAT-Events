@@ -235,6 +235,6 @@ export class ManagerDashboardComponent implements OnInit {
     }
 
     editEvent(eventId: number) {
-        this.router.navigate(['/manager/events', eventId, 'edit']);
+        this.router.navigate(['/manager/clubs', this.selectedClubId(), 'events', eventId, 'edit']);
     }
 }

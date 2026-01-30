@@ -23,6 +23,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
 import { UpdateRegistrationStatusDto } from './dto/update-registration-status.dto';
+import { ClubAccessGuard } from './guards/club-access.guard';
 
 interface AuthenticatedRequest extends Request {
     user: {
@@ -41,10 +42,11 @@ export class ManagerController {
 
     @Get('clubs')
     getAllManagedClubs(@Req() req: AuthenticatedRequest) {
-        return this.managerService.getAllManagedClubs(req.user.id);
+        return this.managerService.getAllManagedClubs(req.user.id, req.user.role);
     }
 
     @Get('clubs/:clubId')
+    @UseGuards(ClubAccessGuard)
     getManagedClubById(
         @Req() req: AuthenticatedRequest,
         @Param('clubId', ParseIntPipe) clubId: number,
@@ -53,14 +55,15 @@ export class ManagerController {
     }
 
     @Get('clubs/:clubId/events')
+    @UseGuards(ClubAccessGuard)
     getClubEvents(
-        @Req() req: AuthenticatedRequest,
         @Param('clubId', ParseIntPipe) clubId: number,
     ) {
-        return this.managerService.getClubEvents(req.user.id, clubId);
+        return this.managerService.getClubEvents(clubId);
     }
 
     @Get('clubs/:clubId/managers')
+    @UseGuards(ClubAccessGuard)
     getClubManagers(
         @Req() req: AuthenticatedRequest,
         @Param('clubId', ParseIntPipe) clubId: number,
@@ -69,6 +72,7 @@ export class ManagerController {
     }
 
     @Delete('clubs/:clubId/managers/:managerId')
+    @UseGuards(ClubAccessGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     removeManager(
         @Req() req: AuthenticatedRequest,
@@ -78,27 +82,23 @@ export class ManagerController {
         return this.managerService.removeManager(req.user.id, clubId, managerId);
     }
 
-    @Get('club')
-    getClub(@Req() req: AuthenticatedRequest) {
-        return this.managerService.getManagedClub(req.user.id);
-    }
-
-    @Put('club')
-    updateClub(@Req() req: AuthenticatedRequest, @Body() updateClubDto: UpdateClubDto) {
-        return this.managerService.updateClub(req.user.id, updateClubDto);
-    }
-
-    @Get('events')
-    getAllEvents(@Req() req: AuthenticatedRequest) {
-        return this.managerService.getAllEvents(req.user.id);
+    @Put('clubs/:clubId')
+    @UseGuards(ClubAccessGuard)
+    updateClub(
+        @Param('clubId', ParseIntPipe) clubId: number,
+        @Body() updateClubDto: UpdateClubDto,
+    ) {
+        return this.managerService.updateClub(clubId, updateClubDto);
     }
 
     @Post('events')
+    @UseGuards(ClubAccessGuard)
     createEvent(@Req() req: AuthenticatedRequest, @Body() createEventDto: CreateEventDto) {
-        return this.managerService.createEvent(req.user.id, createEventDto);
+        return this.managerService.createEvent(createEventDto);
     }
 
     @Put('events/:id')
+    @UseGuards(ClubAccessGuard)
     updateEvent(
         @Req() req: AuthenticatedRequest,
         @Param('id', ParseIntPipe) id: number,
@@ -108,22 +108,26 @@ export class ManagerController {
     }
 
     @Delete('events/:id')
+    @UseGuards(ClubAccessGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     deleteEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
         return this.managerService.deleteEvent(req.user.id, id);
     }
 
     @Patch('events/:id/publish')
+    @UseGuards(ClubAccessGuard)
     publishEvent(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
         return this.managerService.publishEvent(req.user.id, id);
     }
 
     @Get('events/:id/registrations')
+    @UseGuards(ClubAccessGuard)
     getEventRegistrations(@Req() req: AuthenticatedRequest, @Param('id', ParseIntPipe) id: number) {
         return this.managerService.getEventRegistrations(req.user.id, id);
     }
 
     @Patch('registrations/:id/status')
+    @UseGuards(ClubAccessGuard)
     updateRegistrationStatus(
         @Req() req: AuthenticatedRequest,
         @Param('id', ParseIntPipe) id: number,

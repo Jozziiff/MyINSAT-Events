@@ -40,11 +40,11 @@ export class EventFormComponent implements OnInit {
     submitting = signal(false);
     error = signal<string | null>(null);
     success = signal(false);
-    loadingEvent = signal(false);
+    loading = signal(false);
 
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
-
+    clubId = signal<number | null>(null);
     // Required fields
     title = '';
     description = '';
@@ -77,6 +77,11 @@ export class EventFormComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        const clubIdParam = this.route.snapshot.paramMap.get('clubId');
+        if (clubIdParam) {
+            this.clubId.set(+clubIdParam);
+        }
+
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.isEditMode.set(true);
@@ -85,51 +90,61 @@ export class EventFormComponent implements OnInit {
         }
     }
 
-    async loadEvent(id: number) {
-        this.loadingEvent.set(true);
-        try {
-            const events = await this.managerApi.getAllEvents().toPromise();
-            const event = events?.find(e => e.id === id);
-
-            if (event) {
-                this.title = event.title;
-                this.description = event.description || '';
-                this.location = event.location;
-                this.startTime = this.formatDateForInput(event.startTime);
-                this.endTime = this.formatDateForInput(event.endTime);
-                this.capacity = event.capacity || 30;
-                this.price = event.price || 0;
-
-                if (event.photoUrl) {
-                    this.coverUrl = resolveImageUrl(event.photoUrl) || '';
-                }
-
-                if (event.sections && Array.isArray(event.sections)) {
-                    const sectionKeys = Object.keys(this.sections);
-                    event.sections.forEach((section, idx) => {
-                        if (idx < sectionKeys.length) {
-                            const key = sectionKeys[idx];
-                            this.sections[key] = {
-                                enabled: true,
-                                title: section.title,
-                                description: section.description,
-                                imageUrl: section.imageUrl || '',
-                                imageFile: null,
-                                imagePreview: ''
-                            };
-                        }
-                    });
-                }
-
-                this.cdr.detectChanges();
-            } else {
-                this.error.set('Event not found');
-            }
-        } catch (err) {
-            this.error.set('Failed to load event');
-        } finally {
-            this.loadingEvent.set(false);
+    loadEvent(id: number) {
+        this.loading.set(true);
+        const clubId = this.clubId();
+        if (!clubId) {
+            this.error.set('Club ID not found');
+            this.loading.set(false);
+            return;
         }
+        this.managerApi.getClubEvents(clubId).subscribe({
+            next: (events) => {
+                const event = events.find(e => e.id === id);
+                if (event) {
+                    // Set form values directly
+                    this.title = event.title;
+                    this.description = event.description || '';
+                    this.location = event.location;
+                    this.startTime = this.formatDateForInput(event.startTime);
+                    this.endTime = this.formatDateForInput(event.endTime);
+                    this.capacity = event.capacity || 30;
+                    this.price = event.price || 0;
+
+                    // Set cover image
+                    if (event.photoUrl) {
+                        this.coverUrl = resolveImageUrl(event.photoUrl) || '';
+                    }
+
+                    // Load sections
+                    if (event.sections && Array.isArray(event.sections)) {
+                        const sectionKeys = Object.keys(this.sections);
+                        event.sections.forEach((section, idx) => {
+                            if (idx < sectionKeys.length) {
+                                const key = sectionKeys[idx];
+                                this.sections[key] = {
+                                    enabled: true,
+                                    title: section.title,
+                                    description: section.description,
+                                    imageUrl: section.imageUrl || '',
+                                    imageFile: null,
+                                    imagePreview: ''
+                                };
+                            }
+                        });
+                    }
+
+                    this.cdr.detectChanges();
+                } else {
+                    this.error.set('Event not found');
+                }
+                this.loading.set(false);
+            },
+            error: (err) => {
+                this.error.set('Failed to load event');
+                this.loading.set(false);
+            }
+        });
     }
 
     formatDateForInput(dateString: string): string {
@@ -305,6 +320,7 @@ export class EventFormComponent implements OnInit {
 
             // Build event data
             const eventData: any = {
+                clubId: this.clubId(),
                 title: this.title.trim(),
                 description: this.description.trim() || undefined,
                 location: this.location.trim(),
