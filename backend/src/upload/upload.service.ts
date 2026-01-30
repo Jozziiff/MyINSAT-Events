@@ -1,12 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join, extname } from 'path';
+import { extname } from 'path';
 
 @Injectable()
 export class UploadService {
-  private readonly uploadDir = join(process.cwd(), 'uploads');
+  private readonly supabaseUrl: string;
+  private readonly supabaseKey: string;
+  private readonly bucketName: string;
+
+  constructor(private configService: ConfigService) {
+    this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') || '';
+    this.supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY') || '';
+    this.bucketName = this.configService.get<string>('SUPABASE_BUCKET') || 'uploads';
+    
+    if (!this.supabaseUrl || !this.supabaseKey) {
+      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables');
+    }
+  }
 
   async saveFile(
     file: Express.Multer.File,
@@ -22,25 +33,51 @@ export class UploadService {
       else if (url.includes('users')) folder = 'users';
       else folder = 'others';
     }
-    if (!folder) folder = 'default'; // fallback default
-
-    const folderPath = join(this.uploadDir, folder);
-
-    // Ensure directory exists
-    if (!existsSync(folderPath)) {
-      await mkdir(folderPath, { recursive: true });
-    }
+    if (!folder) folder = 'default';
 
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = extname(file.originalname);
     const filename = `${uniqueSuffix}${ext}`;
-    const filePath = join(folderPath, filename);
+    const filePath = `${folder}/${filename}`;
 
-    // Save file
-    await writeFile(filePath, file.buffer);
+    // Upload to Supabase Storage via REST API
+    const uploadUrl = `${this.supabaseUrl}/storage/v1/object/${this.bucketName}/${filePath}`;
 
-    // Return the URL path (relative to static serving)
-    return `/uploads/${folder}/${filename}`;
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.supabaseKey}`,
+        'Content-Type': file.mimetype,
+      },
+      body: file.buffer as any,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Supabase Storage upload error:', error);
+      throw new InternalServerErrorException('Failed to upload file');
+    }
+
+    // Return the public URL
+    return `${this.supabaseUrl}/storage/v1/object/public/${this.bucketName}/${filePath}`;
+  }
+
+  // Optional: Delete file from Supabase Storage
+  async deleteFile(fileUrl: string): Promise<void> {
+    // Extract file path from URL
+    const publicPrefix = `/storage/v1/object/public/${this.bucketName}/`;
+    const startIndex = fileUrl.indexOf(publicPrefix);
+    if (startIndex === -1) return;
+
+    const filePath = fileUrl.substring(startIndex + publicPrefix.length);
+    const deleteUrl = `${this.supabaseUrl}/storage/v1/object/${this.bucketName}/${filePath}`;
+
+    await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${this.supabaseKey}`,
+      },
+    });
   }
 }
