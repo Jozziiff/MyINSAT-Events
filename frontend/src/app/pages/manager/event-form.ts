@@ -29,6 +29,7 @@ export class EventFormComponent implements OnInit {
 
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
+    clubId = signal<number | null>(null);
     loading = signal(false);
     error = signal('');
     uploadingPhotoIndex = signal<number | null>(null);
@@ -53,6 +54,11 @@ export class EventFormComponent implements OnInit {
     }
 
     ngOnInit() {
+        const clubIdParam = this.route.snapshot.paramMap.get('clubId');
+        if (clubIdParam) {
+            this.clubId.set(+clubIdParam);
+        }
+
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.isEditMode.set(true);
@@ -63,7 +69,13 @@ export class EventFormComponent implements OnInit {
 
     loadEvent(id: number) {
         this.loading.set(true);
-        this.managerApi.getAllEvents().subscribe({
+        const clubId = this.clubId();
+        if (!clubId) {
+            this.error.set('Club ID not found');
+            this.loading.set(false);
+            return;
+        }
+        this.managerApi.getClubEvents(clubId).subscribe({
             next: (events) => {
                 const event = events.find(e => e.id === id);
                 if (event) {
@@ -321,6 +333,7 @@ export class EventFormComponent implements OnInit {
 
         const eventData = {
             ...formValue,
+            clubId: this.clubId(),
             startTime: new Date(formValue.startTime).toISOString(),
             endTime: new Date(formValue.endTime).toISOString(),
             photoUrl: photoUrl || undefined,

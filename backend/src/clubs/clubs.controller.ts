@@ -55,7 +55,7 @@ export class ClubsController {
 
   // Approve a join request
   @Post('join-requests/:requestId/approve')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   @HttpCode(HttpStatus.OK)
   approveJoinRequest(
     @Param('requestId', ParseIntPipe) requestId: number,
@@ -66,7 +66,7 @@ export class ClubsController {
 
   // Reject a join request
   @Post('join-requests/:requestId/reject')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   @HttpCode(HttpStatus.OK)
   rejectJoinRequest(
     @Param('requestId', ParseIntPipe) requestId: number,

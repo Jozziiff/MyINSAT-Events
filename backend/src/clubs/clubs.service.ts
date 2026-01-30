@@ -435,14 +435,6 @@ export class ClubsService {
       throw new NotFoundException(`Join request with ID ${requestId} not found`);
     }
 
-    // Verify the approver is a manager
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId: managerId, clubId: request.clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can approve requests');
-    }
-
     // Update request status
     request.status = JoinRequestStatus.APPROVED;
     await this.joinRequestRepository.save(request);
@@ -465,14 +457,6 @@ export class ClubsService {
 
     if (!request) {
       throw new NotFoundException(`Join request with ID ${requestId} not found`);
-    }
-
-    // Verify the rejector is a manager
-    const isManager = await this.clubManagerRepository.findOne({
-      where: { userId: managerId, clubId: request.clubId },
-    });
-    if (!isManager) {
-      throw new ForbiddenException('Only club managers can reject requests');
     }
 
     request.status = JoinRequestStatus.REJECTED;

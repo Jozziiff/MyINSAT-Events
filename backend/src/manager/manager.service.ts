@@ -20,18 +20,6 @@ export class ManagerService {
         private clubManagerRepository: Repository<ClubManager>,
     ) { }
 
-    private async verifyManagerAccess(userId: number, clubId: number, userRole?: string): Promise<void> {
-        // Admins have access to all clubs
-        if (userRole === 'ADMIN') return;
-
-        const managerRecord = await this.clubManagerRepository.findOne({
-            where: { userId, clubId },
-        });
-
-        if (!managerRecord) {
-            throw new ForbiddenException('You do not have access to this club');
-        }
-    }
 
     private async getEventWithAccess(userId: number, eventId: number): Promise<Event> {
         const event = await this.eventRepository.findOne({ where: { id: eventId } });
@@ -81,32 +69,9 @@ export class ManagerService {
         }
     }
 
-    async getManagedClub(userId: number): Promise<Club> {
-        const managerRecord = await this.clubManagerRepository.findOne({
-            where: { userId },
-            relations: ['club'],
-        });
-
-        if (!managerRecord) {
-            throw new NotFoundException('You are not managing any club');
-        }
-
-        return managerRecord.club;
-    }
-
-    async getAllEvents(userId: number): Promise<Event[]> {
-        const club = await this.getManagedClub(userId);
-
-        return this.eventRepository.find({
-            where: { clubId: club.id },
-            order: { startTime: 'ASC' },
-        });
-    }
-
-    async createEvent(userId: number, createEventDto: CreateEventDto): Promise<Event> {
-        const club = await this.getManagedClub(userId);
+    async createEvent(createEventDto: CreateEventDto): Promise<Event> {
+        // Access check is handled by ClubAccessGuard
         this.validateEventDates(createEventDto.startTime, createEventDto.endTime);
-
 
         await this.checkLocationConflict(
             createEventDto.location,
@@ -116,7 +81,6 @@ export class ManagerService {
 
         const event = this.eventRepository.create({
             ...createEventDto,
-            clubId: club.id,
             status: EventStatus.DRAFT,
         });
 
@@ -230,8 +194,13 @@ export class ManagerService {
         return this.registrationRepository.save(registration);
     }
 
-    async updateClub(userId: number, updateClubDto: UpdateClubDto): Promise<Club> {
-        const club = await this.getManagedClub(userId);
+    async updateClub(clubId: number, updateClubDto: UpdateClubDto): Promise<Club> {
+        // Access check is handled by ClubAccessGuard
+        const club = await this.clubRepository.findOne({ where: { id: clubId } });
+
+        if (!club) {
+            throw new NotFoundException('Club not found');
+        }
 
         Object.assign(club, updateClubDto);
         return this.clubRepository.save(club);
@@ -312,7 +281,7 @@ export class ManagerService {
         return club;
     }
 
-    async getClubEvents(userId: number, clubId: number, userRole?: string): Promise<Event[]> {
+    async getClubEvents(clubId: number): Promise<Event[]> {
         // Access check is handled by ClubAccessGuard
 
         return this.eventRepository.find({

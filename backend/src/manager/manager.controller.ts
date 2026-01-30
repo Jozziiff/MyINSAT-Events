@@ -57,10 +57,9 @@ export class ManagerController {
     @Get('clubs/:clubId/events')
     @UseGuards(ClubAccessGuard)
     getClubEvents(
-        @Req() req: AuthenticatedRequest,
         @Param('clubId', ParseIntPipe) clubId: number,
     ) {
-        return this.managerService.getClubEvents(req.user.id, clubId, req.user.role);
+        return this.managerService.getClubEvents(clubId);
     }
 
     @Get('clubs/:clubId/managers')
@@ -83,24 +82,19 @@ export class ManagerController {
         return this.managerService.removeManager(req.user.id, clubId, managerId);
     }
 
-    @Get('club')
-    getClub(@Req() req: AuthenticatedRequest) {
-        return this.managerService.getManagedClub(req.user.id);
-    }
-
-    @Put('club')
-    updateClub(@Req() req: AuthenticatedRequest, @Body() updateClubDto: UpdateClubDto) {
-        return this.managerService.updateClub(req.user.id, updateClubDto);
-    }
-
-    @Get('events')
-    getAllEvents(@Req() req: AuthenticatedRequest) {
-        return this.managerService.getAllEvents(req.user.id);
+    @Put('clubs/:clubId')
+    @UseGuards(ClubAccessGuard)
+    updateClub(
+        @Param('clubId', ParseIntPipe) clubId: number,
+        @Body() updateClubDto: UpdateClubDto,
+    ) {
+        return this.managerService.updateClub(clubId, updateClubDto);
     }
 
     @Post('events')
+    @UseGuards(ClubAccessGuard)
     createEvent(@Req() req: AuthenticatedRequest, @Body() createEventDto: CreateEventDto) {
-        return this.managerService.createEvent(req.user.id, createEventDto);
+        return this.managerService.createEvent(createEventDto);
     }
 
     @Put('events/:id')

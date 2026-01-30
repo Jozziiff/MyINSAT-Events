@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClubManager, Event, Registration } from '../../entities';
+import { ClubManager, Event, Registration, ClubJoinRequest } from '../../entities';
 
 @Injectable()
 export class ClubAccessGuard implements CanActivate {
@@ -12,6 +12,8 @@ export class ClubAccessGuard implements CanActivate {
         private eventRepository: Repository<Event>,
         @InjectRepository(Registration)
         private registrationRepository: Repository<Registration>,
+        @InjectRepository(ClubJoinRequest)
+        private joinRequestRepository: Repository<ClubJoinRequest>,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,7 +30,7 @@ export class ClubAccessGuard implements CanActivate {
         }
 
         // Try to get clubId from various sources
-        const clubId = await this.resolveClubId(request.params, request.path);
+        const clubId = await this.resolveClubId(request.params, request.path, request.body);
 
         if (!clubId) {
             throw new ForbiddenException('Unable to determine club access');
@@ -46,18 +48,23 @@ export class ClubAccessGuard implements CanActivate {
         return true;
     }
 
-    private async resolveClubId(params: Record<string, string>, path: string): Promise<number | null> {
+    private async resolveClubId(params: Record<string, string>, path: string, body?: Record<string, any>): Promise<number | null> {
         // 1. Direct clubId from params (no DB query)
         if (params.clubId) {
             return parseInt(params.clubId, 10);
         }
 
-        // 2. Club id param for /clubs/:id routes (no DB query)
+        // 2. clubId from request body (for POST requests like createEvent)
+        if (body?.clubId) {
+            return body.clubId;
+        }
+
+        // 3. Club id param for /clubs/:id routes (no DB query)
         if (params.id && path.includes('/clubs/')) {
             return parseInt(params.id, 10);
         }
 
-        // 3. Event route with :id param (requires DB lookup)
+        // 4. Event route with :id param (requires DB lookup)
         if (params.id && path.includes('/events/')) {
             const event = await this.eventRepository.findOne({
                 where: { id: parseInt(params.id, 10) },
@@ -68,7 +75,7 @@ export class ClubAccessGuard implements CanActivate {
             return event.clubId;
         }
 
-        // 4. Registration route with :id param (requires DB lookup)
+        // 5. Registration route with :id param (requires DB lookup)
         if (params.id && path.includes('/registrations/')) {
             const registration = await this.registrationRepository.findOne({
                 where: { id: parseInt(params.id, 10) },
@@ -78,6 +85,17 @@ export class ClubAccessGuard implements CanActivate {
                 throw new NotFoundException('Registration not found');
             }
             return registration.event.clubId;
+        }
+
+        // 6. Join request route with :requestId param (requires DB lookup)
+        if (params.requestId && path.includes('/join-requests/')) {
+            const joinRequest = await this.joinRequestRepository.findOne({
+                where: { id: parseInt(params.requestId, 10) },
+            });
+            if (!joinRequest) {
+                throw new NotFoundException('Join request not found');
+            }
+            return joinRequest.clubId;
         }
 
         return null;
