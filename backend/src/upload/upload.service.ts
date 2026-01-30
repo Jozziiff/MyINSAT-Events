@@ -28,12 +28,26 @@ export class UploadService {
     let folder = subfolder;
     if (!folder && req) {
       const url = req.originalUrl || req.url || '';
-      if (url.includes('events')) folder = 'events';
-      else if (url.includes('clubs')) folder = 'clubs';
-      else if (url.includes('users')) folder = 'users';
+      const referer = req.get('referer') || '';
+      console.log('Upload URL:', url); // Debug log
+      console.log('Referer:', referer); // Debug log
+      
+      // Check referer first (where the upload came from)
+      if (referer.includes('/users') || referer.includes('/user') || referer.includes('/profile')) folder = 'users';
+      else if (referer.includes('/events') || referer.includes('/event')) folder = 'events';
+      else if (referer.includes('/clubs') || referer.includes('/club')) folder = 'clubs';
+      // Then check URL
+      else if (url.includes('/events/')) folder = 'events';
+      else if (url.includes('/clubs/')) folder = 'clubs';
+      else if (url.includes('/users/')) folder = 'users';
+      else if (url.includes('event')) folder = 'events';
+      else if (url.includes('club')) folder = 'clubs';
+      else if (url.includes('user')) folder = 'users';
       else folder = 'others';
     }
     if (!folder) folder = 'default';
+
+    console.log('Detected folder:', folder); // Debug log
 
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
