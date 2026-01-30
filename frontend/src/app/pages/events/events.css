@@ -773,6 +773,18 @@
         }
       }
 
+      &.attended {
+        background: var(--status-attended-bg);
+        color: var(--status-attended-color);
+        border-color: var(--status-attended-border);
+        cursor: not-allowed;
+
+        &:hover {
+          background: var(--status-attended-bg);
+          color: var(--status-attended-color);
+        }
+      }
+
       &.processing {
         opacity: 0.7;
         cursor: not-allowed;

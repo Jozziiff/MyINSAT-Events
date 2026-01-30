@@ -26,7 +26,7 @@ import { RegistrationStatus } from '../../../models/event.model';
 import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
 import { isEventLive } from '../../../utils/time.utils';
 
-type EventFilterType = 'all' | 'confirmed' | 'pending' | 'interested' | 'rejected' | 'live' | 'attended';
+type EventFilterType = 'all' | 'confirmed' | 'pending' | 'interested' | 'rejected' | 'live' | 'attended' | 'past';
 type EventSortType = 'date-asc' | 'date-desc';
 
 @Component({
@@ -84,7 +84,6 @@ export class ProfilePage implements OnInit {
     ratingsGiven: 0,
   });
   upcomingEvents = signal<ProfileEvent[]>([]);
-  pastEvents = signal<ProfileEvent[]>([]);
   followedClubs = signal<FollowedClub[]>([]);
   userRatings = signal<UserRating[]>([]);
   managedClubs = signal<ManagedClub[]>([]);
@@ -100,13 +99,14 @@ export class ProfilePage implements OnInit {
   showSortDropdown = signal(false);
 
   filterOptions = [
-    { value: 'all' as EventFilterType, label: 'All Events', icon: '📋' },
-    { value: 'live' as EventFilterType, label: 'Live Now', icon: '🔴' },
-    { value: 'confirmed' as EventFilterType, label: 'Confirmed', icon: '✓' },
-    { value: 'pending' as EventFilterType, label: 'Pending Payment', icon: '⏳' },
-    { value: 'interested' as EventFilterType, label: 'Interested', icon: '❤️' },
-    { value: 'attended' as EventFilterType, label: 'Attended', icon: '🎯' },
-    { value: 'rejected' as EventFilterType, label: 'Rejected', icon: '❌' }
+    { value: 'all' as EventFilterType, label: 'All Events'},
+    { value: 'live' as EventFilterType, label: 'Live Now'},
+    { value: 'confirmed' as EventFilterType, label: 'Confirmed'},
+    { value: 'pending' as EventFilterType, label: 'Pending Payment'},
+    { value: 'interested' as EventFilterType, label: 'Interested'},
+    { value: 'attended' as EventFilterType, label: 'Attended'},
+    { value: 'past' as EventFilterType, label: 'Past Events'},
+    { value: 'rejected' as EventFilterType, label: 'Rejected'}
   ];
 
   sortOptions = [
@@ -142,6 +142,11 @@ export class ProfilePage implements OnInit {
         break;
       case 'attended':
         filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.ATTENDED);
+        break;
+      case 'past':
+        // Show all past events (events that have ended)
+        const now = new Date();
+        filtered = filtered.filter(e => new Date(e.endTime) < now);
         break;
       case 'rejected':
         filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.REJECTED);
@@ -187,7 +192,6 @@ export class ProfilePage implements OnInit {
       if (dashboard) {
         this.profile.set(dashboard.profile);
         this.upcomingEvents.set(dashboard.upcomingEvents);
-        this.pastEvents.set(dashboard.recentEvents);
         this.followedClubs.set(dashboard.followedClubs);
 
         // Combine for filtering/searching UI

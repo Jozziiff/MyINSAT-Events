@@ -208,6 +208,11 @@ export class EventsComponent implements OnInit {
     return event.userInteraction?.status === RegistrationStatus.PENDING_PAYMENT;
   }
 
+  // Check if user has attended
+  isAttended(event: EventSummary): boolean {
+    return event.userInteraction?.status === RegistrationStatus.ATTENDED;
+  }
+
   // Get registration status for display
   getRegistrationStatus(event: EventSummary): RegistrationStatus | null {
     return event.userInteraction?.status || null;

@@ -85,7 +85,6 @@
                       class="filter-option"
                       [class.active]="selectedFilter() === option.value"
                       (click)="applyFilter(option.value)">
-                      <span class="option-icon">{{ option.icon }}</span>
                       <span class="option-label">{{ option.label }}</span>
                       @if (selectedFilter() === option.value) {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon">
@@ -133,19 +132,6 @@
         </div>
 
         <app-event-section [events]="filteredEvents()"></app-event-section>
-      </div>
-
-      <div class="section-card glass-card animate-card" [@fadeInUp]>
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            Past Events
-          </h2>
-        </div>
-        <app-event-section [events]="pastEvents()"></app-event-section>
       </div>
 
       <!-- Ratings Section -->
