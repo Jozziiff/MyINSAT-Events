@@ -60,6 +60,13 @@
             <div class="stat-value">{{ events().length }}</div>
             <div class="stat-label">Total Events</div>
         </div>
+        <div class="stat-card stat-card-live" [class.has-live]="liveEvents().length > 0">
+            <div class="stat-value">{{ liveEvents().length }}</div>
+            <div class="stat-label">Live Now</div>
+            @if (liveEvents().length > 0) {
+            <span class="stat-live-dot"></span>
+            }
+        </div>
         <div class="stat-card">
             <div class="stat-value">{{ publishedCount() }}</div>
             <div class="stat-label">Published</div>
@@ -73,6 +80,48 @@
             <div class="stat-label">Pending Requests</div>
         </div>
     </div>
+
+    @if (liveEvents().length > 0) {
+    <div class="section-header live-section-header">
+        <div class="live-indicator">
+            <span class="live-dot"></span>
+            <h2>Live Now ({{ liveEvents().length }})</h2>
+        </div>
+    </div>
+    <div class="live-events-grid">
+        @for (event of liveEvents(); track event.id) {
+        <div class="live-event-card">
+            <div class="live-badge">
+                <span class="pulse-dot"></span>
+                LIVE
+            </div>
+            <div class="live-event-content">
+                <h3 class="live-event-title">{{ event.title }}</h3>
+                <div class="live-event-details">
+                    <span class="live-event-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        {{ event.location }}
+                    </span>
+                    <span class="live-event-time">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Ends in {{ formatRemaining(getRemainingTime(event)) }}
+                    </span>
+                </div>
+            </div>
+            <div class="live-event-actions">
+                <button class="btn-icon" title="View" (click)="viewEvent(event.id)">View</button>
+                <button class="btn-icon" title="Registrations" (click)="viewRegistrations(event.id)">Registrations</button>
+            </div>
+        </div>
+        }
+    </div>
+    }
 
     @if (joinRequests().length > 0) {
     <div class="section-header">

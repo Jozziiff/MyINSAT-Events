@@ -5,6 +5,7 @@ import { fadeSlideIn } from '../../animations';
 import { ManagerApiService, Event, Club, ClubManager } from '../../services/manager-api.service';
 import { ClubsService } from '../../services/clubs.service';
 import { JoinRequest } from '../../models/club.model';
+import { isEventLive, getTimeUntilEventEnds, formatRemainingTime, TimeUntil } from '../../utils/time.utils';
 
 @Component({
     selector: 'app-manager-dashboard',
@@ -39,15 +40,28 @@ export class ManagerDashboardComponent implements OnInit {
 
     hasMultipleClubs = computed(() => this.managedClubs().length > 1);
 
+    liveEvents = computed(() =>
+        this.events()
+            .filter(e => isEventLive(new Date(e.startTime), new Date(e.endTime)))
+            .sort(this.compareByStartTime)
+    );
+
     upcomingEvents = computed(() =>
         this.events()
-            .filter(e => new Date(e.startTime) >= this.now())
+            .filter(e => {
+                const start = new Date(e.startTime);
+                const end = new Date(e.endTime);
+                return start >= this.now() && !isEventLive(start, end);
+            })
             .sort(this.compareByStartTime)
     );
 
     pastEvents = computed(() =>
         this.events()
-            .filter(e => new Date(e.startTime) < this.now())
+            .filter(e => {
+                const end = new Date(e.endTime);
+                return end < this.now();
+            })
             .sort((a, b) => -this.compareByStartTime(a, b))
     );
 
@@ -236,5 +250,18 @@ export class ManagerDashboardComponent implements OnInit {
 
     editEvent(eventId: number) {
         this.router.navigate(['/manager/clubs', this.selectedClubId(), 'events', eventId, 'edit']);
+    }
+
+    // Live events helpers
+    isLive(event: Event): boolean {
+        return isEventLive(new Date(event.startTime), new Date(event.endTime));
+    }
+
+    getRemainingTime(event: Event): TimeUntil | null {
+        return getTimeUntilEventEnds(new Date(event.endTime));
+    }
+
+    formatRemaining(timeUntil: TimeUntil | null): string {
+        return formatRemainingTime(timeUntil);
     }
 }
