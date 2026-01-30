@@ -142,6 +142,7 @@ export class ManagerService {
                     id: r.user.id,
                     email: r.user.email,
                     fullName: r.user.fullName,
+                    avatarUrl: r.user.avatarUrl,
                 },
                 status: r.status,
                 createdAt: r.createdAt,

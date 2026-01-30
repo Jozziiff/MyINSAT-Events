@@ -49,6 +49,7 @@ export interface Registration {
         id: number;
         email: string;
         fullName: string;
+        avatarUrl: string;
     };
     status: 'INTERESTED' | 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'REJECTED' | 'ATTENDED' | 'NO_SHOW';
     createdAt: string;

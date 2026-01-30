@@ -75,7 +75,11 @@
                 <tr>
                     <td>
                         <div class="user-cell">
+                            @if (reg.user.avatarUrl) {
+                            <img [src]="reg.user.avatarUrl" [alt]="reg.user.fullName" class="user-avatar" />
+                            } @else {
                             <div class="user-avatar">{{ reg.user.fullName.charAt(0) }}</div>
+                            }
                             <strong>{{ reg.user.fullName }}</strong>
                         </div>
                     </td>
