@@ -1,12 +1,17 @@
 import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthStateService } from '../../../services/auth/auth-state';
 
+/**
+ * Login Component
+ * 
+ * Handles user authentication with email and password.
+ * Uses Angular signals for reactive UI state and follows OnPush change detection.
+ */
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,17 +21,22 @@ export class Login {
   private readonly authState = inject(AuthStateService);
   private readonly router = inject(Router);
 
-  readonly loginForm: FormGroup;
+  // ==================== Form State ====================
+  readonly loginForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+  });
+
+  // ==================== UI State Signals ====================
   readonly errorMessage = signal<string>('');
   readonly isLoading = this.authState.isLoading;
 
-  constructor() {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-    });
-  }
-
+  // ==================== Event Handlers ====================
+  
+  /**
+   * Handles form submission.
+   * Validates credentials and authenticates user.
+   */
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -36,15 +46,21 @@ export class Login {
     this.errorMessage.set('');
 
     try {
-      await this.authState.login(this.loginForm.value);
+      await this.authState.login(this.loginForm.getRawValue());
       this.router.navigate(['/']);
-    } catch (error: any) {
-      this.errorMessage.set(
-        error.error?.message || 'Login failed. Please check your credentials.'
-      );
+    } catch (error: unknown) {
+      const message = this.extractErrorMessage(error);
+      this.errorMessage.set(message);
     }
   }
 
+  // ==================== Template Helper Methods ====================
+  
+  /**
+   * Gets the appropriate error message for a form field.
+   * @param fieldName - The name of the form field
+   * @returns Error message string or empty string if no error
+   */
   getErrorMessage(fieldName: string): string {
     const control = this.loginForm.get(fieldName);
     
@@ -52,22 +68,45 @@ export class Login {
       return '';
     }
 
-    if (control.errors['required']) {
-      return `${this.capitalize(fieldName)} is required`;
+    const errors = control.errors;
+
+    if (errors['required']) {
+      return `${this.formatFieldName(fieldName)} is required`;
     }
 
-    if (control.errors['email']) {
+    if (errors['email']) {
       return 'Please enter a valid email';
     }
 
-    if (control.errors['minlength']) {
-      return `${this.capitalize(fieldName)} must be at least ${control.errors['minlength'].requiredLength} characters`;
+    if (errors['minlength']) {
+      const requiredLength = errors['minlength'].requiredLength;
+      return `${this.formatFieldName(fieldName)} must be at least ${requiredLength} characters`;
     }
 
     return '';
   }
 
-  private capitalize(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+  // ==================== Utility Methods ====================
+  
+  /**
+   * Formats a field name with first letter capitalized.
+   * @param fieldName - The field name to format
+   * @returns Formatted field name
+   */
+  private formatFieldName(fieldName: string): string {
+    return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+  }
+
+  /**
+   * Extracts error message from API error response.
+   * @param error - The caught error
+   * @returns User-friendly error message
+   */
+  private extractErrorMessage(error: unknown): string {
+    if (error && typeof error === 'object' && 'error' in error) {
+      const apiError = error as { error?: { message?: string } };
+      return apiError.error?.message || 'Login failed. Please check your credentials.';
+    }
+    return 'Login failed. Please check your credentials.';
   }
 }

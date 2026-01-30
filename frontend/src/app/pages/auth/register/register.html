@@ -45,11 +45,29 @@
           type="password"
           formControlName="password"
           placeholder="••••••••"
-          [class.error]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+          (blur)="onPasswordBlur()"
+          [class.error]="isPasswordTouched() && !hasMinLength()"
         />
-        @if (getErrorMessage('password')) {
-          <span class="error-message">{{ getErrorMessage('password') }}</span>
-        }
+        
+        <!-- Password Requirements Checklist -->
+        <ul class="password-requirements">
+          <li [class.valid]="hasMinLength()" 
+              [class.invalid]="isPasswordTouched() && !hasMinLength()">
+            At least 8 characters
+          </li>
+          <li [class.valid]="hasUppercase()" 
+              [class.invalid]="isPasswordTouched() && !hasUppercase()">
+            At least one uppercase letter
+          </li>
+          <li [class.valid]="hasNumber()" 
+              [class.invalid]="isPasswordTouched() && !hasNumber()">
+            At least one number
+          </li>
+          <li [class.valid]="hasSpecialChar()" 
+              [class.invalid]="isPasswordTouched() && !hasSpecialChar()">
+            At least one special character
+          </li>
+        </ul>
       </div>
 
       <div class="form-group">
@@ -59,11 +77,16 @@
           type="password"
           formControlName="confirmPassword"
           placeholder="••••••••"
-          [class.error]="registerForm.get('confirmPassword')?.touched && (registerForm.get('confirmPassword')?.invalid || getFormError())"
+          (blur)="onConfirmPasswordBlur()"
+          [class.error]="isConfirmPasswordTouched() && !passwordsMatch()"
         />
-        @if (getFormError()) {
-          <span class="error-message">{{ getFormError() }}</span>
-        }
+        
+        <!-- Password Match Indicator -->
+        <p class="password-match"
+           [class.valid]="passwordsMatch()"
+           [class.invalid]="isConfirmPasswordTouched() && !passwordsMatch()">
+          Passwords must match
+        </p>
       </div>
 
       <button
