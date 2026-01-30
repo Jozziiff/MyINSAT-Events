@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { fadeSlideIn } from '../../animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { EventsService } from '../../services/events.service';
 import { AuthStateService } from '../../services/auth/auth-state';
 import { UserService } from '../../services/user.service';
 import { EventSummary, RegistrationStatus } from '../../models/event.model';
+import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeUntilEventEnds, formatRemainingTime } from '../../utils/time.utils';
 
 type FilterType = 'all' | 'my-clubs' | 'live' | 'upcoming' | 'ended';
 type SortType = 'date-asc' | 'date-desc' | 'interested' | 'confirmed' | 'rating';
@@ -176,11 +177,6 @@ export class EventsComponent implements OnInit {
     return this.eventsService.formatPrice(price);
   }
 
-  // Get status label
-  getStatusLabel(event: EventSummary): string {
-    return this.eventsService.getStatusLabel(event);
-  }
-
   // Format rating
   formatRating(rating: number): string {
     if (rating === 0) return 'New';
@@ -197,47 +193,73 @@ export class EventsComponent implements OnInit {
     return event.userInteraction?.status === RegistrationStatus.INTERESTED;
   }
 
+  // Check if user was rejected from event
+  isRejected(event: EventSummary): boolean {
+    return event.userInteraction?.status === RegistrationStatus.REJECTED;
+  }
+
+  // Check if user is confirmed for event
+  isConfirmed(event: EventSummary): boolean {
+    return event.userInteraction?.status === RegistrationStatus.CONFIRMED;
+  }
+
+  // Check if user has pending payment
+  isPendingPayment(event: EventSummary): boolean {
+    return event.userInteraction?.status === RegistrationStatus.PENDING_PAYMENT;
+  }
+
+  // Get registration status for display
+  getRegistrationStatus(event: EventSummary): RegistrationStatus | null {
+    return event.userInteraction?.status || null;
+  }
+
+  // Get registration status label
+  getRegistrationStatusLabel(status: RegistrationStatus): string {
+    const labels: Record<RegistrationStatus, string> = {
+      [RegistrationStatus.INTERESTED]: 'Interested',
+      [RegistrationStatus.PENDING_PAYMENT]: 'Pending Payment',
+      [RegistrationStatus.CONFIRMED]: 'Confirmed',
+      [RegistrationStatus.CANCELLED]: 'Cancelled',
+      [RegistrationStatus.REJECTED]: 'Rejected',
+      [RegistrationStatus.ATTENDED]: 'Attended',
+      [RegistrationStatus.NO_SHOW]: 'No Show',
+    };
+    return labels[status] || status;
+  }
+
   // Check if event is being processed
   isProcessing(eventId: number): boolean {
     return this.processingEvents().has(eventId);
   }
 
-  // Check if event has ended
+  // Check if event has ended (using utility)
   isEventEnded(event: EventSummary): boolean {
-    const now = new Date();
-    const endTime = new Date(event.endTime);
-    return endTime < now;
+    return isEventEnded(event.endTime);
   }
 
-  // Check if event is currently live (started but not ended)
+  // Check if event is currently live (using utility)
   isEventLive(event: EventSummary): boolean {
-    const now = new Date();
-    const startTime = new Date(event.startTime);
-    const endTime = new Date(event.endTime);
-    return startTime <= now && endTime >= now;
+    return isEventLive(event.startTime, event.endTime);
   }
 
-  // Get days until event starts
-  getDaysUntilEvent(event: EventSummary): number | null {
-    const now = new Date();
-    const startTime = new Date(event.startTime);
-
-    if (startTime < now) {
-      return null; // Event has started or passed
-    }
-
-    const diffTime = startTime.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  // Get time until event starts (using utility)
+  getTimeUntilEvent(event: EventSummary): { value: number; unit: 'minutes' | 'hours' | 'days' } | null {
+    return getTimeUntilEvent(event.startTime);
   }
 
-  // Format countdown display
-  formatCountdown(days: number): string {
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Tomorrow';
-    if (days <= 7) return `${days} days`;
-    if (days <= 14) return `${Math.ceil(days / 7)} week${Math.ceil(days / 7) > 1 ? 's' : ''}`;
-    return `${days} days`;
+  // Format countdown display (using utility)
+  formatCountdown(timeUntil: { value: number; unit: 'minutes' | 'hours' | 'days' } | null): string {
+    return formatCountdown(timeUntil);
+  }
+
+  // Get remaining time until live event ends
+  getTimeUntilEventEnds(event: EventSummary) {
+    return getTimeUntilEventEnds(event.endTime);
+  }
+
+  // Format remaining time for live events
+  formatRemainingTime(timeUntil: { value: number; unit: 'minutes' | 'hours' | 'days' } | null): string {
+    return formatRemainingTime(timeUntil);
   }
 
   // Toggle interest in event

@@ -35,7 +35,32 @@
             <div class="hero-overlay"></div>
             }
             <div class="hero-content">
-                <h1 class="event-title">{{ event()!.title }}</h1>
+                <div class="hero-left">
+                    <h1 class="event-title">{{ event()!.title }}</h1>
+
+                    <!-- Countdown/Live Badge -->
+                    <div class="event-time-badge">
+                    @if (isUpcoming() && getTimeUntil()) {
+                        <span class="countdown-badge"
+                              [class.urgent]="getTimeUntil()!.unit === 'hours' || (getTimeUntil()!.unit === 'days' && getTimeUntil()!.value <= 1)"
+                              [class.very-urgent]="getTimeUntil()!.unit === 'minutes'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            {{ formatCountdown(getTimeUntil()) }}
+                        </span>
+                    } @else if (isLive()) {
+                        <span class="live-badge pulsing">
+                            <span class="live-dot"></span>
+                            {{ formatRemainingTime(getTimeUntilEventEnds()) }}
+                        </span>
+                    } @else if (isPast()) {
+                        <span class="ended-badge">
+                            Event Ended
+                        </span>
+                    }
+                </div>
 
                 <!-- Event Stats Pills -->
                 <div class="event-stats-pills">
@@ -65,9 +90,88 @@
                     </span>
                 </div>
             </div>
+
+            <!-- Rating Section (for attended events) -->
+            @if (hasAttended() && isLoggedIn()) {
+                <div class="hero-rating">
+                    <button type="button" class="rating-button" (click)="openRatingModal()">
+                        <div class="rating-stars">
+                            @for (star of [1,2,3,4,5]; track star) {
+                                <svg class="star-icon"
+                                     [class.filled]="star <= currentUserRating()"
+                                     viewBox="0 0 24 24"
+                                     [attr.fill]="star <= currentUserRating() ? 'currentColor' : 'none'"
+                                     stroke="currentColor"
+                                     stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                </svg>
+                            }
+                        </div>
+                        <span class="rating-text">
+                            {{ currentUserRating() > 0 ? 'Update Rating' : 'Rate Event' }}
+                        </span>
+                    </button>
+                </div>
+            }
         </div>
 
-        <div class="event-content">
+        <!-- Rating Modal -->
+        @if (showRatingModal()) {
+            <div class="rating-modal-overlay" (click)="closeRatingModal()">
+                <div class="rating-modal" (click)="$event.stopPropagation()">
+                    <div class="modal-header">
+                        <h3>Rate this Event</h3>
+                        <button type="button" class="modal-close" (click)="closeRatingModal()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-stars">
+                            @for (star of [1,2,3,4,5]; track star) {
+                                <button type="button"
+                                        class="star-button"
+                                        (click)="setRating(star)"
+                                        (mouseenter)="setHoverRating(star)"
+                                        (mouseleave)="setHoverRating(0)">
+                                    <svg class="star-icon-large"
+                                         [class.filled]="star <= (hoverRating() || selectedRating())"
+                                         viewBox="0 0 24 24"
+                                         [attr.fill]="star <= (hoverRating() || selectedRating()) ? 'currentColor' : 'none'"
+                                         stroke="currentColor"
+                                         stroke-width="1.5">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                    </svg>
+                                </button>
+                            }
+                        </div>
+                        <p class="rating-label">
+                            {{ selectedRating() > 0 ? selectedRating() + ' out of 5 stars' : 'Select a rating' }}
+                        </p>
+                        <textarea
+                            class="rating-comment"
+                            placeholder="Add a comment (optional)"
+                            rows="3"
+                            [(ngModel)]="ratingComment"
+                        ></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" (click)="closeRatingModal()">Cancel</button>
+                        <button type="button"
+                                class="btn-submit"
+                                (click)="submitRating()"
+                                [disabled]="selectedRating() === 0 || ratingLoading()">
+                            {{ ratingLoading() ? 'Submitting...' : 'Submit Rating' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="event-content">
             <!-- Two Column Layout -->
             <div class="event-layout">
                 <!-- Main Content -->
@@ -341,7 +445,7 @@
                                     <span class="live-pulse"></span>
                                 </div>
                                 <div class="status-text">
-                                    <span class="status-label">Live Now</span>
+                                    <span class="status-label">{{ formatRemainingTime(getTimeUntilEventEnds()) }}</span>
                                     <p>This event is currently happening</p>
                                 </div>
                             </div>

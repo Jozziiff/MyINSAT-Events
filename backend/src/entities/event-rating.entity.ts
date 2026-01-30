@@ -5,11 +5,13 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     ManyToOne,
+    OneToOne,
     JoinColumn,
     Unique,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Event } from './event.entity';
+import { Registration } from './registration.entity';
 
 @Entity('event_ratings')
 @Unique(['userId', 'eventId']) // One rating per user per event
@@ -42,4 +44,11 @@ export class EventRating {
     @ManyToOne(() => Event, (event) => event.ratings, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'event_id' })
     event: Event;
+
+    @OneToOne(() => Registration, (registration) => registration.userRating, { nullable: true })
+    @JoinColumn([
+        { name: 'user_id', referencedColumnName: 'userId' },
+        { name: 'event_id', referencedColumnName: 'eventId' }
+    ])
+    registration?: Registration;
 }

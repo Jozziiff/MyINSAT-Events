@@ -30,6 +30,7 @@ export interface UserEventDto {
   status: 'upcoming' | 'past';
   registrationStatus: string;
   photoUrl: string | null;
+  userRating?: number; // User's rating if they've rated the event
   club: {
     id: number;
     name: string;

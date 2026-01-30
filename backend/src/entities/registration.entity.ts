@@ -5,11 +5,13 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     ManyToOne,
+    OneToOne,
     JoinColumn,
 } from 'typeorm';
 import { RegistrationStatus } from '../common/enums';
 import { User } from './user.entity';
 import { Event } from './event.entity';
+import { EventRating } from './event-rating.entity';
 
 @Entity('registrations')
 export class Registration {
@@ -38,4 +40,7 @@ export class Registration {
     @ManyToOne(() => Event, (event) => event.registrations, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'event_id' })
     event: Event;
+
+    @OneToOne(() => EventRating, (rating) => rating.registration, { nullable: true })
+    userRating?: EventRating;
 }

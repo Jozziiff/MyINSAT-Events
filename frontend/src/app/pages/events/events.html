@@ -115,7 +115,18 @@
             <div class="card-image">
               <img [src]="event.photoUrl" [alt]="event.title" />
               <div class="image-overlay"></div>
-              @if (isEventEnded(event)) {
+              @if (isRejected(event)) {
+                <div class="rejected-overlay">
+                  <div class="rejected-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <span>Registration Rejected</span>
+                  </div>
+                </div>
+              } @else if (isEventEnded(event)) {
                 <div class="ended-overlay">
                   <div class="ended-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -147,17 +158,19 @@
 
             <!-- Countdown, Live, or Rating Badge -->
             @if (isEventLive(event)) {
-              <div class="live-badge-small">
+              <div class="live-badge-small pulsing">
                 <span class="live-dot"></span>
-                <span>Live Now</span>
+                <span>{{ formatRemainingTime(getTimeUntilEventEnds(event)) }}</span>
               </div>
-            } @else if (!isEventEnded(event) && getDaysUntilEvent(event) !== null && getDaysUntilEvent(event)! <= 30) {
-              <div class="countdown-badge" [class.urgent]="getDaysUntilEvent(event)! <= 3">
+            } @else if (!isEventEnded(event) && getTimeUntilEvent(event)) {
+              <div class="countdown-badge"
+                   [class.urgent]="getTimeUntilEvent(event)!.unit === 'hours' || (getTimeUntilEvent(event)!.unit === 'days' && getTimeUntilEvent(event)!.value <= 1)"
+                   [class.very-urgent]="getTimeUntilEvent(event)!.unit === 'minutes'">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                <span>{{ formatCountdown(getDaysUntilEvent(event)!) }}</span>
+                <span>{{ formatCountdown(getTimeUntilEvent(event)) }}</span>
               </div>
             } @else {
               <!-- Rating Badge -->
@@ -234,12 +247,33 @@
             <button
               class="btn-interest"
               [class.interested]="isInterested(event)"
+              [class.confirmed]="isConfirmed(event)"
+              [class.pending]="isPendingPayment(event)"
+              [class.rejected]="isRejected(event)"
               [class.processing]="isProcessing(event.id)"
               (click)="toggleInterest(event, $event)"
-              [disabled]="isProcessing(event.id) || isEventEnded(event) || isEventLive(event)"
+              [disabled]="isProcessing(event.id) || isEventEnded(event) || isEventLive(event) || isRejected(event) || isConfirmed(event) || isPendingPayment(event)"
             >
               @if (isProcessing(event.id)) {
                 <div class="btn-spinner"></div>
+              } @else if (isRejected(event)) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                Rejected
+              } @else if (isConfirmed(event)) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Confirmed
+              } @else if (isPendingPayment(event)) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Pending Payment
               } @else if (isInterested(event)) {
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>

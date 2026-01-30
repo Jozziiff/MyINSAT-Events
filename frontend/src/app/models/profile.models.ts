@@ -40,6 +40,7 @@ export interface ProfileEvent {
   registrationStatus: RegistrationStatus;
   photoUrl: string | null;
   clubName?: string;
+  userRating?: number; // User's rating if they've rated the event
   club: {
     id: number;
     name: string;

@@ -379,6 +379,41 @@
       }
     }
 
+    .rejected-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.9));
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+
+      .rejected-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.95rem;
+        text-align: center;
+        padding: 1rem;
+
+        svg {
+          width: 48px;
+          height: 48px;
+          stroke-width: 2.5;
+          filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+        }
+      }
+    }
+
     .live-overlay {
       position: absolute;
       top: 0;
@@ -505,6 +540,14 @@
         border-color: rgba(245, 158, 11, 0.3);
         animation: pulse-urgent 1.5s ease-in-out infinite;
       }
+
+      &.very-urgent {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.3);
+        animation: pulse-urgent 1s ease-in-out infinite;
+        font-weight: 700;
+      }
     }
 
     .live-badge-small {
@@ -527,6 +570,10 @@
         background: #ef4444;
         border-radius: 50%;
         animation: blink 1.5s ease-in-out infinite;
+      }
+
+      &.pulsing {
+        animation: pulse-live-badge 2s ease-in-out infinite;
       }
     }
   }
@@ -595,6 +642,53 @@
         }
       }
     }
+
+    /* Registration Status Pill */
+    .registration-status-container {
+      margin-top: 0.75rem;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .registration-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      &.status-interested {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--color-primary-light);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+
+      &.status-confirmed {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--color-success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      &.status-pending {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--color-warning);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+      }
+
+      &.status-rejected {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+    }
   }
 
   .card-footer {
@@ -633,12 +727,49 @@
       }
 
       &.interested {
-        background: rgba(236, 72, 153, 0.15);
-        color: #ec4899;
-        border-color: rgba(236, 72, 153, 0.3);
+        background: var(--status-interested-bg);
+        color: var(--status-interested-color);
+        border-color: var(--status-interested-border);
 
         &:hover:not(:disabled) {
           background: rgba(236, 72, 153, 0.25);
+        }
+      }
+
+      &.confirmed {
+        background: var(--status-confirmed-bg);
+        color: var(--status-confirmed-color);
+        border-color: var(--status-confirmed-border);
+        cursor: not-allowed;
+
+        &:hover {
+          background: var(--status-confirmed-bg);
+          color: var(--status-confirmed-color);
+        }
+      }
+
+      &.pending {
+        background: var(--status-pending-bg);
+        color: var(--status-pending-color);
+        border-color: var(--status-pending-border);
+        cursor: not-allowed;
+
+        &:hover {
+          background: var(--status-pending-bg);
+          color: var(--status-pending-color);
+        }
+      }
+
+      &.rejected {
+        background: var(--status-rejected-bg);
+        color: var(--status-rejected-color);
+        border-color: var(--status-rejected-border);
+        cursor: not-allowed;
+        opacity: 0.9;
+
+        &:hover {
+          background: var(--status-rejected-bg);
+          color: var(--status-rejected-color);
         }
       }
 
@@ -800,6 +931,17 @@
   }
   50% {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.4));
+  }
+}
+
+@keyframes pulse-live-badge {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px 3px rgba(239, 68, 68, 0.3);
+    transform: scale(1.02);
   }
 } }
   50% {
