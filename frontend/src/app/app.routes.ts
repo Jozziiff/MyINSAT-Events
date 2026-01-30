@@ -59,17 +59,17 @@ export const routes: Routes = [
     canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
   {
-    path: 'manager/club',
+    path: 'manager/clubs/:clubId/settings',
     component: ClubSettingsComponent,
     canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
   {
-    path: 'manager/events/new',
+    path: 'manager/clubs/:clubId/events/new',
     component: EventFormComponent,
     canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },
   {
-    path: 'manager/events/:id/edit',
+    path: 'manager/clubs/:clubId/events/:id/edit',
     component: EventFormComponent,
     canActivate: [roleGuard([Role.MANAGER, Role.ADMIN])]
   },

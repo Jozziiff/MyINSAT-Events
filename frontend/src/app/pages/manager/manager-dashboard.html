@@ -31,7 +31,7 @@
             </div>
 
             <div class="header-actions">
-                <button class="btn-primary" routerLink="/manager/events/new">
+                <button class="btn-primary" [routerLink]="['/manager/clubs', selectedClubId(), 'events', 'new']">
                     Create Event
                 </button>
                 <button class="btn-outline" (click)="openManagersPopup()">
@@ -108,7 +108,7 @@
     <div class="empty-state">
         <h3>No events yet</h3>
         <p>Create your first event to get started</p>
-        <button class="btn-primary" routerLink="/manager/events/new">Create Event</button>
+        <button class="btn-primary" [routerLink]="['/manager/clubs', selectedClubId(), 'events', 'new']">Create Event</button>
     </div>
     } @else {
 

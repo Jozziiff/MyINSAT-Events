@@ -73,18 +73,6 @@ export class ManagerApiService {
 
     constructor(private http: HttpClient) { }
 
-    getClub(): Observable<Club> {
-        return this.http.get<Club>(`${this.apiUrl}/club`);
-    }
-
-    updateClub(data: Partial<Club>): Observable<Club> {
-        return this.http.put<Club>(`${this.apiUrl}/club`, data);
-    }
-
-    getAllEvents(): Observable<Event[]> {
-        return this.http.get<Event[]>(`${this.apiUrl}/events`);
-    }
-
     createEvent(event: Partial<Event>): Observable<Event> {
         return this.http.post<Event>(`${this.apiUrl}/events`, event);
     }
@@ -120,6 +108,10 @@ export class ManagerApiService {
 
     getClubEvents(clubId: number): Observable<Event[]> {
         return this.http.get<Event[]>(`${this.apiUrl}/clubs/${clubId}/events`);
+    }
+
+    updateClub(clubId: number, data: Partial<Club>): Observable<Club> {
+        return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, data);
     }
 
     getClubManagers(clubId: number): Observable<ClubManager[]> {

@@ -1,7 +1,7 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService } from '../../services/manager-api.service';
 
@@ -14,6 +14,7 @@ import { ManagerApiService } from '../../services/manager-api.service';
 })
 export class ClubSettingsComponent implements OnInit {
     clubForm: FormGroup;
+    clubId = signal<number | null>(null);
     loading = signal(true);
     saving = signal(false);
     error = signal('');
@@ -22,7 +23,8 @@ export class ClubSettingsComponent implements OnInit {
     constructor(
         private fb: FormBuilder,
         private managerApi: ManagerApiService,
-        private router: Router
+        private router: Router,
+        private route: ActivatedRoute
     ) {
         this.clubForm = this.fb.group({
             name: ['', [Validators.required, Validators.minLength(3)]],
@@ -32,14 +34,21 @@ export class ClubSettingsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.loadClubData();
+        const clubIdParam = this.route.snapshot.paramMap.get('clubId');
+        if (clubIdParam) {
+            this.clubId.set(+clubIdParam);
+            this.loadClubData(+clubIdParam);
+        } else {
+            this.error.set('Club ID not found');
+            this.loading.set(false);
+        }
     }
 
-    loadClubData() {
+    loadClubData(clubId: number) {
         this.loading.set(true);
         this.error.set('');
 
-        this.managerApi.getClub().subscribe({
+        this.managerApi.getManagedClubById(clubId).subscribe({
             next: (club) => {
                 this.clubForm.patchValue({
                     name: club.name,
@@ -62,11 +71,17 @@ export class ClubSettingsComponent implements OnInit {
             return;
         }
 
+        const clubId = this.clubId();
+        if (!clubId) {
+            this.error.set('Club ID not found');
+            return;
+        }
+
         this.saving.set(true);
         this.error.set('');
         this.successMessage.set('');
 
-        this.managerApi.updateClub(this.clubForm.value).subscribe({
+        this.managerApi.updateClub(clubId, this.clubForm.value).subscribe({
             next: () => {
                 this.successMessage.set('Club settings updated successfully!');
                 this.saving.set(false);
