@@ -1,6 +1,7 @@
-import { Component, signal, OnInit, ChangeDetectorRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { fadeSlideIn } from '../../animations';
 import { ManagerApiService } from '../../services/manager-api.service';
 import { resolveImageUrl, getApiUrl } from '../../utils/image.utils';
@@ -13,68 +14,44 @@ interface EventSection {
     imageUrl?: string;
 }
 
-interface SectionForm {
-    enabled: boolean;
-    title: string;
-    description: string;
-    imageUrl: string;
-    imageFile: File | null;
-    imagePreview: string;
-}
-
-interface EnabledSection extends SectionForm {
-    key: string;
-}
-
-const DEFAULT_SECTION_IMAGE = `${API_URL}/uploads/defaults/activities-default.jpg`;
-
 @Component({
     selector: 'app-event-form',
-    imports: [FormsModule, RouterLink],
+    imports: [CommonModule, ReactiveFormsModule],
     templateUrl: './event-form.html',
     styleUrl: './event-form.css',
     animations: [fadeSlideIn]
 })
 export class EventFormComponent implements OnInit {
-    // Form state
-    submitting = signal(false);
-    error = signal<string | null>(null);
-    success = signal(false);
-    loadingEvent = signal(false);
+    eventForm: FormGroup;
+    sections = signal<EventSection[]>([]);
+    sectionControls = signal<FormControl[]>([]);
+    coverImageUrl = signal<string>('');
 
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
     clubId = signal<number | null>(null);
-    // Required fields
-    title = '';
-    description = '';
-    location = '';
-    startTime = '';
-    endTime = '';
-    minEndTime = '';
-    capacity = 30;
-    price = 0;
-
-    // Cover image
-    coverUrl = '';
-    coverFile: File | null = null;
-    coverPreview = '';
-
-    // Optional sections
-    sections: { [key: string]: SectionForm } = {
-        details: { enabled: false, title: 'Event Details', description: '', imageUrl: '', imageFile: null, imagePreview: '' },
-        schedule: { enabled: false, title: 'Schedule', description: '', imageUrl: '', imageFile: null, imagePreview: '' },
-        speakers: { enabled: false, title: 'Speakers', description: '', imageUrl: '', imageFile: null, imagePreview: '' },
-        requirements: { enabled: false, title: 'Requirements', description: '', imageUrl: '', imageFile: null, imagePreview: '' },
-        prizes: { enabled: false, title: 'Prizes', description: '', imageUrl: '', imageFile: null, imagePreview: '' },
-    };
+    loading = signal(false);
+    error = signal('');
+    uploadingPhotoIndex = signal<number | null>(null);
+    uploadingCoverImage = signal(false);
+    showPreview = signal(false);
 
     constructor(
+        private fb: FormBuilder,
         private managerApi: ManagerApiService,
         private router: Router,
-        private route: ActivatedRoute,
-        private cdr: ChangeDetectorRef
-    ) {}
+        private route: ActivatedRoute
+    ) {
+        this.eventForm = this.fb.group({
+            title: ['', [Validators.required, Validators.minLength(3)]],
+            description: [''],
+            location: ['', Validators.required],
+            startTime: ['', Validators.required],
+            endTime: ['', Validators.required],
+            capacity: [30, [Validators.required, Validators.min(1)]],
+            price: [0, [Validators.min(0)]]
+        });
+    }
 
     ngOnInit() {
         const clubIdParam = this.route.snapshot.paramMap.get('clubId');
@@ -116,32 +93,18 @@ export class EventFormComponent implements OnInit {
                         this.coverImageUrl.set(resolveImageUrl(event.photoUrl) || '');
                     }
 
-                if (event.sections && Array.isArray(event.sections)) {
-                    const sectionKeys = Object.keys(this.sections);
-                    event.sections.forEach((section, idx) => {
-                        if (idx < sectionKeys.length) {
-                            const key = sectionKeys[idx];
-                            this.sections[key] = {
-                                enabled: true,
-                                title: section.title,
-                                description: section.description,
-                                imageUrl: section.imageUrl || '',
-                                imageFile: null,
-                                imagePreview: ''
-                            };
-                        }
-                    });
+                    if (event.sections && Array.isArray(event.sections)) {
+                        this.sections.set(event.sections);
+                        this.initializeSectionControls(event.sections);
+                    }
                 }
-
-                this.cdr.detectChanges();
-            } else {
-                this.error.set('Event not found');
+                this.loading.set(false);
+            },
+            error: (err) => {
+                this.error.set('Failed to load event');
+                this.loading.set(false);
             }
-        } catch (err) {
-            this.error.set('Failed to load event');
-        } finally {
-            this.loadingEvent.set(false);
-        }
+        });
     }
 
     formatDateForInput(dateString: string): string {
@@ -149,61 +112,60 @@ export class EventFormComponent implements OnInit {
         return date.toISOString().slice(0, 16);
     }
 
-    // Handle start time change - auto-set end time to 2 hours later
-    onStartTimeChange() {
-        if (!this.startTime) {
-            this.minEndTime = '';
-            return;
+    addSection() {
+        const newSection: EventSection = {
+            title: '',
+            description: '',
+            imageUrl: ''
+        };
+        this.sections.update(s => [...s, newSection]);
+        this.sectionControls.update(c => [
+            ...c,
+            new FormControl(''),
+            new FormControl('')
+        ]);
+    }
+
+    removeSection(index: number) {
+        this.sections.update(s => s.filter((_, i) => i !== index));
+        this.sectionControls.update(c => {
+            const newControls = [...c];
+            newControls.splice(index * 2, 2);
+            return newControls;
+        });
+    }
+
+    getSectionTitleControl(index: number): FormControl {
+        const control = this.sectionControls()[index * 2];
+        if (!control) {
+            const newControl = new FormControl('');
+            this.sectionControls.update(c => [...c, newControl]);
+            return newControl;
         }
+        return control;
+    }
 
-        const startDate = new Date(this.startTime);
-
-        // Set minimum end time to start time
-        this.minEndTime = this.startTime;
-
-        // Auto-set end time to 2 hours after start if end time is not set or is before start
-        if (!this.endTime || new Date(this.endTime) <= startDate) {
-            const endDate = new Date(startDate);
-            endDate.setHours(endDate.getHours() + 2);
-            this.endTime = endDate.toISOString().slice(0, 16);
+    getSectionDescriptionControl(index: number): FormControl {
+        const control = this.sectionControls()[index * 2 + 1];
+        if (!control) {
+            const newControl = new FormControl('');
+            this.sectionControls.update(c => [...c, newControl]);
+            return newControl;
         }
-
-        this.cdr.detectChanges();
+        return control;
     }
 
-    // Get minimum start time (current time)
-    getMinStartTime(): string {
-        const now = new Date();
-        return now.toISOString().slice(0, 16);
+    getSectionImageUrl(index: number): string {
+        return this.sections()[index]?.imageUrl || '';
     }
 
-    // Preview helpers
-    getPreviewCover(): string {
-        return this.coverPreview || this.coverUrl;
-    }
-
-    getEnabledSections(): EnabledSection[] {
-        return Object.entries(this.sections)
-            .filter(([_, section]) => section.enabled)
-            .map(([key, section]) => ({ ...section, key }));
-    }
-
-    hasAnyContent(): boolean {
-        return !!(
-            this.title ||
-            this.description ||
-            this.location ||
-            this.getPreviewCover() ||
-            this.getEnabledSections().length > 0
-        );
-    }
-
-    // Handle file selection
-    onFileSelected(event: Event, target: string) {
+    onSectionImageSelected(event: Event, sectionIndex: number): void {
         const input = event.target as HTMLInputElement;
-        if (!input.files || input.files.length === 0) return;
+        const file = input.files?.[0];
 
-        const file = input.files[0];
+        if (!file) return;
+
+        this.error.set('');
 
         // Validate file type
         if (!file.type.match(/image\/(jpg|jpeg|png|gif|webp)/)) {
@@ -219,190 +181,197 @@ export class EventFormComponent implements OnInit {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const preview = e.target?.result as string;
-
-            if (target === 'cover') {
-                this.coverFile = file;
-                this.coverPreview = preview;
-            } else if (this.sections[target]) {
-                this.sections[target].imageFile = file;
-                this.sections[target].imagePreview = preview;
-            }
-
-            this.cdr.detectChanges();
-        };
-
-        reader.readAsDataURL(file);
+        this.uploadSectionPhoto(file, sectionIndex, input);
     }
 
-    // Upload image and get URL
-    private async uploadIfNeeded(file: File | null, url: string): Promise<string> {
-        if (file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('event', 'event');
+    private uploadSectionPhoto(file: File, sectionIndex: number, input: HTMLInputElement): void {
+        this.uploadingPhotoIndex.set(sectionIndex);
 
-            try {
-                const response = await fetch(`${API_URL}/upload/image`, {
-                    method: 'POST',
-                    body: formData
-                });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('event', 'event');
 
+        fetch(`${API_URL}/upload/image`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
                 if (!response.ok) throw new Error('Upload failed');
-
-                const data = await response.json();
+                return response.json();
+            })
+            .then(data => {
                 let imageUrl = data.url;
-
-                // Make sure URL is absolute
+                // Make sure URL is absolute if it's relative
                 if (imageUrl && !imageUrl.startsWith('http')) {
                     imageUrl = `${API_URL}${imageUrl}`;
                 }
-
-                return imageUrl || '';
-            } catch (err) {
-                throw new Error('Failed to upload image');
-            }
-        }
-        return url;
+                this.sections.update(s => {
+                    const updated = [...s];
+                    updated[sectionIndex] = { ...updated[sectionIndex], imageUrl };
+                    return updated;
+                });
+                this.uploadingPhotoIndex.set(null);
+                input.value = '';
+            })
+            .catch(err => {
+                this.error.set('Failed to upload photo. Please try again.');
+                this.uploadingPhotoIndex.set(null);
+                input.value = '';
+            });
     }
 
-    async onSubmit() {
-        // Validation
-        if (!this.title.trim()) {
-            this.error.set('Event title is required');
-            return;
-        }
-        if (this.title.trim().length < 3) {
-            this.error.set('Title must be at least 3 characters');
-            return;
-        }
-        if (!this.location.trim()) {
-            this.error.set('Event location is required');
-            return;
-        }
-        if (!this.startTime) {
-            this.error.set('Start time is required');
-            return;
-        }
-        if (!this.endTime) {
-            this.error.set('End time is required');
-            return;
-        }
-        if (new Date(this.endTime) <= new Date(this.startTime)) {
-            this.error.set('End time must be after start time');
-            return;
-        }
-        if (this.capacity < 1) {
-            this.error.set('Capacity must be at least 1');
-            return;
-        }
-        if (this.price < 0) {
-            this.error.set('Price cannot be negative');
-            return;
-        }
-
-        this.submitting.set(true);
-        this.error.set(null);
-
-        try {
-            // Upload cover image
-            let photoUrl = await this.uploadIfNeeded(this.coverFile, this.coverUrl);
-
-            // Convert to relative URL if needed
-            if (photoUrl && photoUrl.startsWith(API_URL)) {
-                photoUrl = photoUrl.replace(API_URL, '');
-            }
-
-            // Build event data
-            const eventData: any = {
-                clubId: this.clubId(),
-                title: this.title.trim(),
-                description: this.description.trim() || undefined,
-                location: this.location.trim(),
-                startTime: new Date(this.startTime).toISOString(),
-                endTime: new Date(this.endTime).toISOString(),
-                capacity: this.capacity,
-                price: this.price,
-                photoUrl: photoUrl || undefined,
-            };
-
-            // Add enabled sections
-            const enabledSections: EventSection[] = [];
-            for (const [key, section] of Object.entries(this.sections)) {
-                if (section.enabled && section.description.trim()) {
-                    const imageUrl = await this.uploadIfNeeded(section.imageFile, section.imageUrl);
-                    let relativeImageUrl = imageUrl;
-                    if (relativeImageUrl && relativeImageUrl.startsWith(API_URL)) {
-                        relativeImageUrl = relativeImageUrl.replace(API_URL, '');
-                    }
-
-                    enabledSections.push({
-                        title: section.title.trim(),
-                        description: section.description.trim(),
-                        imageUrl: relativeImageUrl || undefined,
-                    });
-                }
-            }
-
-            if (enabledSections.length > 0) {
-                eventData.sections = enabledSections;
-            }
-
-            // Create or update event
-            const request = this.isEditMode()
-                ? this.managerApi.updateEvent(this.eventId()!, eventData)
-                : this.managerApi.createEvent(eventData);
-
-            await request.toPromise();
-
-            this.success.set(true);
-            setTimeout(() => {
-                this.router.navigate(['/manager']);
-            }, 1500);
-
-        } catch (err: any) {
-            this.error.set(err.error?.message || `Failed to ${this.isEditMode() ? 'update' : 'create'} event`);
-        } finally {
-            this.submitting.set(false);
-        }
-    }
-
-    getSectionKeys(): string[] {
-        return Object.keys(this.sections);
-    }
-
-    getSectionLabel(key: string): string {
-        const labels: { [key: string]: string } = {
-            details: 'Event Details',
-            schedule: 'Schedule',
-            speakers: 'Speakers',
-            requirements: 'Requirements',
-            prizes: 'Prizes & Awards',
-        };
-        return labels[key] || key;
-    }
-
-    getDefaultImageForSection(key: string): string {
-        return DEFAULT_SECTION_IMAGE;
-    }
-
-    formatDateForDisplay(dateString: string): string {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+    removeSectionImage(index: number): void {
+        this.sections.update(s => {
+            const updated = [...s];
+            updated[index] = { ...updated[index], imageUrl: '' };
+            return updated;
         });
     }
 
-    getFormattedPrice(): string {
-        return this.price === 0 ? 'Free' : `${this.price} DT`;
+    // Cover Image Upload Methods
+    onCoverImageSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (!file) return;
+
+        this.error.set('');
+
+        // Validate file type
+        if (!file.type.match(/image\/(jpg|jpeg|png|gif|webp)/)) {
+            this.error.set('Please select a valid image file (JPG, PNG, GIF, WebP)');
+            input.value = '';
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            this.error.set('Image must be smaller than 5MB');
+            input.value = '';
+            return;
+        }
+
+        this.uploadCoverImage(file, input);
+    }
+
+    private uploadCoverImage(file: File, input: HTMLInputElement): void {
+        this.uploadingCoverImage.set(true);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('event', 'event');
+
+        fetch(`${API_URL}/upload/image`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Upload failed');
+                return response.json();
+            })
+            .then(data => {
+                let imageUrl = data.url;
+                // Make sure URL is absolute if it's relative
+                if (imageUrl && !imageUrl.startsWith('http')) {
+                    imageUrl = `${API_URL}${imageUrl}`;
+                }
+                this.coverImageUrl.set(imageUrl);
+                this.uploadingCoverImage.set(false);
+                input.value = '';
+            })
+            .catch(err => {
+                this.error.set('Failed to upload cover image. Please try again.');
+                this.uploadingCoverImage.set(false);
+                input.value = '';
+            });
+    }
+
+    removeCoverImage(): void {
+        this.coverImageUrl.set('');
+    }
+
+    openPreview(): void {
+        this.showPreview.set(true);
+    }
+
+    closePreview(): void {
+        this.showPreview.set(false);
+    }
+
+    initializeSectionControls(sections: EventSection[]): void {
+        const controls: FormControl[] = [];
+        sections.forEach(section => {
+            controls.push(new FormControl(section.title));
+            controls.push(new FormControl(section.description));
+        });
+        this.sectionControls.set(controls);
+    }
+
+    onSubmit() {
+        if (this.eventForm.invalid) {
+            this.eventForm.markAllAsTouched();
+            return;
+        }
+
+        // Update sections with control values
+        this.sections.update(s => s.map((section, idx) => ({
+            ...section,
+            title: this.getSectionTitleControl(idx).value || '',
+            description: this.getSectionDescriptionControl(idx).value || ''
+        })));
+
+        this.loading.set(true);
+        this.error.set('');
+
+        const formValue = this.eventForm.value;
+
+        // Get the relative URL for the cover image (remove base URL if present)
+        let photoUrl = this.coverImageUrl();
+        if (photoUrl && photoUrl.startsWith(API_URL)) {
+            photoUrl = photoUrl.replace(API_URL, '');
+        }
+
+        const eventData = {
+            ...formValue,
+            clubId: this.clubId(),
+            startTime: new Date(formValue.startTime).toISOString(),
+            endTime: new Date(formValue.endTime).toISOString(),
+            photoUrl: photoUrl || undefined,
+            sections: this.sections()
+        };
+
+        const request = this.isEditMode()
+            ? this.managerApi.updateEvent(this.eventId()!, eventData)
+            : this.managerApi.createEvent(eventData);
+
+        request.subscribe({
+            next: () => {
+                this.router.navigate(['/manager']);
+            },
+            error: (err) => {
+                this.error.set(err.error?.message || 'Failed to save event');
+                this.loading.set(false);
+            }
+        });
+    }
+
+    cancel() {
+        this.router.navigate(['/manager']);
+    }
+
+    isFieldInvalid(fieldName: string): boolean {
+        const field = this.eventForm.get(fieldName);
+        return !!(field && field.invalid && (field.dirty || field.touched));
+    }
+
+    getFieldError(fieldName: string): string {
+        const field = this.eventForm.get(fieldName);
+        if (!field || !field.errors) return '';
+
+        if (field.errors['required']) return `${fieldName} is required`;
+        if (field.errors['minlength']) return `${fieldName} must be at least ${field.errors['minlength'].requiredLength} characters`;
+        if (field.errors['min']) return `${fieldName} must be at least ${field.errors['min'].min}`;
+
+        return 'Invalid input';
     }
 }
-
