@@ -67,6 +67,7 @@ export class ClubsService {
     return {
       ...club,
       logoUrl: this.resolveField(club.logoUrl),
+      coverImageUrl: this.resolveImageUrl(club.coverImageUrl),
     };
   }
 
@@ -373,13 +374,13 @@ export class ClubsService {
   }
 
   // Get current user's managed clubs with status
-  async getManagedClubs(): Promise<{ 
-    id: number; 
-    name: string; 
-    shortDescription: string; 
-    logoUrl: string; 
-    status: string; 
-    createdAt: Date; 
+  async getManagedClubs(): Promise<{
+    id: number;
+    name: string;
+    shortDescription: string;
+    logoUrl: string;
+    status: string;
+    createdAt: Date;
   }[]> {
     try {
       const response = await fetch(`${this.apiUrl}/clubs/managed/me`, {

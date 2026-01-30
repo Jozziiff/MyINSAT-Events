@@ -573,9 +573,19 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+.status-badge.status-interested {
+    background: rgba(236, 72, 153, 0.15);
+    color: #ec4899;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .btn-interested,
 .btn-confirm,
-.btn-cancel {
+.btn-cancel,
+.btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -597,6 +607,17 @@
 .btn-interested:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(236, 72, 153, 0.4);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: var(--color-text-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(148, 163, 184, 0.1);
+    border-color: rgba(148, 163, 184, 0.5);
 }
 
 .btn-confirm {
@@ -622,7 +643,8 @@
 
 .btn-interested:disabled,
 .btn-confirm:disabled,
-.btn-cancel:disabled {
+.btn-cancel:disabled,
+.btn-secondary:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
@@ -660,13 +682,126 @@
 }
 
 /* Past Event Notice */
-.past-event-notice {
-    text-align: center;
+.past-event-notice,
+.live-event-notice {
     padding: 1.5rem;
     margin-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.status-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+
+    svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        color: var(--color-text-muted);
+    }
+
+    &.attended {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.3);
+
+        svg {
+            color: #10b981;
+        }
+
+        .status-label {
+            color: #10b981;
+        }
+    }
+
+    &.not-attended {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.3);
+
+        svg {
+            color: #ef4444;
+        }
+
+        .status-label {
+            color: #ef4444;
+        }
+    }
+
+    &.ended {
+        background: rgba(100, 116, 139, 0.15);
+        border-color: rgba(100, 116, 139, 0.25);
+
+        svg {
+            color: #94a3b8;
+        }
+
+        .status-label {
+            color: #94a3b8;
+        }
+    }
+
+    &.live {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.3);
+
+        .status-label {
+            color: #ef4444;
+        }
+    }
+
+    .live-icon-wrapper {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+
+        svg {
+            color: #ef4444;
+            position: relative;
+            z-index: 2;
+        }
+
+        .live-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: pulse-live-icon 2s ease-in-out infinite;
+            z-index: 1;
+        }
+    }
+
+    .status-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .status-label {
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+    }
+}
+
+/* Legacy styles for backwards compatibility */
 .notice-badge {
     display: inline-flex;
     padding: 0.5rem 1rem;
@@ -682,6 +817,18 @@
 .past-event-notice p {
     color: var(--color-text-muted);
     font-size: 0.9rem;
+}
+
+/* Live Icon Pulse Animation */
+@keyframes pulse-live-icon {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.8);
+        opacity: 0;
+    }
 }
 
 /* Responsive */

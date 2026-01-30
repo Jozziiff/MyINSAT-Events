@@ -50,6 +50,13 @@ export class EventDetailComponent implements OnInit {
         return new Date(evt.endTime) < new Date();
     });
 
+    isLive = computed(() => {
+        const evt = this.event();
+        if (!evt) return false;
+        const now = new Date();
+        return new Date(evt.startTime) <= now && new Date(evt.endTime) >= now;
+    });
+
     async ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
