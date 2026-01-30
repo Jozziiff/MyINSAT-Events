@@ -26,7 +26,15 @@ interface EnabledSection extends SectionForm {
     key: string;
 }
 
-const DEFAULT_SECTION_IMAGE = `${API_URL}/uploads/defaults/activities-default.jpg`;
+// Default placeholder images for event sections
+const DEFAULT_SECTION_IMAGES = {
+    details: 'https://picsum.photos/seed/details/800/600',
+    schedule: 'https://picsum.photos/seed/schedule/800/600',
+    speakers: 'https://picsum.photos/seed/speakers/800/600',
+    requirements: 'https://picsum.photos/seed/requirements/800/600',
+    prizes: 'https://picsum.photos/seed/prizes/800/600',
+    default: 'https://picsum.photos/seed/event/800/600',
+};
 
 @Component({
     selector: 'app-event-form',
@@ -388,7 +396,7 @@ export class EventFormComponent implements OnInit {
     }
 
     getDefaultImageForSection(key: string): string {
-        return DEFAULT_SECTION_IMAGE;
+        return (DEFAULT_SECTION_IMAGES as any)[key] || DEFAULT_SECTION_IMAGES.default;
     }
 
     formatDateForDisplay(dateString: string): string {

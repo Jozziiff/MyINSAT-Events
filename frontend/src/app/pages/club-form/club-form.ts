@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ClubsService } from '../../services/clubs.service';
 import { CreateClubDto, ClubSection, ClubContact, Club } from '../../models/club.model';
 import { fadeSlideIn } from '../../animations';
-import { getApiUrl } from '../../utils/image.utils';
 
 interface SectionForm {
   enabled: boolean;
@@ -19,15 +18,14 @@ interface EnabledSection extends SectionForm {
   key: string;
 }
 
-// Default images for preview (should match backend defaults)
-const API_URL = getApiUrl();
+// Default placeholder images for preview
 const DEFAULT_IMAGES = {
-  about: `${API_URL}/uploads/defaults/about-default.jpg`,
-  history: `${API_URL}/uploads/defaults/history-default.jpg`,
-  mission: `${API_URL}/uploads/defaults/mission-default.jpg`,
-  activities: `${API_URL}/uploads/defaults/activities-default.jpg`,
-  achievements: `${API_URL}/uploads/defaults/achievements-default.jpg`,
-  joinUs: `${API_URL}/uploads/defaults/join-default.jpg`,
+  about: 'https://picsum.photos/seed/about/800/600',
+  history: 'https://picsum.photos/seed/history/800/600',
+  mission: 'https://picsum.photos/seed/mission/800/600',
+  activities: 'https://picsum.photos/seed/activities/800/600',
+  achievements: 'https://picsum.photos/seed/achievements/800/600',
+  joinUs: 'https://picsum.photos/seed/joinus/800/600',
 };
 
 @Component({
