@@ -130,6 +130,12 @@ export class UsersController {
     return this.usersService.getEventRegistration(req.user.id, eventId);
   }
 
+  // Public route - Get any user's ratings
+  @Get(':id/ratings')
+  getPublicUserRatings(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.getUserRatings(id);
+  }
+
   // Public route - Get any user's public profile (must be LAST to not conflict with 'me' routes)
   @Get(':id/profile')
   getPublicProfile(@Param('id', ParseIntPipe) id: number) {
