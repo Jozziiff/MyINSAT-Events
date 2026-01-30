@@ -159,6 +159,64 @@
     font-size: 0.7rem;
     color: var(--color-text-muted);
   }
+
+  .field-hint {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+}
+
+/* Founded Year Input */
+.founded-year-group {
+  .year-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .year-icon {
+    position: absolute;
+    left: 0.875rem;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-muted);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .year-select {
+    width: 100%;
+    padding: 0.75rem 0.875rem 0.75rem 2.75rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    transition: all var(--transition-base);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    &:hover {
+      border-color: var(--color-primary-light);
+    }
+
+    option {
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      padding: 0.5rem;
+    }
+  }
 }
 
 .form-row {
@@ -238,7 +296,7 @@
 
     &.wide {
       width: 80px;
-      
+
       span {
         font-size: 0.75rem;
       }
@@ -493,8 +551,8 @@
 .preview-hero .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(99, 102, 241, 0.1) 0%, 
+  background: linear-gradient(135deg,
+    rgba(99, 102, 241, 0.1) 0%,
     rgba(139, 92, 246, 0.1) 100%
   );
   z-index: 0;

@@ -138,10 +138,21 @@
   }
 
   .filter-option .option-icon {
-    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 
-  .filter-option .live-dot {
+  .filter-option .option-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .filter-option .live-dot,
+  .filter-option .option-icon .live-dot {
     width: 8px;
     height: 8px;
     background: #ef4444;
@@ -245,7 +256,17 @@
   }
 
   .sort-option .option-icon {
-    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .sort-option .option-icon svg {
+    width: 16px;
+    height: 16px;
   }
 
   .sort-option .option-label {

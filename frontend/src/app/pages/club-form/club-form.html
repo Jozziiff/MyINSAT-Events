@@ -32,13 +32,13 @@
         <!-- Required Fields Section -->
         <section class="form-section">
           <h2>Basic Information <span class="required-badge">Required</span></h2>
-          
+
           <div class="form-group">
             <label for="name">Club Name *</label>
-            <input 
-              type="text" 
-              id="name" 
-              [(ngModel)]="name" 
+            <input
+              type="text"
+              id="name"
+              [(ngModel)]="name"
               name="name"
               placeholder="e.g., IEEE INSAT"
               required
@@ -47,10 +47,10 @@
 
           <div class="form-group">
             <label for="shortDescription">Tagline *</label>
-            <input 
-              type="text" 
-              id="shortDescription" 
-              [(ngModel)]="shortDescription" 
+            <input
+              type="text"
+              id="shortDescription"
+              [(ngModel)]="shortDescription"
               name="shortDescription"
               placeholder="A brief tagline for your club"
               maxlength="150"
@@ -61,14 +61,38 @@
 
           <div class="form-group">
             <label for="about">About *</label>
-            <textarea 
-              id="about" 
-              [(ngModel)]="about" 
+            <textarea
+              id="about"
+              [(ngModel)]="about"
               name="about"
               placeholder="Tell people about your club..."
               rows="4"
               required
             ></textarea>
+          </div>
+
+          <div class="form-group founded-year-group">
+            <label for="foundedYear">Founded Year</label>
+            <div class="year-input-wrapper">
+              <svg class="year-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <select
+                id="foundedYear"
+                [(ngModel)]="foundedYear"
+                name="foundedYear"
+                class="year-select"
+              >
+                <option [ngValue]="null">Select year...</option>
+                @for (year of yearOptions; track year) {
+                  <option [ngValue]="year">{{ year }}</option>
+                }
+              </select>
+            </div>
+            <span class="field-hint">The year your club was originally founded</span>
           </div>
         </section>
 
@@ -81,9 +105,9 @@
             <label>Club Logo *</label>
             <div class="upload-row">
               <div class="file-upload">
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   (change)="onFileSelected($event, 'logo')"
                   id="logoFile"
                 >
@@ -96,9 +120,9 @@
                 </label>
               </div>
               <span class="or-divider">or</span>
-              <input 
-                type="url" 
-                [(ngModel)]="logoUrl" 
+              <input
+                type="url"
+                [(ngModel)]="logoUrl"
                 name="logoUrl"
                 placeholder="https://example.com/logo.png"
                 class="url-input"
@@ -111,9 +135,9 @@
             <label>Cover Image *</label>
             <div class="upload-row">
               <div class="file-upload wide">
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   (change)="onFileSelected($event, 'cover')"
                   id="coverFile"
                 >
@@ -126,9 +150,9 @@
                 </label>
               </div>
               <span class="or-divider">or</span>
-              <input 
-                type="url" 
-                [(ngModel)]="coverUrl" 
+              <input
+                type="url"
+                [(ngModel)]="coverUrl"
                 name="coverUrl"
                 placeholder="https://example.com/cover.jpg"
                 class="url-input"
@@ -141,9 +165,9 @@
             <label>About Section Image</label>
             <div class="upload-row">
               <div class="file-upload">
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   (change)="onFileSelected($event, 'about')"
                   id="aboutFile"
                 >
@@ -156,9 +180,9 @@
                 </label>
               </div>
               <span class="or-divider">or</span>
-              <input 
-                type="url" 
-                [(ngModel)]="aboutImageUrl" 
+              <input
+                type="url"
+                [(ngModel)]="aboutImageUrl"
                 name="aboutImageUrl"
                 placeholder="https://example.com/about.jpg"
                 class="url-input"
@@ -186,9 +210,9 @@
                 <div class="section-fields" @fadeSlideIn>
                   <div class="form-group">
                     <label>Title</label>
-                    <input 
-                      type="text" 
-                      [(ngModel)]="sections[key].title" 
+                    <input
+                      type="text"
+                      [(ngModel)]="sections[key].title"
                       [name]="key + 'Title'"
                       [placeholder]="'e.g., ' + getSectionLabel(key)"
                     >
@@ -196,8 +220,8 @@
 
                   <div class="form-group">
                     <label>Content</label>
-                    <textarea 
-                      [(ngModel)]="sections[key].content" 
+                    <textarea
+                      [(ngModel)]="sections[key].content"
                       [name]="key + 'Content'"
                       placeholder="Write about this section..."
                       rows="3"
@@ -208,9 +232,9 @@
                     <label>Image (optional)</label>
                     <div class="upload-row">
                       <div class="file-upload small">
-                        <input 
-                          type="file" 
-                          accept="image/*" 
+                        <input
+                          type="file"
+                          accept="image/*"
                           (change)="onFileSelected($event, key)"
                           [id]="key + 'File'"
                         >
@@ -223,9 +247,9 @@
                         </label>
                       </div>
                       <span class="or-divider">or</span>
-                      <input 
-                        type="url" 
-                        [(ngModel)]="sections[key].imageUrl" 
+                      <input
+                        type="url"
+                        [(ngModel)]="sections[key].imageUrl"
                         [name]="key + 'ImageUrl'"
                         placeholder="Image URL"
                         class="url-input"
@@ -245,10 +269,10 @@
           <div class="form-row">
             <div class="form-group">
               <label for="email">Email</label>
-              <input 
-                type="email" 
-                id="email" 
-                [(ngModel)]="contact.email" 
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="contact.email"
                 name="email"
                 placeholder="club@example.com"
               >
@@ -256,10 +280,10 @@
 
             <div class="form-group">
               <label for="phone">Phone</label>
-              <input 
-                type="tel" 
-                id="phone" 
-                [(ngModel)]="contact.phone" 
+              <input
+                type="tel"
+                id="phone"
+                [(ngModel)]="contact.phone"
                 name="phone"
                 placeholder="+216 XX XXX XXX"
               >
@@ -269,10 +293,10 @@
           <div class="form-row">
             <div class="form-group">
               <label for="website">Website</label>
-              <input 
-                type="url" 
-                id="website" 
-                [(ngModel)]="contact.website" 
+              <input
+                type="url"
+                id="website"
+                [(ngModel)]="contact.website"
                 name="website"
                 placeholder="https://yourclub.com"
               >
@@ -280,10 +304,10 @@
 
             <div class="form-group">
               <label for="facebook">Facebook</label>
-              <input 
-                type="url" 
-                id="facebook" 
-                [(ngModel)]="contact.facebook" 
+              <input
+                type="url"
+                id="facebook"
+                [(ngModel)]="contact.facebook"
                 name="facebook"
                 placeholder="https://facebook.com/yourclub"
               >
@@ -293,10 +317,10 @@
           <div class="form-row">
             <div class="form-group">
               <label for="instagram">Instagram</label>
-              <input 
-                type="url" 
-                id="instagram" 
-                [(ngModel)]="contact.instagram" 
+              <input
+                type="url"
+                id="instagram"
+                [(ngModel)]="contact.instagram"
                 name="instagram"
                 placeholder="https://instagram.com/yourclub"
               >
@@ -304,10 +328,10 @@
 
             <div class="form-group">
               <label for="linkedin">LinkedIn</label>
-              <input 
-                type="url" 
-                id="linkedin" 
-                [(ngModel)]="contact.linkedin" 
+              <input
+                type="url"
+                id="linkedin"
+                [(ngModel)]="contact.linkedin"
                 name="linkedin"
                 placeholder="https://linkedin.com/company/yourclub"
               >
@@ -339,8 +363,8 @@
 
     <div class="club-preview">
       <!-- Hero Section -->
-      <header 
-        class="preview-hero" 
+      <header
+        class="preview-hero"
         [style.backgroundImage]="getPreviewCover() ? 'url(' + getPreviewCover() + ')' : 'none'"
         [class.has-cover]="getPreviewCover()"
       >

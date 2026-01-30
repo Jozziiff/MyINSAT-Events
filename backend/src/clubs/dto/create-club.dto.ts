@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty, IsOptional, ValidateNested, IsNumber, Min, Max, IsInt } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 // Default images for each section type (using placeholder service for missing files)
 export const DEFAULT_SECTION_IMAGES = {
@@ -106,4 +106,11 @@ export class CreateClubDto {
   @Type(() => ClubContactDto)
   @IsOptional()
   contact?: ClubContactDto;
+
+  @IsOptional()
+  @Transform(({ value }) => value ? parseInt(value, 10) : null)
+  @IsInt({ message: 'Founded year must be a valid integer' })
+  @Min(1900, { message: 'Founded year must be 1900 or later' })
+  @Max(new Date().getFullYear(), { message: `Founded year cannot be in the future` })
+  foundedYear?: number;
 }

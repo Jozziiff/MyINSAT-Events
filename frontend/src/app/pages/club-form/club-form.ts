@@ -39,6 +39,15 @@ export class ClubFormComponent implements OnInit {
   // Default images for preview
   defaultImages = DEFAULT_IMAGES;
 
+  // Current year for founded year validation
+  currentYear = new Date().getFullYear();
+
+  // Year options for dropdown (from current year down to 1900)
+  yearOptions: number[] = Array.from(
+    { length: this.currentYear - 1899 },
+    (_, i) => this.currentYear - i
+  );
+
   // Edit mode
   isEditMode = false;
   clubId: number | null = null;
@@ -53,6 +62,7 @@ export class ClubFormComponent implements OnInit {
   name = '';
   shortDescription = '';
   about = '';
+  foundedYear: number | null = null;
 
   // Image fields - simplified without toggle
   logoUrl = '';
@@ -125,6 +135,7 @@ export class ClubFormComponent implements OnInit {
     this.name = club.name;
     this.shortDescription = club.shortDescription;
     this.about = club.about;
+    this.foundedYear = club.foundedYear || null;
     this.logoUrl = club.logoUrl || '';
     this.coverUrl = club.coverImageUrl || '';
     this.aboutImageUrl = club.aboutImageUrl || '';
@@ -178,10 +189,10 @@ export class ClubFormComponent implements OnInit {
 
   hasAnyContent(): boolean {
     return !!(
-      this.name || 
-      this.shortDescription || 
-      this.about || 
-      this.getPreviewLogo() || 
+      this.name ||
+      this.shortDescription ||
+      this.about ||
+      this.getPreviewLogo() ||
       this.getPreviewCover() ||
       this.getEnabledSections().length > 0 ||
       this.hasAnyContact()
@@ -268,6 +279,7 @@ export class ClubFormComponent implements OnInit {
         logoUrl: logoUrl, // Required
         coverImageUrl: coverUrl, // Required
         aboutImageUrl: aboutImageUrl || undefined, // Optional
+        foundedYear: this.foundedYear || undefined, // Optional
       };
 
       // Add enabled sections

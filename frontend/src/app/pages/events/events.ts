@@ -26,7 +26,7 @@ export class EventsComponent implements OnInit {
   private router = inject(Router);
 
   searchQuery = signal('');
-  selectedFilter = signal<FilterType>('all');
+  selectedFilter = signal<FilterType>('upcoming');
   selectedSort = signal<SortType>('date-asc');
   showSortDropdown = signal(false);
   showFilterDropdown = signal(false);
@@ -44,14 +44,14 @@ export class EventsComponent implements OnInit {
   // Filter options
   get filterOptions() {
     const options = [
-      { value: 'all' as FilterType, label: 'All Events', icon: '📋' },
-      { value: 'live' as FilterType, label: 'Live Now', icon: '🔴' },
-      { value: 'upcoming' as FilterType, label: 'Upcoming', icon: '🚀' },
-      { value: 'ended' as FilterType, label: 'Ended', icon: '🏁' }
+      { value: 'all' as FilterType, label: 'All Events', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>' },
+      { value: 'live' as FilterType, label: 'Live Now', icon: '<span class="live-dot"></span>' },
+      { value: 'upcoming' as FilterType, label: 'Upcoming', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' },
+      { value: 'ended' as FilterType, label: 'Ended', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' }
     ];
 
     if (this.isAuthenticated()) {
-      options.splice(1, 0, { value: 'my-clubs' as FilterType, label: 'My Clubs', icon: '👥' });
+      options.splice(1, 0, { value: 'my-clubs' as FilterType, label: 'My Clubs', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' });
     }
 
     return options;
@@ -59,11 +59,11 @@ export class EventsComponent implements OnInit {
 
   // Sort options
   sortOptions = [
-    { value: 'date-asc' as SortType, label: 'Date: Earliest First', icon: '📅↑' },
-    { value: 'date-desc' as SortType, label: 'Date: Latest First', icon: '📅↓' },
-    { value: 'interested' as SortType, label: 'Most Interested', icon: '❤️' },
-    { value: 'confirmed' as SortType, label: 'Most Confirmed', icon: '✓' },
-    { value: 'rating' as SortType, label: 'Highest Rated', icon: '⭐' }
+    { value: 'date-asc' as SortType, label: 'Earliest First', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14l4 4 4-4"></path></svg>' },
+    { value: 'date-desc' as SortType, label: 'Latest First', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 18l4-4 4 4"></path></svg>' },
+    { value: 'interested' as SortType, label: 'Most Interested', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>' },
+    { value: 'confirmed' as SortType, label: 'Most Confirmed', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' },
+    { value: 'rating' as SortType, label: 'Highest Rated', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' }
   ];
 
   async ngOnInit() {
@@ -144,27 +144,32 @@ export class EventsComponent implements OnInit {
       filtered = filtered.filter(event => this.isEventEnded(event));
     }
 
-    // Apply sort
+    // Apply sort - create a copy to avoid mutating the filtered array
+    const sorted = [...filtered];
     const sort = this.selectedSort();
     if (sort === 'date-asc') {
-      filtered.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+      sorted.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     } else if (sort === 'date-desc') {
-      filtered.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+      sorted.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
     } else if (sort === 'interested') {
-      filtered.sort((a, b) => b.stats.interestedCount - a.stats.interestedCount);
+      sorted.sort((a, b) => (b.stats?.interestedCount || 0) - (a.stats?.interestedCount || 0));
     } else if (sort === 'confirmed') {
-      filtered.sort((a, b) => b.stats.confirmedCount - a.stats.confirmedCount);
+      sorted.sort((a, b) => (b.stats?.confirmedCount || 0) - (a.stats?.confirmedCount || 0));
     } else if (sort === 'rating') {
-      filtered.sort((a, b) => {
+      sorted.sort((a, b) => {
+        const aRatingCount = a.stats?.ratingCount || 0;
+        const bRatingCount = b.stats?.ratingCount || 0;
+        const aAvgRating = a.stats?.averageRating || 0;
+        const bAvgRating = b.stats?.averageRating || 0;
         // Only compare if both have ratings
-        if (a.stats.ratingCount === 0 && b.stats.ratingCount === 0) return 0;
-        if (a.stats.ratingCount === 0) return 1;
-        if (b.stats.ratingCount === 0) return -1;
-        return b.stats.averageRating - a.stats.averageRating;
+        if (aRatingCount === 0 && bRatingCount === 0) return 0;
+        if (aRatingCount === 0) return 1;
+        if (bRatingCount === 0) return -1;
+        return bAvgRating - aAvgRating;
       });
     }
 
-    return filtered;
+    return sorted;
   }
 
   // Format date for display

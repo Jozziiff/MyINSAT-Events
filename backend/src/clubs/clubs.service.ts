@@ -72,8 +72,8 @@ export class ClubsService {
   async getAllClubs(): Promise<ClubSummaryDto[]> {
     const clubs = await this.clubRepository.find({
       where: { status: ClubStatus.APPROVED },
-      select: ['id', 'name', 'shortDescription', 'logoUrl', 'coverImageUrl', 'about', 'createdAt'],
-      relations: ['followers'],
+      select: ['id', 'name', 'shortDescription', 'logoUrl', 'coverImageUrl', 'about', 'foundedYear', 'createdAt'],
+      relations: ['followers', 'events'],
     });
 
     return clubs.map((club) => ({
@@ -83,8 +83,10 @@ export class ClubsService {
       logoUrl: club.logoUrl,
       coverImageUrl: club.coverImageUrl,
       about: club.about,
+      foundedYear: club.foundedYear,
       createdAt: club.createdAt,
-      followerCount: club.followers?.length || 0
+      followerCount: club.followers?.length || 0,
+      eventsCount: club.events?.length || 0
     }));
   }
 

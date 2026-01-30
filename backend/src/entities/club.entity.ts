@@ -53,6 +53,9 @@ export class Club {
     @Column({ type: 'varchar', nullable: true, name: 'cover_image_url' })
     coverImageUrl: string;
 
+    @Column({ type: 'int', nullable: true, name: 'founded_year' })
+    foundedYear: number;
+
     @Column({ type: 'enum', enum: ClubStatus, default: ClubStatus.PENDING })
     status: ClubStatus;
 

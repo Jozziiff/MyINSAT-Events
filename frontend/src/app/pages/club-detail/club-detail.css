@@ -477,6 +477,21 @@
   transform: translateY(-2px);
 }
 
+/* Founded Year Badge */
+.founded-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 /* Popup Overlay */
 .popup-overlay {
   position: fixed;
@@ -646,15 +661,15 @@
   .popup-modal {
     max-height: 90vh;
   }
-  
+
   .popup-header {
     padding: 1rem 1.25rem;
   }
-  
+
   .follower-item {
     padding: 0.625rem 0.875rem;
   }
-  
+
   .follower-avatar {
     width: 36px;
     height: 36px;

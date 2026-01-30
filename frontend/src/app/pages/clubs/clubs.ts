@@ -11,7 +11,6 @@ type SortType = 'followers-desc' | 'followers-asc' | 'events' | 'oldest';
 interface ClubWithFollow extends ClubSummary {
   isFollowing?: boolean;
   followLoading?: boolean;
-  eventsCount?: number;
 }
 
 @Component({
@@ -36,10 +35,10 @@ export class ClubsComponent implements OnInit {
   isLoggedIn = computed(() => !!this.tokenService.getAccessToken());
 
   sortOptions = [
-    { value: 'followers-desc' as SortType, label: 'Most Followers', icon: '👥↓' },
-    { value: 'followers-asc' as SortType, label: 'Least Followers', icon: '👥↑' },
-    { value: 'events' as SortType, label: 'Most Events', icon: '🎉' },
-    { value: 'oldest' as SortType, label: 'Oldest Founded', icon: '🕰️' }
+    { value: 'followers-desc' as SortType, label: 'Most Followers', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+    { value: 'followers-asc' as SortType, label: 'Least Followers', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg>' },
+    { value: 'events' as SortType, label: 'Most Events', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' },
+    { value: 'oldest' as SortType, label: 'Oldest Founded', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' }
   ];
 
   filteredClubs = computed(() => {
@@ -68,10 +67,18 @@ export class ClubsComponent implements OnInit {
         sorted.sort((a, b) => (b.eventsCount || 0) - (a.eventsCount || 0));
         break;
       case 'oldest':
+        // Sort by foundedYear (oldest first), clubs without foundedYear go to the end
         sorted.sort((a, b) => {
-          const dateA = new Date(a.createdAt).getTime();
-          const dateB = new Date(b.createdAt).getTime();
-          return dateA - dateB;
+          const yearA = a.foundedYear;
+          const yearB = b.foundedYear;
+          // If both have foundedYear, compare them
+          if (yearA && yearB) return yearA - yearB;
+          // If only a has foundedYear, a comes first
+          if (yearA && !yearB) return -1;
+          // If only b has foundedYear, b comes first
+          if (!yearA && yearB) return 1;
+          // If neither has foundedYear, sort by createdAt
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         });
         break;
     }

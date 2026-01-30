@@ -16,6 +16,7 @@ export class ClubDto {
   achievements?: ClubSectionDto;
   joinUs?: ClubSectionDto;
   contact?: ClubContactDto;
+  foundedYear?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,8 @@ export class ClubSummaryDto {
   logoUrl: string;
   coverImageUrl?: string;
   about: string;
+  foundedYear?: number;
   createdAt: Date;
   followerCount?: number;
+  eventsCount?: number;
 }

@@ -24,6 +24,8 @@ export interface ClubSummary {
   coverImageUrl?: string;
   about: string;
   followerCount?: number;
+  eventsCount?: number;
+  foundedYear?: number;
   createdAt: Date;
 }
 
@@ -42,6 +44,7 @@ export interface Club {
   joinUs?: ClubSection;
   contact?: ClubContact;
   coverImageUrl?: string;
+  foundedYear?: number;
   ownerId: number;
   createdAt: Date;
   updatedAt: Date;
@@ -131,4 +134,7 @@ export interface CreateClubDto {
 
   // Cover image - required
   coverImageUrl: string;
+
+  // Founded year - optional
+  foundedYear?: number;
 }
