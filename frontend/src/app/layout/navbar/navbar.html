@@ -21,7 +21,7 @@
     <div class="auth-section">
       @if (isAuthenticated()) {
         <div class="user-menu">
-          <a routerLink="/profile" routerLinkActive="active" class="profile-link" [@nameHoverAnimation]="nameHoverState" (mouseenter)="onNameMouseEnter()" (mouseleave)="onNameMouseLeave()">
+          <a routerLink="/profile" routerLinkActive="active" class="profile-link">
             <div class="profile-avatar-wrapper">
               @if (currentUser()?.avatarUrl) {
                 <img [src]="currentUser()?.avatarUrl" alt="Profile" class="profile-avatar" />
