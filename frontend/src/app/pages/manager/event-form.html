@@ -1,322 +1,269 @@
-<div class="create-event-layout" @fadeSlideIn>
-  <!-- Left Side: Form -->
-  <aside class="form-panel">
-    <header class="panel-header">
-      <a routerLink="/manager" class="btn-back">Back to Dashboard</a>
-      <h1>{{ isEditMode() ? 'Edit Event' : 'Create New Event' }}</h1>
-      <p>{{ isEditMode() ? 'Update your event details' : 'Fill out the form to see the live preview' }}</p>
+<div class="page-container container" @fadeSlideIn>
+    <header class="page-header">
+        <div class="text-content">
+            <h1>{{ isEditMode() ? 'Edit Event' : 'Create Event' }}</h1>
+            <p>{{ isEditMode() ? 'Update event details' : 'Add a new event for your club' }}</p>
+        </div>
     </header>
 
-    @if (loadingEvent()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading event data...</p>
-      </div>
-    } @else if (success()) {
-      <div class="success-message">
-        <span class="success-icon">✓</span>
-        <p>Event {{ isEditMode() ? 'updated' : 'created' }} successfully! Redirecting...</p>
-      </div>
-    } @else {
-      <form class="event-form" (ngSubmit)="onSubmit()">
-        @if (error()) {
-          <div class="error-message">
-            <p>{{ error() }}</p>
-          </div>
-        }
-
-        <!-- Basic Information Section -->
-        <section class="form-section">
-          <h2>Event Information <span class="required-badge">Required</span></h2>
-
-          <div class="form-group">
-            <label for="title">Event Title *</label>
-            <input
-              type="text"
-              id="title"
-              [(ngModel)]="title"
-              name="title"
-              placeholder="e.g., Tech Workshop 2026"
-              required
-              minlength="3"
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea
-              id="description"
-              [(ngModel)]="description"
-              name="description"
-              placeholder="Brief description of your event..."
-              rows="4"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="location">Location *</label>
-            <input
-              type="text"
-              id="location"
-              [(ngModel)]="location"
-              name="location"
-              placeholder="e.g., INSAT Amphitheater"
-              required
-            >
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="startTime">Start Time *</label>
-              <input
-                type="datetime-local"
-                id="startTime"
-                [(ngModel)]="startTime"
-                name="startTime"
-                [min]="getMinStartTime()"
-                (change)="onStartTimeChange()"
-                required
-              >
-              <small class="hint">Event cannot start in the past</small>
-            </div>
-
-            <div class="form-group">
-              <label for="endTime">End Time *</label>
-              <input
-                type="datetime-local"
-                id="endTime"
-                [(ngModel)]="endTime"
-                name="endTime"
-                [min]="minEndTime || startTime"
-                [disabled]="!startTime"
-                required
-              >
-              <small class="hint">Auto-set to 1 hour after start</small>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="capacity">Capacity *</label>
-              <input
-                type="number"
-                id="capacity"
-                [(ngModel)]="capacity"
-                name="capacity"
-                placeholder="30"
-                min="1"
-                required
-              >
-            </div>
-
-            <div class="form-group">
-              <label for="price">Price (DT)</label>
-              <input
-                type="number"
-                id="price"
-                [(ngModel)]="price"
-                name="price"
-                placeholder="0"
-                min="0"
-                step="0.5"
-              >
-              <small class="hint">Leave 0 for free events</small>
-            </div>
-          </div>
-        </section>
-
-        <!-- Cover Image Section -->
-        <section class="form-section">
-          <h2>Event Cover Image</h2>
-
-          <div class="image-upload-group">
-            <label>Cover Image (recommended)</label>
-            <div class="upload-row">
-              <div class="file-upload wide">
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileSelected($event, 'cover')"
-                  id="coverFile"
-                >
-                <label for="coverFile" class="upload-btn wide">
-                  @if (coverPreview) {
-                    <img [src]="coverPreview" alt="Cover preview" class="preview-thumb wide">
-                  } @else {
-                    <span>+</span>
-                  }
-                </label>
-              </div>
-              <span class="or-divider">or</span>
-              <input
-                type="url"
-                [(ngModel)]="coverUrl"
-                name="coverUrl"
-                placeholder="https://example.com/event-cover.jpg"
-                class="url-input"
-              >
-            </div>
-          </div>
-        </section>
-
-        <!-- Optional Sections -->
-        <section class="form-section">
-          <h2>Additional Content</h2>
-          <p class="section-hint">Toggle sections to add more details to your event page.</p>
-
-          @for (key of getSectionKeys(); track key) {
-            <div class="optional-section" [class.enabled]="sections[key].enabled">
-              <div class="section-toggle">
-                <label class="toggle-switch">
-                  <input type="checkbox" [(ngModel)]="sections[key].enabled" [name]="key + 'Enabled'">
-                  <span class="slider"></span>
-                </label>
-                <span class="toggle-label">{{ getSectionLabel(key) }}</span>
-              </div>
-
-              @if (sections[key].enabled) {
-                <div class="section-fields" @fadeSlideIn>
-                  <div class="form-group">
-                    <label>Title</label>
-                    <input
-                      type="text"
-                      [(ngModel)]="sections[key].title"
-                      [name]="key + 'Title'"
-                      [placeholder]="'e.g., ' + getSectionLabel(key)"
-                    >
-                  </div>
-
-                  <div class="form-group">
-                    <label>Content</label>
-                    <textarea
-                      [(ngModel)]="sections[key].description"
-                      [name]="key + 'Content'"
-                      placeholder="Write about this section..."
-                      rows="3"
-                    ></textarea>
-                  </div>
-
-                  <div class="image-upload-group compact">
-                    <label>Image (optional)</label>
-                    <div class="upload-row">
-                      <div class="file-upload small">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          (change)="onFileSelected($event, key)"
-                          [id]="key + 'File'"
-                        >
-                        <label [for]="key + 'File'" class="upload-btn small">
-                          @if (sections[key].imagePreview) {
-                            <img [src]="sections[key].imagePreview" alt="Preview" class="preview-thumb small">
-                          } @else {
-                            <span>+</span>
-                          }
-                        </label>
-                      </div>
-                      <span class="or-divider">or</span>
-                      <input
-                        type="url"
-                        [(ngModel)]="sections[key].imageUrl"
-                        [name]="key + 'ImageUrl'"
-                        placeholder="Image URL"
-                        class="url-input"
-                      >
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </section>
-
-        <!-- Submit -->
-        <div class="form-actions">
-          <a routerLink="/manager" class="btn-cancel">Cancel</a>
-          <button type="submit" class="btn-submit" [disabled]="submitting()">
-            @if (submitting()) {
-              <span class="spinner"></span> {{ isEditMode() ? 'Saving...' : 'Creating...' }}
-            } @else {
-              {{ isEditMode() ? 'Save Changes' : 'Create Event' }}
-            }
-          </button>
-        </div>
-      </form>
+    @if (error()) {
+    <div class="alert alert-error">
+        <span>Error</span>
+        <p>{{ error() }}</p>
+    </div>
     }
-  </aside>
 
-  <!-- Right Side: Live Preview -->
-  <main class="preview-panel">
-    <div class="preview-label">
-      <span class="preview-dot"></span>
-      Live Preview
+    <div class="form-container">
+        <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+            <!-- Basic Info Section -->
+            <div class="section-header">
+                <h2>Event Details</h2>
+            </div>
+            
+            <!-- Cover Image + Title/Description Grid -->
+            <div class="event-header-grid">
+                <!-- Left: Cover Image Upload -->
+                <div class="cover-image-section">
+                    <label>Cover Image</label>
+                    <div class="cover-image-upload-box">
+                        @if (coverImageUrl()) {
+                        <div class="cover-image-preview-container">
+                            <img [src]="coverImageUrl()" alt="Event cover" class="cover-image-preview">
+                            <button type="button" class="btn-remove-cover" (click)="removeCoverImage()">×</button>
+                        </div>
+                        } @else {
+                        <label for="cover-image-input" class="cover-upload-label">
+                            <div class="cover-upload-placeholder">+</div>
+                            <span class="cover-upload-text">Add Cover Image</span>
+                        </label>
+                        }
+                        <input
+                            id="cover-image-input"
+                            type="file"
+                            accept="image/*"
+                            (change)="onCoverImageSelected($event)"
+                            [disabled]="uploadingCoverImage()"
+                            class="hidden"
+                        >
+                        @if (uploadingCoverImage()) {
+                        <div class="uploading-badge">
+                            <div class="spinner-tiny"></div>
+                            <span>Uploading...</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                
+                <!-- Right: Title and Description -->
+                <div class="event-title-section">
+                    <div class="form-group">
+                        <label for="title">Event Title *</label>
+                        <input id="title" type="text" formControlName="title"
+                            placeholder="e.g. AI & Machine Learning Workshop" [class.invalid]="isFieldInvalid('title')">
+                        @if (isFieldInvalid('title')) {
+                        <span class="error-message">{{ getFieldError('title') }}</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" formControlName="description" placeholder="Describe your event..."
+                            rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other Details Grid -->
+            <div class="form-grid two-col">
+                <div class="form-group">
+                    <label for="location">Location *</label>
+                    <input id="location" type="text" formControlName="location" placeholder="e.g. Amphi 2, Room B101"
+                        [class.invalid]="isFieldInvalid('location')">
+                    @if (isFieldInvalid('location')) {
+                    <span class="error-message">{{ getFieldError('location') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="capacity">Capacity *</label>
+                    <input id="capacity" type="number" formControlName="capacity" placeholder="30" min="1"
+                        [class.invalid]="isFieldInvalid('capacity')">
+                    @if (isFieldInvalid('capacity')) {
+                    <span class="error-message">{{ getFieldError('capacity') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="startTime">Start Time *</label>
+                    <input id="startTime" type="datetime-local" formControlName="startTime"
+                        [class.invalid]="isFieldInvalid('startTime')">
+                    @if (isFieldInvalid('startTime')) {
+                    <span class="error-message">{{ getFieldError('startTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="endTime">End Time *</label>
+                    <input id="endTime" type="datetime-local" formControlName="endTime"
+                        [class.invalid]="isFieldInvalid('endTime')">
+                    @if (isFieldInvalid('endTime')) {
+                    <span class="error-message">{{ getFieldError('endTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Price (TND)</label>
+                    <input id="price" type="number" formControlName="price" placeholder="0" min="0" step="0.5"
+                        [class.invalid]="isFieldInvalid('price')">
+                    <small>Leave 0 for free events</small>
+                </div>
+            </div>
+
+            <!-- Sections -->
+            <div class="sections-container">
+                <div class="section-header">
+                    <h2>Event Sections</h2>
+                </div>
+
+                @if (sections().length === 0) {
+                <p class="empty-state">No sections yet. Add one to get started!</p>
+                }
+
+                @for (section of sections(); let i = $index; track i) {
+                <div class="section-card">
+                    <div class="section-content">
+                        <div class="section-form-grid">
+                            <!-- Left: Section Title & Description -->
+                            <div class="section-text">
+                                <div class="form-group">
+                                    <label>Section Title</label>
+                                    <input type="text" [formControl]="getSectionTitleControl(i)"
+                                        placeholder="e.g. Workshop Overview, Agenda, etc." class="section-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Section Content</label>
+                                    <textarea [formControl]="getSectionDescriptionControl(i)"
+                                        placeholder="Add content for this section..." rows="4" class="section-textarea"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Right: Image Upload -->
+                            <div class="section-image">
+                                <label>Section Image</label>
+                                <div class="image-upload-box">
+                                    @if (getSectionImageUrl(i)) {
+                                    <div class="image-preview-container">
+                                        <img [src]="getSectionImageUrl(i)" [alt]="getSectionTitleControl(i).value || 'Section image'"
+                                            class="image-preview">
+                                        <button type="button" class="btn-remove-image" (click)="removeSectionImage(i)">×</button>
+                                    </div>
+                                    } @else {
+                                    <label [for]="'section-image-' + i" class="upload-label">
+                                        <div class="upload-placeholder">+</div>
+                                        <span class="upload-text">Add Image</span>
+                                    </label>
+                                    }
+                                    <input
+                                        [id]="'section-image-' + i"
+                                        type="file"
+                                        accept="image/*"
+                                        (change)="onSectionImageSelected($event, i)"
+                                        [disabled]="uploadingPhotoIndex() === i"
+                                        class="hidden"
+                                    >
+                                    @if (uploadingPhotoIndex() === i) {
+                                    <div class="uploading-badge">
+                                        <div class="spinner-tiny"></div>
+                                        <span>Uploading...</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remove Section Button -->
+                    <button type="button" class="btn-remove-section" (click)="removeSection(i)">
+                        Remove Section
+                    </button>
+                </div>
+                }
+
+                <button type="button" class="btn-add-section" (click)="addSection()">
+                    + Add Section
+                </button>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="button" class="btn-preview" (click)="openPreview()">
+                    Preview Event
+                </button>
+                <button type="submit" class="btn-primary" [disabled]="loading() || eventForm.invalid">
+                    @if (loading()) {
+                    <span class="spinner-small"></span>
+                    Saving...
+                    } @else {
+                    {{ isEditMode() ? 'Update Event' : 'Create Event' }}
+                    }
+                </button>
+                <button type="button" class="btn-outline" (click)="cancel()" [disabled]="loading()">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
-
-    <div class="event-preview">
-      <!-- Hero Section -->
-      <header
-        class="preview-hero"
-        [style.backgroundImage]="getPreviewCover() ? 'url(' + getPreviewCover() + ')' : 'none'"
-        [class.has-cover]="getPreviewCover()"
-      >
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-          <div class="event-badge">Event</div>
-          <h1>{{ title || 'Your Event Title' }}</h1>
-          <div class="event-meta">
-            <div class="meta-item">
-              <span class="icon">📍</span>
-              <span>{{ location || 'Location' }}</span>
-            </div>
-            @if (startTime) {
-              <div class="meta-item">
-                <span class="icon">📅</span>
-                <span>{{ formatDateForDisplay(startTime) }}</span>
-              </div>
-            }
-            <div class="meta-item">
-              <span class="icon">👥</span>
-              <span>{{ capacity || '30' }} spots</span>
-            </div>
-            <div class="meta-item price">
-              <span class="icon">💰</span>
-              <span>{{ getFormattedPrice() }}</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Description Section -->
-      @if (description) {
-        <section class="preview-section description-section">
-          <h2>About This Event</h2>
-          <p class="preview-text">{{ description }}</p>
-        </section>
-      }
-
-      <!-- Dynamic Sections -->
-      @for (item of getEnabledSections(); track item.key; let i = $index) {
-        <section class="preview-section">
-          <div class="section-row" [class.reversed]="i % 2 === 0">
-            <div class="section-image">
-              <img [src]="item.imagePreview || item.imageUrl || getDefaultImageForSection(item.key)" [alt]="item.title">
-            </div>
-            <div class="section-content">
-              <h2>{{ item.title || getSectionLabel(item.key) }}</h2>
-              <p class="preview-text" [class.placeholder]="!item.description">
-                {{ item.description || 'Content for this section will appear here...' }}
-              </p>
-            </div>
-          </div>
-        </section>
-      }
-
-      <!-- Empty State -->
-      @if (!hasAnyContent()) {
-        <div class="empty-preview">
-          <p>Start filling the form to see your event page come to life!</p>
-        </div>
-      }
-    </div>
-  </main>
 </div>
+
+<!-- Event Preview Modal -->
+@if (showPreview()) {
+<div class="modal-overlay" (click)="closePreview()">
+    <div class="modal-content event-preview-modal" (click)="$event.stopPropagation()">
+        <button type="button" class="btn-close-modal" (click)="closePreview()">×</button>
+        <div class="preview-container">
+            <!-- Cover Image -->
+            @if (coverImageUrl()) {
+            <div class="preview-cover-image">
+                <img [src]="coverImageUrl()" alt="Event cover">
+            </div>
+            }
+            
+            <!-- Event Header -->
+            <div class="preview-header">
+                <h1>{{ eventForm.get('title')?.value || 'Event Title' }}</h1>
+                <div class="preview-meta-info">
+                    <span class="meta-item">{{ eventForm.get('location')?.value || 'Location TBD' }}</span>
+                    <span class="meta-item">{{ eventForm.get('capacity')?.value || '0' }} Capacity</span>
+                    <span class="meta-item">{{ eventForm.get('price')?.value || '0' }} TND</span>
+                </div>
+                @if (eventForm.get('description')?.value) {
+                <p class="preview-description">{{ eventForm.get('description')?.value }}</p>
+                }
+            </div>
+
+            <!-- Event Sections -->
+            <div class="preview-sections">
+                @if (sections().length === 0) {
+                <p class="no-sections">No sections added yet</p>
+                }
+
+                @for (section of sections(); let i = $index; track i) {
+                <div class="preview-section-card">
+                    <div class="section-layout" [ngClass]="{'image-left': i % 2 === 0, 'image-right': i % 2 !== 0}">
+                        @if (getSectionImageUrl(i)) {
+                        <div class="section-image-wrapper">
+                            <img [src]="getSectionImageUrl(i)" [alt]="getSectionTitleControl(i).value" class="section-image-preview">
+                        </div>
+                        }
+                        <div class="section-text-wrapper">
+                            <h3>{{ getSectionTitleControl(i).value || 'Section ' + (i + 1) }}</h3>
+                            <p class="section-text">{{ getSectionDescriptionControl(i).value || 'No description added' }}</p>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}
