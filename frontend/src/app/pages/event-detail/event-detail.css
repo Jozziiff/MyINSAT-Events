@@ -1402,6 +1402,23 @@
     flex: 1;
 }
 
+.user-info-link {
+    text-decoration: none;
+    color: inherit;
+    border-radius: 8px;
+    padding: 4px;
+    margin: -4px;
+    transition: background-color 0.2s ease;
+}
+
+.user-info-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-info-link:hover .user-name {
+    color: var(--color-primary-light);
+}
+
 .user-avatar {
     width: 40px;
     height: 40px;

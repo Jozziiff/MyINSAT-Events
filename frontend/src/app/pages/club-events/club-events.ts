@@ -1,6 +1,6 @@
 import { Component, computed, effect, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { CommonModule, Location } from '@angular/common';
 import { ClubsService } from '../../services/clubs.service';
 import { fadeSlideIn } from '../../animations';
 
@@ -13,40 +13,53 @@ interface ClubEvent {
   endTime: string;
   capacity?: number;
   price?: number;
-  status: string;
   photoUrl?: string;
   registrationsCount: number;
   attendedCount: number;
   attendanceRate: number;
+  ratingsCount: number;
   averageRating: number;
 }
 
-interface ClubEventsData {
-  clubId: number;
-  clubName: string;
+interface ClubStatistics {
   totalEvents: number;
   totalAttendance: number;
   averageAttendanceRate: number;
   averageRating: number;
+}
+
+interface ClubEventsResponse {
   events: ClubEvent[];
+  statistics: ClubStatistics;
 }
 
 @Component({
   selector: 'app-club-events',
-  imports: [],
+  imports: [CommonModule, RouterModule],
   templateUrl: './club-events.html',
   styleUrl: './club-events.css',
   animations: [fadeSlideIn],
 })
 export class ClubEventsComponent implements OnInit {
   clubId = signal<number>(0);
-  eventsData = signal<ClubEventsData | null>(null);
+  clubName = signal<string>('');
+  eventsData = signal<ClubEventsResponse | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
 
   pastEvents = computed(() => {
     const data = this.eventsData();
     return data?.events || [];
+  });
+
+  statistics = computed(() => {
+    const data = this.eventsData();
+    return data?.statistics || {
+      totalEvents: 0,
+      totalAttendance: 0,
+      averageAttendanceRate: 0,
+      averageRating: 0
+    };
   });
 
   constructor(
@@ -68,8 +81,16 @@ export class ClubEventsComponent implements OnInit {
       const id = parseInt(params['id'], 10);
       if (id) {
         this.clubId.set(id);
+        this.loadClubName(id);
       }
     });
+  }
+
+  private async loadClubName(clubId: number): Promise<void> {
+    const club = await this.clubsService.getClubById(clubId);
+    if (club) {
+      this.clubName.set(club.name);
+    }
   }
 
   async loadEvents(clubId: number): Promise<void> {

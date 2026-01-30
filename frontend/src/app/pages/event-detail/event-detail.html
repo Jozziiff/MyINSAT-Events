@@ -295,7 +295,7 @@
                             @for (rating of displayedRatings(); track rating.id) {
                             <div class="rating-card">
                                 <div class="rating-card-header">
-                                    <div class="user-info">
+                                    <a [routerLink]="['/users', rating.user?.id]" class="user-info user-info-link">
                                         @if (rating.user?.avatarUrl) {
                                         <img [src]="rating.user?.avatarUrl" [alt]="rating.user?.fullName" class="user-avatar">
                                         } @else {
@@ -307,7 +307,7 @@
                                             <span class="user-name">{{ rating.user?.fullName || 'Anonymous' }}</span>
                                             <span class="rating-date">{{ rating.createdAt | date:'mediumDate' }}</span>
                                         </div>
-                                    </div>
+                                    </a>
                                     <div class="rating-stars">
                                         @for (star of [1,2,3,4,5]; track star) {
                                         <svg class="star-icon" [class.filled]="star <= rating.rating" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
