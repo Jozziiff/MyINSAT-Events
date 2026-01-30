@@ -40,7 +40,7 @@ export class EventFormComponent implements OnInit {
     submitting = signal(false);
     error = signal<string | null>(null);
     success = signal(false);
-    loadingEvent = signal(false);
+    loading = signal(false);
 
     isEditMode = signal(false);
     eventId = signal<number | null>(null);
@@ -102,46 +102,49 @@ export class EventFormComponent implements OnInit {
             next: (events) => {
                 const event = events.find(e => e.id === id);
                 if (event) {
-                    this.eventForm.patchValue({
-                        title: event.title,
-                        description: event.description,
-                        location: event.location,
-                        startTime: this.formatDateForInput(event.startTime),
-                        endTime: this.formatDateForInput(event.endTime),
-                        capacity: event.capacity,
-                        price: event.price || 0
-                    });
+                    // Set form values directly
+                    this.title = event.title;
+                    this.description = event.description || '';
+                    this.location = event.location;
+                    this.startTime = this.formatDateForInput(event.startTime);
+                    this.endTime = this.formatDateForInput(event.endTime);
+                    this.capacity = event.capacity || 30;
+                    this.price = event.price || 0;
 
+                    // Set cover image
                     if (event.photoUrl) {
-                        this.coverImageUrl.set(resolveImageUrl(event.photoUrl) || '');
+                        this.coverUrl = resolveImageUrl(event.photoUrl) || '';
                     }
 
-                if (event.sections && Array.isArray(event.sections)) {
-                    const sectionKeys = Object.keys(this.sections);
-                    event.sections.forEach((section, idx) => {
-                        if (idx < sectionKeys.length) {
-                            const key = sectionKeys[idx];
-                            this.sections[key] = {
-                                enabled: true,
-                                title: section.title,
-                                description: section.description,
-                                imageUrl: section.imageUrl || '',
-                                imageFile: null,
-                                imagePreview: ''
-                            };
-                        }
-                    });
-                }
+                    // Load sections
+                    if (event.sections && Array.isArray(event.sections)) {
+                        const sectionKeys = Object.keys(this.sections);
+                        event.sections.forEach((section, idx) => {
+                            if (idx < sectionKeys.length) {
+                                const key = sectionKeys[idx];
+                                this.sections[key] = {
+                                    enabled: true,
+                                    title: section.title,
+                                    description: section.description,
+                                    imageUrl: section.imageUrl || '',
+                                    imageFile: null,
+                                    imagePreview: ''
+                                };
+                            }
+                        });
+                    }
 
-                this.cdr.detectChanges();
-            } else {
-                this.error.set('Event not found');
+                    this.cdr.detectChanges();
+                } else {
+                    this.error.set('Event not found');
+                }
+                this.loading.set(false);
+            },
+            error: (err) => {
+                this.error.set('Failed to load event');
+                this.loading.set(false);
             }
-        } catch (err) {
-            this.error.set('Failed to load event');
-        } finally {
-            this.loadingEvent.set(false);
-        }
+        });
     }
 
     formatDateForInput(dateString: string): string {

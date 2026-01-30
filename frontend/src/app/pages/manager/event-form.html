@@ -7,7 +7,7 @@
       <p>{{ isEditMode() ? 'Update your event details' : 'Fill out the form to see the live preview' }}</p>
     </header>
 
-    @if (loadingEvent()) {
+    @if (loading()) {
       <div class="loading-state">
         <div class="spinner"></div>
         <p>Loading event data...</p>
