@@ -14,8 +14,6 @@ export class AdminService {
         private clubRepository: Repository<Club>,
         @InjectRepository(User)
         private userRepository: Repository<User>,
-        @InjectRepository(ClubManager)
-        private clubManagerRepository: Repository<ClubManager>,
     ) { }
 
     // Get all pending clubs
