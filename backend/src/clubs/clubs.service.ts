@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Club } from '../entities/club.entity';
@@ -8,7 +8,8 @@ import { ClubFollower } from '../entities/club-follower.entity';
 import { ClubManager } from '../entities/club-manager.entity';
 import { ClubJoinRequest } from '../entities/club-join-request.entity';
 import { EventRating } from '../entities/event-rating.entity';
-import { RegistrationStatus, ClubStatus, JoinRequestStatus } from '../common/enums';
+import { User } from '../entities/user.entity';
+import { RegistrationStatus, ClubStatus, JoinRequestStatus, UserRole } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
 
@@ -28,6 +29,8 @@ export class ClubsService {
     private readonly joinRequestRepository: Repository<ClubJoinRequest>,
     @InjectRepository(EventRating)
     private readonly eventRatingRepository: Repository<EventRating>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) { }
 
   private applyDefaultImages(club: any): any {
@@ -435,25 +438,51 @@ export class ClubsService {
   async approveJoinRequest(requestId: number, managerId: number): Promise<ClubJoinRequest> {
     const request = await this.joinRequestRepository.findOne({
       where: { id: requestId },
-      relations: ['club'],
+      relations: ['club', 'user'],
     });
 
     if (!request) {
       throw new NotFoundException(`Join request with ID ${requestId} not found`);
     }
 
-    // Update request status
-    request.status = JoinRequestStatus.APPROVED;
-    await this.joinRequestRepository.save(request);
+    // Check if request is already approved
+    if (request.status === JoinRequestStatus.APPROVED) {
+      throw new BadRequestException('Join request is already approved');
+    }
 
-    // Add user as a manager
-    const clubManager = this.clubManagerRepository.create({
-      userId: request.userId,
-      clubId: request.clubId,
+    // Check if user is already a manager
+    const existingManager = await this.clubManagerRepository.findOne({
+      where: {
+        userId: request.userId,
+        clubId: request.clubId,
+      },
     });
-    await this.clubManagerRepository.save(clubManager);
 
-    return request;
+    if (existingManager) {
+      throw new BadRequestException('User is already a manager of this club');
+    }
+
+    // Use transaction to ensure all operations succeed or fail together
+    return await this.clubManagerRepository.manager.transaction(async (transactionManager) => {
+      // Update request status
+      request.status = JoinRequestStatus.APPROVED;
+      await transactionManager.save(request);
+
+      // Add user as a club manager
+      const clubManager = this.clubManagerRepository.create({
+        userId: request.userId,
+        clubId: request.clubId,
+      });
+      await transactionManager.save(clubManager);
+
+      // Update user's role to MANAGER if not already
+      if (request.user.role === UserRole.USER) {
+        request.user.role = UserRole.MANAGER;
+        await transactionManager.save(request.user);
+      }
+
+      return request;
+    });
   }
 
   // Reject a join request

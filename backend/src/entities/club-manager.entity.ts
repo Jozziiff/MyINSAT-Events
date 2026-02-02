@@ -4,11 +4,13 @@ import {
     Column,
     ManyToOne,
     JoinColumn,
+    Unique,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Club } from './club.entity';
 
 @Entity('club_managers')
+@Unique(['userId', 'clubId'])
 export class ClubManager {
     @PrimaryGeneratedColumn()
     id: number;
