@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Club } from './club.entity';
-import { JoinRequestStatus } from '../../common/enums';
+import { JoinRequestStatus } from '../enums';
 
 @Entity('club_join_requests')
 @Unique(['userId', 'clubId'])

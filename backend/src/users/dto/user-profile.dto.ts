@@ -1,4 +1,4 @@
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../enums';
 
 // Basic user info for public display
 export interface PublicUserDto {

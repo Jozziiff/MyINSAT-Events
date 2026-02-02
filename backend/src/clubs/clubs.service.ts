@@ -4,7 +4,9 @@ import { Repository, In } from 'typeorm';
 import { Club, ClubFollower, ClubManager, ClubJoinRequest } from './entities';
 import { Event, Registration, EventRating } from '../events/entities';
 import { User } from '../users/entities';
-import { RegistrationStatus, ClubStatus, JoinRequestStatus, UserRole } from '../common/enums';
+import { RegistrationStatus } from '../events/enums';
+import { ClubStatus, JoinRequestStatus } from './enums';
+import { UserRole } from '../users/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';
 

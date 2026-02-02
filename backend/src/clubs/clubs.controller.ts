@@ -48,7 +48,7 @@ export class ClubsController {
 
   // Get current user's managed clubs with status
   @Get('managed/me')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   getUserManagedClubs(@CurrentUser() user: { id: number }) {
     return this.clubsService.getUserManagedClubs(user.id);
   }
@@ -107,7 +107,7 @@ export class ClubsController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   async updateClub(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateData: Partial<CreateClubDto>,
@@ -126,7 +126,7 @@ export class ClubsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAccessGuard)
+  @UseGuards(JwtAccessGuard, ClubAccessGuard)
   async deleteClub(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: { id: number; role: string },

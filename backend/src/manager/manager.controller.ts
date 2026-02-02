@@ -18,7 +18,7 @@ import { ManagerService } from './manager.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../common/enums';
+import { UserRole } from '../users/enums';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateClubDto } from './dto/update-club.dto';

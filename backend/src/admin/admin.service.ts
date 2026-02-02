@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Club, ClubManager } from '../clubs/entities';
 import { User } from '../users/entities';
-import { ClubStatus } from '../common/enums/club-status.enum';
-import { UserRole } from '../common/enums/user-role.enum';
+import { ClubStatus } from '../clubs/enums';
+import { UserRole } from '../users/enums';
 
 @Injectable()
 export class AdminService {

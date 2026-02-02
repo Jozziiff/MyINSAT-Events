@@ -10,7 +10,7 @@ import { ClubManager } from './club-manager.entity';
 import { ClubJoinRequest } from './club-join-request.entity';
 import { Event } from '../../events/entities/event.entity';
 import { ClubFollower } from './club-follower.entity';
-import { ClubStatus } from '../../common/enums/club-status.enum';
+import { ClubStatus } from '../enums';
 
 @Entity('clubs')
 export class Club {

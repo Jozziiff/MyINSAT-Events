@@ -6,7 +6,7 @@ import { Club, ClubManager } from '../clubs/entities';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { UpdateClubDto } from './dto/update-club.dto';
-import { EventStatus, RegistrationStatus } from '../common/enums';
+import { EventStatus, RegistrationStatus } from '../events/enums';
 
 @Injectable()
 export class ManagerService {

@@ -4,7 +4,8 @@ import { Repository, FindOptionsWhere, LessThan, MoreThanOrEqual, In } from 'typ
 import { User } from './entities';
 import { Registration, EventRating, Event } from '../events/entities';
 import { ClubFollower, ClubManager, Club } from '../clubs/entities';
-import { UserRole, RegistrationStatus, EventStatus } from '../common/enums';
+import { UserRole } from './enums';
+import { RegistrationStatus, EventStatus } from '../events/enums';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   UserProfileDto,

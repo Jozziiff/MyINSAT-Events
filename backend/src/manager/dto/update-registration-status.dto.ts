@@ -1,5 +1,5 @@
 import { IsEnum } from 'class-validator';
-import { RegistrationStatus } from '../../common/enums';
+import { RegistrationStatus } from '../../events/enums';
 
 export class UpdateRegistrationStatusDto {
     @IsEnum(RegistrationStatus)

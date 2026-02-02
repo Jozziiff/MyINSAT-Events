@@ -1,6 +1,6 @@
 import { IsBoolean, IsEmail, IsString} from 'class-validator';
 
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../../users/enums';
 
 export class UserResponseDto {
 

@@ -6,7 +6,7 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../enums';
 import { ClubManager } from '../../clubs/entities/club-manager.entity';
 import { Registration } from '../../events/entities/registration.entity';
 import { ClubFollower } from '../../clubs/entities/club-follower.entity';
