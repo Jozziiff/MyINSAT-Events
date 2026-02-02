@@ -1,22 +1,31 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { extname } from 'path';
 
+type FolderType = 'users' | 'events' | 'clubs' | 'others' | 'default';
+
+const FOLDER_PATTERNS: Record<FolderType, RegExp> = {
+  users: /\/(users?|profile)/i,
+  events: /\/events?/i,
+  clubs: /\/clubs?/i,
+  others: /.*/,
+  default: /.*/,
+};
+
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name);
   private readonly supabaseUrl: string;
   private readonly supabaseKey: string;
   private readonly bucketName: string;
+  private readonly baseStorageUrl: string;
 
-  constructor(private configService: ConfigService) {
-    this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') || '';
-    this.supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY') || '';
-    this.bucketName = this.configService.get<string>('SUPABASE_BUCKET') || 'uploads';
-    
-    if (!this.supabaseUrl || !this.supabaseKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables');
-    }
+  constructor(private readonly configService: ConfigService) {
+    this.supabaseUrl = this.configService.getOrThrow<string>('SUPABASE_URL');
+    this.supabaseKey = this.configService.getOrThrow<string>('SUPABASE_SERVICE_KEY');
+    this.bucketName = this.configService.get<string>('SUPABASE_BUCKET', 'uploads');
+    this.baseStorageUrl = `${this.supabaseUrl}/storage/v1/object`;
   }
 
   async saveFile(
@@ -24,74 +33,78 @@ export class UploadService {
     req?: Request,
     subfolder?: string,
   ): Promise<string> {
-    // Determine subfolder from request path if not provided
-    let folder = subfolder;
-    if (!folder && req) {
-      const url = req.originalUrl || req.url || '';
-      const referer = req.get('referer') || '';
-      console.log('Upload URL:', url); // Debug log
-      console.log('Referer:', referer); // Debug log
-      
-      // Check referer first (where the upload came from)
-      if (referer.includes('/users') || referer.includes('/user') || referer.includes('/profile')) folder = 'users';
-      else if (referer.includes('/events') || referer.includes('/event')) folder = 'events';
-      else if (referer.includes('/clubs') || referer.includes('/club')) folder = 'clubs';
-      // Then check URL
-      else if (url.includes('/events/')) folder = 'events';
-      else if (url.includes('/clubs/')) folder = 'clubs';
-      else if (url.includes('/users/')) folder = 'users';
-      else if (url.includes('event')) folder = 'events';
-      else if (url.includes('club')) folder = 'clubs';
-      else if (url.includes('user')) folder = 'users';
-      else folder = 'others';
+    const folder = subfolder ?? this.detectFolder(req);
+    const filePath = this.generateFilePath(folder, file.originalname);
+
+    await this.uploadToSupabase(filePath, file.buffer, file.mimetype);
+
+    return `${this.baseStorageUrl}/public/${this.bucketName}/${filePath}`;
+  }
+
+  async deleteFile(fileUrl: string): Promise<void> {
+    const filePath = this.extractFilePath(fileUrl);
+    if (!filePath) return;
+
+    try {
+      await fetch(`${this.baseStorageUrl}/${this.bucketName}/${filePath}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to delete file: ${filePath}`, error);
     }
-    if (!folder) folder = 'default';
+  }
 
-    console.log('Detected folder:', folder); // Debug log
+  private detectFolder(req?: Request): FolderType {
+    if (!req) return 'default';
 
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = extname(file.originalname);
-    const filename = `${uniqueSuffix}${ext}`;
-    const filePath = `${folder}/${filename}`;
+    const referer = req.get('referer') ?? '';
+    const url = req.originalUrl ?? req.url ?? '';
 
-    // Upload to Supabase Storage via REST API
-    const uploadUrl = `${this.supabaseUrl}/storage/v1/object/${this.bucketName}/${filePath}`;
+    for (const [folder, pattern] of Object.entries(FOLDER_PATTERNS) as [FolderType, RegExp][]) {
+      if (folder === 'others' || folder === 'default') continue;
+      if (pattern.test(referer) || pattern.test(url)) return folder;
+    }
+
+    return 'others';
+  }
+
+  private generateFilePath(folder: string, originalName: string): string {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = extname(originalName);
+    return `${folder}/${uniqueSuffix}${ext}`;
+  }
+
+  private async uploadToSupabase(
+    filePath: string,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<void> {
+    const uploadUrl = `${this.baseStorageUrl}/${this.bucketName}/${filePath}`;
 
     const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.supabaseKey}`,
-        'Content-Type': file.mimetype,
+        ...this.getAuthHeaders(),
+        'Content-Type': mimetype,
       },
-      body: file.buffer as any,
+      body: new Uint8Array(buffer),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Supabase Storage upload error:', error);
+      this.logger.error('Supabase Storage upload error', error);
       throw new InternalServerErrorException('Failed to upload file');
     }
-
-    // Return the public URL
-    return `${this.supabaseUrl}/storage/v1/object/public/${this.bucketName}/${filePath}`;
   }
 
-  // Optional: Delete file from Supabase Storage
-  async deleteFile(fileUrl: string): Promise<void> {
-    // Extract file path from URL
+  private extractFilePath(fileUrl: string): string | null {
     const publicPrefix = `/storage/v1/object/public/${this.bucketName}/`;
     const startIndex = fileUrl.indexOf(publicPrefix);
-    if (startIndex === -1) return;
+    return startIndex !== -1 ? fileUrl.substring(startIndex + publicPrefix.length) : null;
+  }
 
-    const filePath = fileUrl.substring(startIndex + publicPrefix.length);
-    const deleteUrl = `${this.supabaseUrl}/storage/v1/object/${this.bucketName}/${filePath}`;
-
-    await fetch(deleteUrl, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${this.supabaseKey}`,
-      },
-    });
+  private getAuthHeaders(): Record<string, string> {
+    return { Authorization: `Bearer ${this.supabaseKey}` };
   }
 }

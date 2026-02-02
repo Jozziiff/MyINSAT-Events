@@ -9,7 +9,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
-import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+
 import { ClubsModule } from './clubs/clubs.module';
 import { UploadModule } from './upload/upload.module';
 import { ManagerModule } from './manager/manager.module';
@@ -44,7 +44,6 @@ import { AdminModule } from './admin/admin.module';
     AuthModule,
     UsersModule,
     EventsModule,
-    SubscriptionsModule,
     ManagerModule,
     ClubsModule,
     UploadModule,
