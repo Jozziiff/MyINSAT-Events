@@ -17,7 +17,7 @@
           type="email"
           formControlName="email"
           placeholder="you@example.com"
-          [class.error]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+          [class.error]="isFieldInvalid('email')"
         />
         @if (getErrorMessage('email')) {
           <span class="error-message">{{ getErrorMessage('email') }}</span>
@@ -31,7 +31,7 @@
           type="password"
           formControlName="password"
           placeholder="••••••••"
-          [class.error]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+          [class.error]="isFieldInvalid('password')"
         />
         @if (getErrorMessage('password')) {
           <span class="error-message">{{ getErrorMessage('password') }}</span>

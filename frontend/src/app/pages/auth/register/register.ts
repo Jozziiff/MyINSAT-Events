@@ -11,15 +11,34 @@ const PASSWORD_PATTERNS = {
   specialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
 } as const;
 
-/** Minimum password length requirement */
 const MIN_PASSWORD_LENGTH = 8;
 
-/**
- * Register Component
- * 
- * Handles user registration with real-time password validation feedback.
- * Uses Angular signals for reactive UI updates and follows OnPush change detection.
- */
+/** Validates password against all requirements */
+function validatePasswordRequirements(password: string) {
+  return {
+    hasMinLength: password.length >= MIN_PASSWORD_LENGTH,
+    hasUppercase: PASSWORD_PATTERNS.uppercase.test(password),
+    hasNumber: PASSWORD_PATTERNS.number.test(password),
+    hasSpecialChar: PASSWORD_PATTERNS.specialChar.test(password),
+  };
+}
+
+/** Custom validator for password requirements */
+function passwordValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const req = validatePasswordRequirements(control.value);
+  const isValid = req.hasMinLength && req.hasUppercase && req.hasNumber && req.hasSpecialChar;
+  return isValid ? null : { passwordRequirements: true };
+}
+
+/** Cross-field validator for password matching */
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  const password = control.get('password');
+  const confirmPassword = control.get('confirmPassword');
+  if (!password || !confirmPassword) return null;
+  return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+}
+
 @Component({
   selector: 'app-register',
   imports: [ReactiveFormsModule, RouterLink],
@@ -33,51 +52,32 @@ export class Register {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  // ==================== Form State ====================
   readonly registerForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: ['', [Validators.required, passwordValidator]],
     confirmPassword: ['', [Validators.required]],
   }, {
-    validators: this.passwordMatchValidator,
+    validators: passwordMatchValidator,
   });
 
-  // ==================== UI State Signals ====================
-  readonly errorMessage = signal<string>('');
+  readonly errorMessage = signal('');
   readonly isLoading = this.authState.isLoading;
 
-  // ==================== Password Validation Signals ====================
-  private readonly passwordValue = signal<string>('');
-  private readonly confirmPasswordValue = signal<string>('');
-  private readonly passwordTouched = signal<boolean>(false);
-  private readonly confirmPasswordTouched = signal<boolean>(false);
+  // Password validation signals
+  private readonly passwordValue = signal('');
+  private readonly confirmPasswordValue = signal('');
+  readonly passwordTouched = signal(false);
+  readonly confirmPasswordTouched = signal(false);
 
-  // ==================== Computed Validation States ====================
-  /** Checks if password meets minimum length requirement */
-  readonly hasMinLength = computed(() => this.passwordValue().length >= MIN_PASSWORD_LENGTH);
+  // Computed validation states - derived from shared validation logic
+  private readonly passwordRequirements = computed(() => validatePasswordRequirements(this.passwordValue()));
   
-  /** Checks if password contains at least one uppercase letter */
-  readonly hasUppercase = computed(() => PASSWORD_PATTERNS.uppercase.test(this.passwordValue()));
+  readonly hasMinLength = computed(() => this.passwordRequirements().hasMinLength);
+  readonly hasUppercase = computed(() => this.passwordRequirements().hasUppercase);
+  readonly hasNumber = computed(() => this.passwordRequirements().hasNumber);
+  readonly hasSpecialChar = computed(() => this.passwordRequirements().hasSpecialChar);
   
-  /** Checks if password contains at least one number */
-  readonly hasNumber = computed(() => PASSWORD_PATTERNS.number.test(this.passwordValue()));
-  
-  /** Checks if password contains at least one special character */
-  readonly hasSpecialChar = computed(() => PASSWORD_PATTERNS.specialChar.test(this.passwordValue()));
-  
-  /** Checks if all password requirements are satisfied */
-  readonly isPasswordValid = computed(() => 
-    this.hasMinLength() && this.hasUppercase() && this.hasNumber() && this.hasSpecialChar()
-  );
-
-  /** Tracks if password field has been interacted with */
-  readonly isPasswordTouched = computed(() => this.passwordTouched());
-  
-  /** Tracks if confirm password field has been interacted with */
-  readonly isConfirmPasswordTouched = computed(() => this.confirmPasswordTouched());
-  
-  /** Checks if password and confirm password fields match */
   readonly passwordsMatch = computed(() => {
     const password = this.passwordValue();
     const confirmPassword = this.confirmPasswordValue();
@@ -88,68 +88,34 @@ export class Register {
     this.setupFormSubscriptions();
   }
 
-  // ==================== Private Methods ====================
-  
-  /**
-   * Sets up reactive subscriptions to form value changes.
-   * Uses takeUntilDestroyed for automatic cleanup.
-   */
   private setupFormSubscriptions(): void {
-    // Sync password value to signal for reactive validation display
     this.registerForm.controls.password.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => this.passwordValue.set(value));
 
-    // Sync confirm password value to signal
     this.registerForm.controls.confirmPassword.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => this.confirmPasswordValue.set(value));
   }
 
-  /**
-   * Cross-field validator to ensure password and confirmPassword match.
-   */
-  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
-
-    if (!password || !confirmPassword) {
-      return null;
-    }
-
-    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
-  }
-
-  // ==================== Event Handlers ====================
-  
-  /** Handles password field blur event */
   onPasswordBlur(): void {
     this.passwordTouched.set(true);
   }
 
-  /** Handles confirm password field blur event */
   onConfirmPasswordBlur(): void {
     this.confirmPasswordTouched.set(true);
   }
 
-  /**
-   * Handles form submission.
-   * Validates all fields and submits registration request.
-   */
   async onSubmit(): Promise<void> {
-    // Mark password fields as touched for validation display
     this.passwordTouched.set(true);
     this.confirmPasswordTouched.set(true);
 
-    // Validate form and custom password requirements
-    if (this.registerForm.invalid || !this.isPasswordValid()) {
+    if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
     this.errorMessage.set('');
-
-    // Extract form data, excluding confirmPassword
     const { confirmPassword, ...registerData } = this.registerForm.getRawValue();
 
     try {
@@ -161,45 +127,22 @@ export class Register {
     }
   }
 
-  // ==================== Template Helper Methods ====================
-  
-  /**
-   * Gets the appropriate error message for a form field.
-   * @param fieldName - The name of the form field
-   * @returns Error message string or empty string if no error
-   */
+  isFieldInvalid(fieldName: string): boolean {
+    const control = this.registerForm.get(fieldName);
+    return !!(control?.touched && control?.invalid);
+  }
+
   getErrorMessage(fieldName: string): string {
     const control = this.registerForm.get(fieldName);
-    
-    if (!control?.touched || !control?.errors) {
-      return '';
-    }
+    if (!control?.touched || !control?.errors) return '';
 
     const errors = control.errors;
-
-    if (errors['required']) {
-      return `${this.formatFieldName(fieldName)} is required`;
-    }
-
-    if (errors['email']) {
-      return 'Please enter a valid email';
-    }
-
-    if (errors['minlength']) {
-      const requiredLength = errors['minlength'].requiredLength;
-      return `${this.formatFieldName(fieldName)} must be at least ${requiredLength} characters`;
-    }
-
+    if (errors['required']) return `${this.formatFieldName(fieldName)} is required`;
+    if (errors['email']) return 'Please enter a valid email';
+    if (errors['minlength']) return `${this.formatFieldName(fieldName)} must be at least ${errors['minlength'].requiredLength} characters`;
     return '';
   }
 
-  // ==================== Utility Methods ====================
-  
-  /**
-   * Formats a camelCase field name to Title Case with spaces.
-   * @param fieldName - The camelCase field name
-   * @returns Formatted field name
-   */
   private formatFieldName(fieldName: string): string {
     return fieldName
       .replace(/([A-Z])/g, ' $1')
@@ -209,11 +152,6 @@ export class Register {
       .join(' ');
   }
 
-  /**
-   * Extracts error message from API error response.
-   * @param error - The caught error
-   * @returns User-friendly error message
-   */
   private extractErrorMessage(error: unknown): string {
     if (error && typeof error === 'object' && 'error' in error) {
       const apiError = error as { error?: { message?: string } };

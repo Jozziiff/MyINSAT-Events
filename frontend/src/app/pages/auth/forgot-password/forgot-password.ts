@@ -1,13 +1,12 @@
 import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthApiService } from '../../../services/auth/auth-api';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,16 +15,14 @@ export class ForgotPassword {
   private readonly fb = inject(FormBuilder);
   private readonly authApi = inject(AuthApiService);
 
-  readonly forgotForm: FormGroup;
-  readonly isLoading = signal<boolean>(false);
-  readonly successMessage = signal<string>('');
-  readonly errorMessage = signal<string>('');
+  readonly forgotForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
 
-  constructor() {
-    this.forgotForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-    });
-  }
+  readonly isLoading = signal(false);
+  readonly successMessage = signal('');
+  readonly errorMessage = signal('');
+
 
   async onSubmit(): Promise<void> {
     if (this.forgotForm.invalid) {
@@ -38,7 +35,7 @@ export class ForgotPassword {
     this.successMessage.set('');
 
     try {
-      await firstValueFrom(this.authApi.forgotPassword(this.forgotForm.value));
+      await firstValueFrom(this.authApi.forgotPassword(this.forgotForm.getRawValue()));
       this.successMessage.set(
         'If an account with that email exists, a password reset link has been sent.'
       );
@@ -50,6 +47,11 @@ export class ForgotPassword {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const control = this.forgotForm.get(fieldName);
+    return !!(control?.touched && control?.invalid);
   }
 
   getErrorMessage(fieldName: string): string {

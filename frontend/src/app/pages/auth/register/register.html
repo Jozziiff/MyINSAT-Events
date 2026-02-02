@@ -17,7 +17,7 @@
           type="text"
           formControlName="fullName"
           placeholder="John Doe"
-          [class.error]="registerForm.get('fullName')?.touched && registerForm.get('fullName')?.invalid"
+          [class.error]="isFieldInvalid('fullName')"
         />
         @if (getErrorMessage('fullName')) {
           <span class="error-message">{{ getErrorMessage('fullName') }}</span>
@@ -31,7 +31,7 @@
           type="email"
           formControlName="email"
           placeholder="you@example.com"
-          [class.error]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+          [class.error]="isFieldInvalid('email')"
         />
         @if (getErrorMessage('email')) {
           <span class="error-message">{{ getErrorMessage('email') }}</span>
@@ -46,25 +46,25 @@
           formControlName="password"
           placeholder="••••••••"
           (blur)="onPasswordBlur()"
-          [class.error]="isPasswordTouched() && !hasMinLength()"
+          [class.error]="passwordTouched() && !hasMinLength()"
         />
         
         <!-- Password Requirements Checklist -->
         <ul class="password-requirements">
           <li [class.valid]="hasMinLength()" 
-              [class.invalid]="isPasswordTouched() && !hasMinLength()">
+              [class.invalid]="passwordTouched() && !hasMinLength()">
             At least 8 characters
           </li>
           <li [class.valid]="hasUppercase()" 
-              [class.invalid]="isPasswordTouched() && !hasUppercase()">
+              [class.invalid]="passwordTouched() && !hasUppercase()">
             At least one uppercase letter
           </li>
           <li [class.valid]="hasNumber()" 
-              [class.invalid]="isPasswordTouched() && !hasNumber()">
+              [class.invalid]="passwordTouched() && !hasNumber()">
             At least one number
           </li>
           <li [class.valid]="hasSpecialChar()" 
-              [class.invalid]="isPasswordTouched() && !hasSpecialChar()">
+              [class.invalid]="passwordTouched() && !hasSpecialChar()">
             At least one special character
           </li>
         </ul>
@@ -78,13 +78,13 @@
           formControlName="confirmPassword"
           placeholder="••••••••"
           (blur)="onConfirmPasswordBlur()"
-          [class.error]="isConfirmPasswordTouched() && !passwordsMatch()"
+          [class.error]="confirmPasswordTouched() && !passwordsMatch()"
         />
         
         <!-- Password Match Indicator -->
         <p class="password-match"
            [class.valid]="passwordsMatch()"
-           [class.invalid]="isConfirmPasswordTouched() && !passwordsMatch()">
+           [class.invalid]="confirmPasswordTouched() && !passwordsMatch()">
           Passwords must match
         </p>
       </div>

@@ -57,6 +57,14 @@ export class Login {
   // ==================== Template Helper Methods ====================
   
   /**
+   * Checks if a form field is invalid and has been touched.
+   */
+  isFieldInvalid(fieldName: string): boolean {
+    const control = this.loginForm.get(fieldName);
+    return !!(control?.touched && control?.invalid);
+  }
+
+  /**
    * Gets the appropriate error message for a form field.
    * @param fieldName - The name of the form field
    * @returns Error message string or empty string if no error
