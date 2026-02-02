@@ -124,8 +124,8 @@ export class AuthService {
   }
 
   // ==================== LOGOUT ====================
-  async logout(userId: number): Promise<void> {
-    await this.revokeRefreshToken(userId);
+  async logout(userId: number, refreshToken: string): Promise<void> {
+    await this.revokeSingleRefreshToken(userId, refreshToken);
   }
 
   // ==================== EMAIL VERIFICATION ====================
@@ -262,8 +262,8 @@ export class AuthService {
       resetToken.usedAt = new Date();
       await this.passwordResetRepository.save(resetToken);
 
-      // Revoke all refresh tokens for this user
-      await this.revokeRefreshToken(resetToken.user.id);
+      // Revoke all refresh tokens for this user (security measure on password reset)
+      await this.revokeAllRefreshTokens(resetToken.user.id);
 
       return {
         message: 'Password reset successfully',
@@ -330,7 +330,14 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async revokeRefreshToken(userId: number): Promise<void> {
+  private async revokeSingleRefreshToken(userId: number, token: string): Promise<void> {
+    await this.refreshTokenRepository.update(
+      { userId, token, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+  }
+
+  private async revokeAllRefreshTokens(userId: number): Promise<void> {
     await this.refreshTokenRepository.update(
       { userId, revokedAt: IsNull() },
       { revokedAt: new Date() },

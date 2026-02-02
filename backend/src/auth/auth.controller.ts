@@ -99,8 +99,11 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAccessGuard)
-  async logout(@CurrentUser() user: AuthenticatedUser): Promise<{ message: string }> {
-    await this.authService.logout(user.id);
+  async logout(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<{ message: string }> {
+    await this.authService.logout(user.id, refreshTokenDto.refreshToken);
     return { message: 'Logged out successfully' };
   }
 

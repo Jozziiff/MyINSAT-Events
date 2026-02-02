@@ -30,8 +30,8 @@ export class AuthApiService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, data);
   }
 
-  logout(): Observable<MessageResponse> {
-    return this.http.post<MessageResponse>(`${this.apiUrl}/logout`, {});
+  logout(data: RefreshTokenRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/logout`, data);
   }
 
   refreshTokens(data: RefreshTokenRequest): Observable<TokenPair> {

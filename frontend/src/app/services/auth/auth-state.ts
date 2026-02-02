@@ -73,8 +73,10 @@ export class AuthStateService {
 
   async logout(): Promise<void> {
     try {
-    
-      await firstValueFrom(this.authApi.logout());
+      const refreshToken = this.tokenService.getRefreshToken();
+      if (refreshToken) {
+        await firstValueFrom(this.authApi.logout({ refreshToken }));
+      }
     } catch (error) {
     
     } finally {
