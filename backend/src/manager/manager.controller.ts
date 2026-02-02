@@ -65,10 +65,9 @@ export class ManagerController {
     @Get('clubs/:clubId/managers')
     @UseGuards(ClubAccessGuard)
     getClubManagers(
-        @Req() req: AuthenticatedRequest,
         @Param('clubId', ParseIntPipe) clubId: number,
     ) {
-        return this.managerService.getClubManagers(req.user.id, clubId);
+        return this.managerService.getClubManagers(clubId);
     }
 
     @Delete('clubs/:clubId/managers/:managerId')

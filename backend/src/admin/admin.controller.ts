@@ -11,8 +11,8 @@ import { AdminService } from './admin.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-import { ClubStatus } from '../common/enums/club-status.enum';
+import { UserRole } from '../users/enums/user-role.enum';
+import { ClubStatus } from '../clubs/enums/club-status.enum';
 
 @Controller('admin')
 @UseGuards(JwtAccessGuard, RolesGuard)
@@ -34,7 +34,7 @@ export class AdminController {
 
     // Approve a club
     @Patch('clubs/:id/approve')
-    async approveClub(@Param('id', ParseIntPipe) id: number) {
+    async approveClub(@Param('id', ParseIntPipe) id: number) {  
         return this.adminService.approveClub(id);
     }
 

@@ -28,8 +28,6 @@ export class ManagerService {
         if (!event) {
             throw new NotFoundException('Event not found');
         }
-
-        // Access check is handled by ClubAccessGuard
         return event;
     }
 
@@ -71,7 +69,7 @@ export class ManagerService {
     }
 
     async createEvent(createEventDto: CreateEventDto): Promise<Event> {
-        // Access check is handled by ClubAccessGuard
+
         this.validateEventDates(createEventDto.startTime, createEventDto.endTime);
 
         await this.checkLocationConflict(
@@ -165,7 +163,7 @@ export class ManagerService {
             throw new NotFoundException('Registration not found');
         }
 
-        // Access check is handled by ClubAccessGuard
+    
 
         // Validate attendance marking can only happen on or after event day
         if ((newStatus === RegistrationStatus.ATTENDED || newStatus === RegistrationStatus.NO_SHOW)) {
@@ -197,7 +195,7 @@ export class ManagerService {
     }
 
     async updateClub(clubId: number, updateClubDto: UpdateClubDto): Promise<Club> {
-        // Access check is handled by ClubAccessGuard
+       
         const club = await this.clubRepository.findOne({ where: { id: clubId } });
 
         if (!club) {
@@ -234,8 +232,8 @@ export class ManagerService {
         return managerRecords.map(record => record.club);
     }
 
-    async getClubManagers(userId: number, clubId: number): Promise<{ id: number; fullName: string; email: string; avatarUrl: string }[]> {
-        // Access check is handled by ClubAccessGuard
+    async getClubManagers( clubId: number): Promise<{ id: number; fullName: string; email: string; avatarUrl: string }[]> {
+        
 
         const managers = await this.clubManagerRepository.find({
             where: { clubId },
@@ -251,7 +249,7 @@ export class ManagerService {
     }
 
     async removeManager(userId: number, clubId: number, managerUserId: number): Promise<void> {
-        // Access check is handled by ClubAccessGuard
+        
 
         // Prevent removing yourself
         if (userId === managerUserId) {
@@ -270,7 +268,7 @@ export class ManagerService {
     }
 
     async getManagedClubById(userId: number, clubId: number): Promise<Club> {
-        // Access check is handled by ClubAccessGuard
+        
         
         const club = await this.clubRepository.findOne({
             where: { id: clubId },
@@ -284,7 +282,7 @@ export class ManagerService {
     }
 
     async getClubEvents(clubId: number): Promise<Event[]> {
-        // Access check is handled by ClubAccessGuard
+        
 
         return this.eventRepository.find({
             where: { clubId },
