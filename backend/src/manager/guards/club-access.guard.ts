@@ -1,7 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClubManager, Event, Registration, ClubJoinRequest } from '../../entities';
+import { Event, Registration } from '../../events/entities';
+import { ClubManager, ClubJoinRequest } from '../../clubs/entities';
 
 @Injectable()
 export class ClubAccessGuard implements CanActivate {

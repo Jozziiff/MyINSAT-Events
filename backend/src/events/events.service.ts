@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
-import { Event, Registration, EventRating } from '../entities';
+import { Event, Registration, EventRating } from './entities';
 import { EventStatus, RegistrationStatus } from '../common/enums';
 import { RateEventDto } from './dto';
 

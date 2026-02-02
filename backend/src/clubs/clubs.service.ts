@@ -1,14 +1,9 @@
 import { Injectable, ForbiddenException, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Club } from '../entities/club.entity';
-import { Event } from '../entities/event.entity';
-import { Registration } from '../entities/registration.entity';
-import { ClubFollower } from '../entities/club-follower.entity';
-import { ClubManager } from '../entities/club-manager.entity';
-import { ClubJoinRequest } from '../entities/club-join-request.entity';
-import { EventRating } from '../entities/event-rating.entity';
-import { User } from '../entities/user.entity';
+import { Club, ClubFollower, ClubManager, ClubJoinRequest } from './entities';
+import { Event, Registration, EventRating } from '../events/entities';
+import { User } from '../users/entities';
 import { RegistrationStatus, ClubStatus, JoinRequestStatus, UserRole } from '../common/enums';
 import { ClubDto, ClubSummaryDto } from './dto/club.dto';
 import { CreateClubDto, DEFAULT_SECTION_IMAGES } from './dto/create-club.dto';

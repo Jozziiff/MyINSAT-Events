@@ -2,16 +2,15 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
+    CreateDateColumn,
     ManyToOne,
     JoinColumn,
-    Unique,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../users/entities/user.entity';
 import { Club } from './club.entity';
 
-@Entity('club_managers')
-@Unique(['userId', 'clubId'])
-export class ClubManager {
+@Entity('club_followers')
+export class ClubFollower {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -21,11 +20,14 @@ export class ClubManager {
     @Column({ type: 'int', name: 'club_id', nullable: false })
     clubId: number;
 
-    @ManyToOne(() => User, (user) => user.managedClubs, { onDelete: 'CASCADE' })
+    @CreateDateColumn({ name: 'created_at' })
+    createdAt: Date;
+
+    @ManyToOne(() => User, (user) => user.followedClubs, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     user: User;
 
-    @ManyToOne(() => Club, (club) => club.managers, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Club, (club) => club.followers, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'club_id' })
     club: Club;
 }

@@ -1,7 +1,9 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, LessThan, MoreThanOrEqual, In } from 'typeorm';
-import { User, Registration, ClubFollower, ClubManager, EventRating, Event, Club } from '../entities';
+import { User } from './entities';
+import { Registration, EventRating, Event } from '../events/entities';
+import { ClubFollower, ClubManager, Club } from '../clubs/entities';
 import { UserRole, RegistrationStatus, EventStatus } from '../common/enums';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {

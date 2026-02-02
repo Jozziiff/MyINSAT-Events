@@ -1,4 +1,4 @@
-import { User } from 'src/entities';
+import { User } from '../../users/entities';
 import { ClubContactDto, ClubSectionDto } from './create-club.dto';
 
 // Full club details

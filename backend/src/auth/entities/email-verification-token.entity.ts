@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../entities';
+import { User } from '../../users/entities';
 
 @Entity('email_verification_tokens')
 export class EmailVerificationToken {

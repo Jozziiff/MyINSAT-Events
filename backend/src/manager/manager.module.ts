@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ManagerController } from './manager.controller';
 import { ManagerService } from './manager.service';
-import { Event, Club, Registration, ClubManager, ClubJoinRequest } from '../entities';
+import { Event, Registration } from '../events/entities';
+import { Club, ClubManager, ClubJoinRequest } from '../clubs/entities';
 import { ClubAccessGuard } from './guards/club-access.guard';
 
 @Module({

@@ -2,7 +2,9 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { User, Registration, ClubFollower, ClubManager, EventRating, Event, Club } from '../entities';
+import { User } from './entities';
+import { Registration, EventRating, Event } from '../events/entities';
+import { ClubFollower, ClubManager, Club } from '../clubs/entities';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({

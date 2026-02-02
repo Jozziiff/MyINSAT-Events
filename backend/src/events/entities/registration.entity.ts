@@ -8,8 +8,8 @@ import {
     OneToOne,
     JoinColumn,
 } from 'typeorm';
-import { RegistrationStatus } from '../common/enums';
-import { User } from './user.entity';
+import { RegistrationStatus } from '../../common/enums';
+import { User } from '../../users/entities/user.entity';
 import { Event } from './event.entity';
 import { EventRating } from './event-rating.entity';
 

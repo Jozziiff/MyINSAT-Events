@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Club } from '../entities/club.entity';
-import { User } from '../entities/user.entity';
-import { ClubManager } from '../entities/club-manager.entity';
+import { Club, ClubManager } from '../clubs/entities';
+import { User } from '../users/entities';
 import { ClubStatus } from '../common/enums/club-status.enum';
 import { UserRole } from '../common/enums/user-role.enum';
 
