@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, switchMap, map, throwError } from 'rxjs';
 import { TokenService } from './token';
 import { AuthApiService } from './auth-api';
 import { AuthStateService } from './auth-state';
@@ -54,36 +54,21 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // If already refreshing, wait for the refresh to complete
-      if (tokenRefreshService.isRefreshInProgress()) {
-        return tokenRefreshService.getRefreshToken().pipe(
-          switchMap(token => {
-            const clonedRequest = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            return next(clonedRequest);
+      // Use the token refresh service to coordinate refresh requests
+      return tokenRefreshService.refreshToken(() => {
+        return authApi.refreshTokens({ refreshToken }).pipe(
+          map((tokens) => {
+            // Store new tokens
+            tokenService.setTokens(tokens.accessToken, tokens.refreshToken);
+            return tokens.accessToken; // Return just the access token
           })
         );
-      }
-
-      // Start refresh process
-      tokenRefreshService.startRefresh();
-
-      // Attempt to refresh tokens
-      return authApi.refreshTokens({ refreshToken }).pipe(
-        switchMap((tokens) => {
-          // Store new tokens
-          tokenService.setTokens(tokens.accessToken, tokens.refreshToken);
-          
-          // Complete refresh and notify waiting requests
-          tokenRefreshService.completeRefresh(tokens.accessToken);
-
+      }).pipe(
+        switchMap((newAccessToken) => {
           // Clone the original request with new token
           const clonedRequest = req.clone({
             setHeaders: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Authorization: `Bearer ${newAccessToken}`,
             },
           });
 
@@ -91,9 +76,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           return next(clonedRequest);
         }),
         catchError((refreshError) => {
-          // Mark refresh as failed
-          tokenRefreshService.failRefresh();
-          
           // Refresh failed, logout user
           authState.clearUser();
           router.navigate(['/login']);
