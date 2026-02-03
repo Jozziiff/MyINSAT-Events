@@ -36,14 +36,14 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  // ==================== REGISTRATION ====================
+  
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, password, fullName } = registerDto;
 
-    // Hash password
+    
     const passwordHash = await this.hashPassword(password);
 
-    // Create user (UsersService handles duplicate check)
+   
     const user = await this.usersService.create({
       email,
       passwordHash,
@@ -51,49 +51,45 @@ export class AuthService {
       role: UserRole.USER,
     });
 
-    // Generate email verification token (for future implementation)
+   
     await this.generateEmailVerificationToken(user.id);
 
-    // Generate tokens and return response
+    
     return this.generateAuthResponse(user);
   }
 
-  // ==================== LOGIN ====================
+ 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    // Find user
+   
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
+ 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check if user is active
+  
     if (!user.isActive) {
       throw new UnauthorizedException('Account is inactive');
     }
 
-    // Generate tokens and return response
+   
     return this.generateAuthResponse(user);
   }
 
-  // ==================== REFRESH TOKEN ====================
   async refreshTokens(
     userId: number,
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    // Note: JWT signature is already verified by JwtRefreshGuard/JwtRefreshStrategy
-    // Here we only validate the token exists in DB and is not revoked
 
-    // Find the specific refresh token record
     const existingRefreshToken = await this.refreshTokenRepository.findOne({
       where: {
         token: refreshToken,
@@ -106,29 +102,29 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or revoked refresh token');
     }
 
-    // Get user
+   
     const user = await this.usersService.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // Revoke the old refresh token (mark as used)
+    
     existingRefreshToken.revokedAt = new Date();
     await this.refreshTokenRepository.save(existingRefreshToken);
 
-    // Generate new token pair
+  
     const tokens = await this.generateTokens(user);
 
     return tokens;
   }
 
-  // ==================== LOGOUT ====================
+  
   async logout(userId: number, refreshToken: string): Promise<void> {
     await this.revokeSingleRefreshToken(userId, refreshToken);
   }
 
-  // ==================== EMAIL VERIFICATION ====================
+  
   async verifyEmail(token: string): Promise<{ message: string }> {
     try {
       const payload = this.jwtService.verify<{
@@ -148,7 +144,7 @@ export class AuthService {
         throw new BadRequestException('Verification link expired');
       }
 
-      // Check if token exists in database and matches
+      
       const verificationToken = await this.emailVerificationRepository.findOne({
         where: {
           userId: payload.sub,
@@ -167,7 +163,7 @@ export class AuthService {
         };
       }
 
-      // Verify email and mark token as used (one-time use)
+      
       verificationToken.user.emailVerified = true;
       await this.usersService.save(verificationToken.user);
 
@@ -188,16 +184,16 @@ export class AuthService {
     }
   }
 
-  // ==================== PASSWORD RESET ====================
+  
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      // Don't reveal if email exists
+    
       return;
     }
 
-    // Generate JWT reset token
+   
     const token = this.jwtService.sign(
       {
         sub: user.id,
@@ -206,11 +202,11 @@ export class AuthService {
       },
       {
         secret: this.configService.get('JWT_PASSWORD_RESET_SECRET'),
-        expiresIn: '1h',
+        expiresIn: this.configService.get<string>('JWT_PASSWORD_RESET_EXPIRATION') as JwtSignOptions['expiresIn'],
       },
     );
 
-    // Store token in database for verification
+ 
     const resetToken = this.passwordResetRepository.create({
       userId: user.id,
       token: token,
@@ -218,7 +214,6 @@ export class AuthService {
 
     await this.passwordResetRepository.save(resetToken);
 
-    // Send password reset email
     await this.mailService.sendPasswordReset(email, token);
   }
 
@@ -242,7 +237,7 @@ export class AuthService {
         throw new BadRequestException('Reset link expired');
       }
 
-      // Check if token exists in database and matches
+     
       const resetToken = await this.passwordResetRepository.findOne({
         where: {
           userId: payload.sub,
@@ -255,14 +250,14 @@ export class AuthService {
         throw new BadRequestException('Invalid or expired reset token');
       }
 
-      // Update password and mark token as used (one-time use)
+      
       resetToken.user.passwordHash = await this.hashPassword(newPassword);
       await this.usersService.save(resetToken.user);
 
       resetToken.usedAt = new Date();
       await this.passwordResetRepository.save(resetToken);
 
-      // Revoke all refresh tokens for this user (security measure on password reset)
+      
       await this.revokeAllRefreshTokens(resetToken.user.id);
 
       return {
@@ -279,7 +274,7 @@ export class AuthService {
     }
   }
 
-  // ==================== HELPER METHODS ====================
+  
   private async generateAuthResponse(user: User): Promise<AuthResponseDto> {
     const tokens = await this.generateTokens(user);
 
@@ -307,19 +302,19 @@ export class AuthService {
     };
 
 
-    // Generate access token
+    
     const accessToken = await this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION') as JwtSignOptions['expiresIn'],
     });
 
-    // Generate refresh token
+    
     const refreshToken = await this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION') as JwtSignOptions['expiresIn'],
     });
 
-    // Store refresh token in database
+    
     const refreshTokenEntity = this.refreshTokenRepository.create({
       userId: user.id,
       token: refreshToken,
@@ -366,11 +361,11 @@ export class AuthService {
       },
       {
         secret: this.configService.get('JWT_EMAIL_VERIFICATION_SECRET'),
-        expiresIn: '24h',
+        expiresIn: this.configService.get<string>('JWT_EMAIL_VERIFICATION_EXPIRATION') as JwtSignOptions['expiresIn'],
       },
     );
 
-    // Store token in database for verification
+    
     const verificationToken = this.emailVerificationRepository.create({
       userId: userId,
       token: token,
@@ -378,7 +373,7 @@ export class AuthService {
 
     await this.emailVerificationRepository.save(verificationToken);
 
-    // Send email verification email
+  
     await this.mailService.sendEmailVerification(user.email, token);
 
     return token;

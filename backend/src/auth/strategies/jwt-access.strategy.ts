@@ -13,7 +13,7 @@ export interface JwtPayload {
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     private usersService: UsersService,
   ) {
     super({
@@ -30,7 +30,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    // Return user data that will be attached to request.user
+  
     return {
       id: user.id,
       email: user.email,

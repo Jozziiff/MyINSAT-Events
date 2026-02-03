@@ -13,7 +13,7 @@ import { MailModule } from '../mail/mail.module';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
-import { OptionalAuth } from './decorators/optional-auth.decorator';
+import { OptionalAuth } from './guards/optional-auth.guard';
 
 @Module({
   imports: [
@@ -38,7 +38,7 @@ import { OptionalAuth } from './decorators/optional-auth.decorator';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy, JwtAccessGuard],
-  exports: [AuthService, JwtAccessGuard, JwtModule],
+  providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy, JwtAccessGuard, OptionalAuth],
+  exports: [AuthService, JwtAccessGuard, OptionalAuth, JwtModule],
 })
 export class AuthModule {}

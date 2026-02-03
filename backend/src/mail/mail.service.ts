@@ -39,10 +39,10 @@ export class MailService implements OnModuleInit {
           },
         });
 
-        this.logger.log('✅ Ethereal test account created');
-        this.logger.log(`📧 Ethereal User: ${testAccount.user}`);
-        this.logger.log(`🔑 Ethereal Pass: ${testAccount.pass}`);
-        this.logger.log('🌐 View sent emails at: https://ethereal.email/messages');
+        this.logger.log(' Ethereal test account created');
+        this.logger.log(` Ethereal User: ${testAccount.user}`);
+        this.logger.log(` Ethereal Pass: ${testAccount.pass}`);
+        this.logger.log(' View sent emails at: https://ethereal.email/messages');
       } catch (error) {
         this.logger.error('Failed to create Ethereal test account:', error);
         throw error;
@@ -52,7 +52,7 @@ export class MailService implements OnModuleInit {
     // Verify transporter
     try {
       await this.transporter.verify();
-      this.logger.log('✅ Mail transporter is ready');
+      this.logger.log(' Mail transporter is ready');
     } catch (error) {
       this.logger.error('Mail transporter verification failed:', error);
     }
@@ -68,12 +68,12 @@ export class MailService implements OnModuleInit {
         html: options.html,
       });
 
-      this.logger.log(`📧 Email sent to ${options.to}: ${info.messageId}`);
+      this.logger.log(` Email sent to ${options.to}: ${info.messageId}`);
 
       // If using Ethereal, log the preview URL
       const previewUrl = nodemailer.getTestMessageUrl(info);
       if (previewUrl) {
-        this.logger.log(`📨 Preview URL: ${previewUrl}`);
+        this.logger.log(` Preview URL: ${previewUrl}`);
       }
     } catch (error) {
       this.logger.error(`Failed to send email to ${options.to}:`, error);
@@ -183,102 +183,6 @@ export class MailService implements OnModuleInit {
     });
   }
 
-  async sendEventReminder(to: string, eventTitle: string, eventDate: Date, eventLocation: string): Promise<void> {
-    await this.sendMail({
-      to,
-      subject: `Reminder: ${eventTitle} is coming soon! - MyINSAT Events`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
-              .event-details { background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10B981; }
-              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>📅 Event Reminder</h1>
-              </div>
-              <div class="content">
-                <h2>Don't forget!</h2>
-                <p>This is a friendly reminder about your upcoming event:</p>
-                <div class="event-details">
-                  <h3 style="margin-top: 0; color: #10B981;">🎉 ${eventTitle}</h3>
-                  <p><strong>📅 Date:</strong> ${eventDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p><strong>🕐 Time:</strong> ${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                  <p><strong>📍 Location:</strong> ${eventLocation}</p>
-                </div>
-                <p>We're looking forward to seeing you there! 🎊</p>
-              </div>
-              <div class="footer">
-                <p>&copy; 2026 MyINSAT Events. All rights reserved.</p>
-              </div>
-            </div>
-          </body>
-        </html>
-      `,
-      text: `Event Reminder\n\nDon't forget about your upcoming event!\n\nEvent: ${eventTitle}\nDate: ${eventDate.toLocaleDateString()}\nTime: ${eventDate.toLocaleTimeString()}\nLocation: ${eventLocation}\n\nWe're looking forward to seeing you there!`,
-    });
-  }
 
-  async sendRegistrationConfirmation(
-    to: string,
-    eventTitle: string,
-    eventDate: Date,
-    eventLocation: string,
-  ): Promise<void> {
-    await this.sendMail({
-      to,
-      subject: `Registration confirmed: ${eventTitle} - MyINSAT Events`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
-              .success-badge { background-color: #D1FAE5; color: #065F46; padding: 10px 20px; border-radius: 20px; display: inline-block; margin: 20px 0; }
-              .event-details { background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10B981; }
-              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>✅ Registration Confirmed!</h1>
-              </div>
-              <div class="content">
-                <div style="text-align: center;">
-                  <span class="success-badge">✨ You're all set!</span>
-                </div>
-                <h2>Thank you for registering!</h2>
-                <p>Your registration for the following event has been confirmed:</p>
-                <div class="event-details">
-                  <h3 style="margin-top: 0; color: #10B981;">🎉 ${eventTitle}</h3>
-                  <p><strong>📅 Date:</strong> ${eventDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  <p><strong>🕐 Time:</strong> ${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                  <p><strong>📍 Location:</strong> ${eventLocation}</p>
-                </div>
-                <p>We'll send you a reminder before the event. See you there! 🎊</p>
-              </div>
-              <div class="footer">
-                <p>&copy; 2026 MyINSAT Events. All rights reserved.</p>
-              </div>
-            </div>
-          </body>
-        </html>
-      `,
-      text: `Registration Confirmed!\n\nYour registration for the following event has been confirmed:\n\nEvent: ${eventTitle}\nDate: ${eventDate.toLocaleDateString()}\nTime: ${eventDate.toLocaleTimeString()}\nLocation: ${eventLocation}\n\nWe'll send you a reminder before the event. See you there!`,
-    });
-  }
+ 
 }

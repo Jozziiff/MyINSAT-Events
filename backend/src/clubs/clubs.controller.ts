@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
-import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
+import { OptionalAuth } from '../auth/guards/optional-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ClubsService } from './clubs.service';
 import { CreateClubDto } from './dto/create-club.dto';

@@ -17,7 +17,7 @@ import { Request } from 'express';
 import { EventsService } from './events.service';
 import { RateEventDto } from './dto';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
-import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
+import { OptionalAuth } from '../auth/guards/optional-auth.guard';
 
 interface AuthenticatedRequest extends Request {
   user?: {

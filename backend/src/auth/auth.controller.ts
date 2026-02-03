@@ -20,7 +20,7 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
-// Type for the user attached to request by JWT guards
+
 interface AuthenticatedUser {
   id: number;
   email: string;
@@ -39,7 +39,6 @@ interface RefreshTokenUser {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // ==================== PUBLIC ENDPOINTS ====================
 
   @Public()
   @Post('register')
@@ -94,7 +93,6 @@ export class AuthController {
     );
   }
 
-  // ==================== PROTECTED ENDPOINTS ====================
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
