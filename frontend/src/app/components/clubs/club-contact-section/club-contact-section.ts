@@ -4,7 +4,6 @@ import { ClubContact } from '../../../models/club.model';
 interface ContactLink {
   key: string;
   label: string;
-  icon: string;
   value: string;
   href: string;
 }
@@ -40,7 +39,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'email',
         label: 'Email',
-        icon: '📧',
         value: this.contact.email,
         href: `mailto:${this.contact.email}`
       });
@@ -50,7 +48,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'phone',
         label: 'Phone',
-        icon: '📞',
         value: this.contact.phone,
         href: `tel:${this.contact.phone}`
       });
@@ -60,7 +57,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'website',
         label: 'Website',
-        icon: '🌐',
         value: 'Website',
         href: this.contact.website
       });
@@ -70,7 +66,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'facebook',
         label: 'Facebook',
-        icon: '📘',
         value: 'Facebook',
         href: this.contact.facebook
       });
@@ -80,7 +75,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'instagram',
         label: 'Instagram',
-        icon: '📷',
         value: 'Instagram',
         href: this.contact.instagram
       });
@@ -90,7 +84,6 @@ export class ClubContactSectionComponent {
       links.push({
         key: 'linkedin',
         label: 'LinkedIn',
-        icon: '💼',
         value: 'LinkedIn',
         href: this.contact.linkedin
       });
