@@ -1,0 +1,112 @@
+/* Contact Section */
+.contact-section {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.contact-section.is-preview {
+  padding: 1.5rem;
+  background: var(--color-surface);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.contact-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 2rem;
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    border-radius: 2px;
+  }
+}
+
+.contact-section.is-preview h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+
+  &::after {
+    width: 40px;
+    height: 3px;
+    bottom: -0.35rem;
+  }
+}
+
+.contact-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.contact-section.is-preview .contact-links {
+  gap: 0.75rem;
+}
+
+.contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all var(--transition-base);
+}
+
+.contact-section.is-preview .contact-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  background: var(--color-bg);
+}
+
+.contact-item:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.contact-icon {
+  font-size: 1rem;
+}
+
+.contact-label {
+  font-size: 0.9rem;
+}
+
+.contact-section.is-preview .contact-label {
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .contact-section {
+    padding: 3rem 0;
+  }
+
+  .contact-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .contact-links {
+    gap: 0.75rem;
+  }
+
+  .contact-item {
+    padding: 0.625rem 1rem;
+  }
+}

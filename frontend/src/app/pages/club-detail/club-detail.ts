@@ -6,10 +6,11 @@ import { TokenService } from '../../services/auth/token';
 import { AuthStateService } from '../../services/auth/auth-state';
 import { Role } from '../../models/auth.models';
 import { fadeSlideIn, fadeInRight } from '../../animations';
+import { ClubHeroComponent, ClubSectionRowComponent, ClubContactSectionComponent } from '../../components/clubs';
 
 @Component({
   selector: 'app-club-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, ClubHeroComponent, ClubSectionRowComponent, ClubContactSectionComponent],
   templateUrl: './club-detail.html',
   styleUrl: './club-detail.css',
   animations: [fadeSlideIn, fadeInRight]
@@ -83,17 +84,6 @@ export class ClubDetailComponent implements OnInit {
     }
 
     this.sections.set(builtSections);
-  }
-
-  hasContact(club: Club): boolean {
-    return !!(club.contact && (
-      club.contact.email ||
-      club.contact.phone ||
-      club.contact.facebook ||
-      club.contact.instagram ||
-      club.contact.linkedin ||
-      club.contact.website
-    ));
   }
 
   async toggleFollow(): Promise<void> {

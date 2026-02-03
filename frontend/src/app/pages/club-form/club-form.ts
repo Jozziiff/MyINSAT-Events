@@ -4,107 +4,103 @@ import { FormsModule } from '@angular/forms';
 import { ClubsService } from '../../services/clubs.service';
 import { CreateClubDto, ClubSection, ClubContact, Club } from '../../models/club.model';
 import { fadeSlideIn } from '../../animations';
+import {
+  ImageUploadFieldComponent,
+  ClubPreviewComponent,
+  ContactFormSectionComponent,
+  OptionalSectionEditorComponent,
+  DEFAULT_SECTION_IMAGES,
+  SectionFormData,
+  SectionConfig
+} from '../../components/clubs';
+import type { PreviewSection } from '../../components/clubs';
+import { FormInputComponent } from '../../components/shared/form-input/form-input';
 
-interface SectionForm {
-  enabled: boolean;
-  title: string;
-  content: string;
-  imageUrl: string;
-  imageFile: File | null;
-  imagePreview: string;
-}
+// Section configurations
+const SECTION_CONFIGS: SectionConfig[] = [
+  { key: 'history', label: 'History', defaultTitle: 'Our History' },
+  { key: 'mission', label: 'Mission', defaultTitle: 'Our Mission' },
+  { key: 'activities', label: 'Activities', defaultTitle: 'What We Do' },
+  { key: 'achievements', label: 'Achievements', defaultTitle: 'Achievements' },
+  { key: 'joinUs', label: 'Join Us', defaultTitle: 'Join Us' }
+];
 
-interface EnabledSection extends SectionForm {
-  key: string;
-}
-
-// Default placeholder images for preview
-const DEFAULT_IMAGES = {
-  about: 'https://picsum.photos/seed/about/800/600',
-  history: 'https://picsum.photos/seed/history/800/600',
-  mission: 'https://picsum.photos/seed/mission/800/600',
-  activities: 'https://picsum.photos/seed/activities/800/600',
-  achievements: 'https://picsum.photos/seed/achievements/800/600',
-  joinUs: 'https://picsum.photos/seed/joinus/800/600',
-};
+const createEmptySection = (defaultTitle: string): SectionFormData => ({
+  enabled: false,
+  title: defaultTitle,
+  content: '',
+  imageUrl: '',
+  imageFile: null,
+  imagePreview: ''
+});
 
 @Component({
   selector: 'app-club-form',
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink,
+    FormInputComponent,
+    ImageUploadFieldComponent,
+    ClubPreviewComponent,
+    ContactFormSectionComponent,
+    OptionalSectionEditorComponent
+  ],
   templateUrl: './club-form.html',
   styleUrl: './club-form.css',
   animations: [fadeSlideIn]
 })
 export class ClubFormComponent implements OnInit {
-  // Default images for preview
-  defaultImages = DEFAULT_IMAGES;
+  // Constants
+  readonly defaultImages = DEFAULT_SECTION_IMAGES;
+  readonly sectionConfigs = SECTION_CONFIGS;
+  readonly currentYear = new Date().getFullYear();
+  readonly yearOptions = Array.from({ length: this.currentYear - 1899 }, (_, i) => this.currentYear - i);
 
-  // Current year for founded year validation
-  currentYear = new Date().getFullYear();
-
-  // Year options for dropdown (from current year down to 1900)
-  yearOptions: number[] = Array.from(
-    { length: this.currentYear - 1899 },
-    (_, i) => this.currentYear - i
-  );
-
-  // Edit mode
+  // Mode
   isEditMode = false;
   clubId: number | null = null;
-  loadingClub = signal(false);
 
-  // Form state
+  // State signals
+  loadingClub = signal(false);
   submitting = signal(false);
   error = signal<string | null>(null);
   success = signal(false);
 
-  // Required fields
+  // Basic info
   name = '';
   shortDescription = '';
   about = '';
   foundedYear: number | null = null;
 
-  // Image fields - simplified without toggle
-  logoUrl = '';
-  logoFile: File | null = null;
-  logoPreview = '';
-
-  coverUrl = '';
-  coverFile: File | null = null;
-  coverPreview = '';
-
-  aboutImageUrl = '';
-  aboutImageFile: File | null = null;
-  aboutImagePreview = '';
-
-  // Optional sections
-  sections: { [key: string]: SectionForm } = {
-    history: { enabled: false, title: 'Our History', content: '', imageUrl: '', imageFile: null, imagePreview: '' },
-    mission: { enabled: false, title: 'Our Mission', content: '', imageUrl: '', imageFile: null, imagePreview: '' },
-    activities: { enabled: false, title: 'What We Do', content: '', imageUrl: '', imageFile: null, imagePreview: '' },
-    achievements: { enabled: false, title: 'Achievements', content: '', imageUrl: '', imageFile: null, imagePreview: '' },
-    joinUs: { enabled: false, title: 'Join Us', content: '', imageUrl: '', imageFile: null, imagePreview: '' },
+  // Images
+  images = {
+    logo: { url: '', file: null as File | null, preview: '' },
+    cover: { url: '', file: null as File | null, preview: '' },
+    about: { url: '', file: null as File | null, preview: '' }
   };
 
-  // Contact info
-  contact: ClubContact = {
-    email: '',
-    phone: '',
-    facebook: '',
-    instagram: '',
-    linkedin: '',
-    website: '',
-  };
+  // Sections
+  sections: Record<string, SectionFormData> = {};
+
+  // Contact
+  contact: ClubContact = {};
 
   constructor(
     private clubsService: ClubsService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    this.initializeSections();
+  }
+
+  private initializeSections(): void {
+    for (const config of SECTION_CONFIGS) {
+      this.sections[config.key] = createEmptySection(config.defaultTitle);
+    }
+  }
 
   ngOnInit() {
-    // Check if we're in edit mode by looking for :id param
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEditMode = true;
@@ -124,7 +120,7 @@ export class ClubFormComponent implements OnInit {
       } else {
         this.error.set('Club not found');
       }
-    } catch (err) {
+    } catch {
       this.error.set('Failed to load club data');
     } finally {
       this.loadingClub.set(false);
@@ -136,16 +132,15 @@ export class ClubFormComponent implements OnInit {
     this.shortDescription = club.shortDescription;
     this.about = club.about;
     this.foundedYear = club.foundedYear || null;
-    this.logoUrl = club.logoUrl || '';
-    this.coverUrl = club.coverImageUrl || '';
-    this.aboutImageUrl = club.aboutImageUrl || '';
+    
+    this.images.logo.url = club.logoUrl || '';
+    this.images.cover.url = club.coverImageUrl || '';
+    this.images.about.url = club.aboutImageUrl || '';
 
-    // Populate sections
-    const sectionKeys = ['history', 'mission', 'activities', 'achievements', 'joinUs'] as const;
-    for (const key of sectionKeys) {
-      const section = club[key];
+    for (const config of SECTION_CONFIGS) {
+      const section = club[config.key as keyof Club] as ClubSection | undefined;
       if (section) {
-        this.sections[key] = {
+        this.sections[config.key] = {
           enabled: true,
           title: section.title,
           content: section.content,
@@ -156,109 +151,55 @@ export class ClubFormComponent implements OnInit {
       }
     }
 
-    // Populate contact
     if (club.contact) {
-      this.contact = { ...this.contact, ...club.contact };
+      this.contact = { ...club.contact };
     }
 
     this.cdr.detectChanges();
   }
 
-  // Preview helper methods
-  getPreviewLogo(): string {
-    return this.logoPreview || this.logoUrl;
-  }
-
-  getPreviewCover(): string {
-    return this.coverPreview || this.coverUrl;
-  }
-
-  getPreviewAboutImage(): string {
-    return this.aboutImagePreview || this.aboutImageUrl;
-  }
-
-  getEnabledSections(): EnabledSection[] {
-    return Object.entries(this.sections)
-      .filter(([_, section]) => section.enabled)
-      .map(([key, section]) => ({ ...section, key }));
-  }
-
-  hasAnyContact(): boolean {
-    return Object.values(this.contact).some(v => !!v?.trim());
-  }
-
-  hasAnyContent(): boolean {
-    return !!(
-      this.name ||
-      this.shortDescription ||
-      this.about ||
-      this.getPreviewLogo() ||
-      this.getPreviewCover() ||
-      this.getEnabledSections().length > 0 ||
-      this.hasAnyContact()
-    );
-  }
-
-  // Handle file selection
-  onFileSelected(event: Event, target: string) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const file = input.files[0];
+  // Image handling
+  onImageFileSelected(file: File, target: 'logo' | 'cover' | 'about') {
     const reader = new FileReader();
-
     reader.onload = (e) => {
-      const preview = e.target?.result as string;
-
-      if (target === 'logo') {
-        this.logoFile = file;
-        this.logoPreview = preview;
-      } else if (target === 'cover') {
-        this.coverFile = file;
-        this.coverPreview = preview;
-      } else if (target === 'about') {
-        this.aboutImageFile = file;
-        this.aboutImagePreview = preview;
-      } else if (this.sections[target]) {
-        this.sections[target].imageFile = file;
-        this.sections[target].imagePreview = preview;
-      }
-
+      this.images[target].file = file;
+      this.images[target].preview = e.target?.result as string;
       this.cdr.detectChanges();
     };
-
     reader.readAsDataURL(file);
   }
 
-  // Upload image and get URL
-  private async uploadIfNeeded(file: File | null, url: string): Promise<string> {
-    if (file) {
-      const uploadedUrl = await this.clubsService.uploadImage(file);
-      return uploadedUrl || '';
-    }
-    return url;
+  onSectionImageSelected(file: File, sectionKey: string) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.sections[sectionKey].imageFile = file;
+      this.sections[sectionKey].imagePreview = e.target?.result as string;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
   }
 
+  // Preview helpers
+  getEnabledSections(): PreviewSection[] {
+    return SECTION_CONFIGS
+      .filter(config => this.sections[config.key].enabled)
+      .map(config => {
+        const section = this.sections[config.key];
+        return {
+          key: config.key,
+          title: section.title,
+          content: section.content,
+          imageUrl: section.imageUrl,
+          imagePreview: section.imagePreview
+        };
+      });
+  }
+
+  // Form submission
   async onSubmit() {
-    // Validation
-    if (!this.name.trim()) {
-      this.error.set('Club name is required');
-      return;
-    }
-    if (!this.shortDescription.trim()) {
-      this.error.set('Short description is required');
-      return;
-    }
-    if (!this.about.trim()) {
-      this.error.set('About section is required');
-      return;
-    }
-    if (!this.logoFile && !this.logoUrl.trim()) {
-      this.error.set('Club logo is required');
-      return;
-    }
-    if (!this.coverFile && !this.coverUrl.trim()) {
-      this.error.set('Cover image is required');
+    const validationError = this.validateForm();
+    if (validationError) {
+      this.error.set(validationError);
       return;
     }
 
@@ -266,58 +207,14 @@ export class ClubFormComponent implements OnInit {
     this.error.set(null);
 
     try {
-      // Upload images
-      const logoUrl = await this.uploadIfNeeded(this.logoFile, this.logoUrl);
-      const coverUrl = await this.uploadIfNeeded(this.coverFile, this.coverUrl);
-      const aboutImageUrl = await this.uploadIfNeeded(this.aboutImageFile, this.aboutImageUrl);
-
-      // Build club data (logoUrl and coverImageUrl are required, validated above)
-      const clubData: CreateClubDto = {
-        name: this.name.trim(),
-        shortDescription: this.shortDescription.trim(),
-        about: this.about.trim(),
-        logoUrl: logoUrl, // Required
-        coverImageUrl: coverUrl, // Required
-        aboutImageUrl: aboutImageUrl || undefined, // Optional
-        foundedYear: this.foundedYear || undefined, // Optional
-      };
-
-      // Add enabled sections
-      for (const [key, section] of Object.entries(this.sections)) {
-        if (section.enabled && section.content.trim()) {
-          const imageUrl = await this.uploadIfNeeded(section.imageFile, section.imageUrl);
-          (clubData as any)[key] = {
-            title: section.title.trim(),
-            content: section.content.trim(),
-            imageUrl: imageUrl || undefined,
-          } as ClubSection;
-        }
-      }
-
-      // Add contact if any field is filled
-      const hasContact = Object.values(this.contact).some(v => v && v.trim());
-      if (hasContact) {
-        clubData.contact = {};
-        for (const [key, value] of Object.entries(this.contact)) {
-          if (value && value.trim()) {
-            (clubData.contact as any)[key] = value.trim();
-          }
-        }
-      }
-
-      // Create or update club
-      let result: Club | null;
-      if (this.isEditMode && this.clubId) {
-        result = await this.clubsService.updateClub(this.clubId, clubData);
-      } else {
-        result = await this.clubsService.createClub(clubData);
-      }
+      const clubData = await this.buildClubData();
+      const result = this.isEditMode && this.clubId
+        ? await this.clubsService.updateClub(this.clubId, clubData)
+        : await this.clubsService.createClub(clubData);
 
       if (result) {
         this.success.set(true);
-        setTimeout(() => {
-          this.router.navigate(['/clubs', result!.id]);
-        }, 1500);
+        setTimeout(() => this.router.navigate(['/clubs', result.id]), 1500);
       } else {
         this.error.set(this.clubsService.error() || `Failed to ${this.isEditMode ? 'update' : 'create'} club`);
       }
@@ -328,22 +225,60 @@ export class ClubFormComponent implements OnInit {
     }
   }
 
-  getSectionKeys(): string[] {
-    return Object.keys(this.sections);
+  private validateForm(): string | null {
+    if (!this.name.trim()) return 'Club name is required';
+    if (!this.shortDescription.trim()) return 'Short description is required';
+    if (!this.about.trim()) return 'About section is required';
+    if (!this.images.logo.file && !this.images.logo.url.trim()) return 'Club logo is required';
+    if (!this.images.cover.file && !this.images.cover.url.trim()) return 'Cover image is required';
+    return null;
   }
 
-  getSectionLabel(key: string): string {
-    const labels: { [key: string]: string } = {
-      history: 'History',
-      mission: 'Mission',
-      activities: 'Activities',
-      achievements: 'Achievements',
-      joinUs: 'Join Us',
+  private async buildClubData(): Promise<CreateClubDto> {
+    const [logoUrl, coverUrl, aboutImageUrl] = await Promise.all([
+      this.uploadIfNeeded(this.images.logo.file, this.images.logo.url),
+      this.uploadIfNeeded(this.images.cover.file, this.images.cover.url),
+      this.uploadIfNeeded(this.images.about.file, this.images.about.url)
+    ]);
+
+    const clubData: CreateClubDto = {
+      name: this.name.trim(),
+      shortDescription: this.shortDescription.trim(),
+      about: this.about.trim(),
+      logoUrl,
+      coverImageUrl: coverUrl,
+      aboutImageUrl: aboutImageUrl || undefined,
+      foundedYear: this.foundedYear || undefined
     };
-    return labels[key] || key;
+
+    // Add sections
+    for (const config of SECTION_CONFIGS) {
+      const section = this.sections[config.key];
+      if (section.enabled && section.content.trim()) {
+        const imageUrl = await this.uploadIfNeeded(section.imageFile, section.imageUrl);
+        (clubData as any)[config.key] = {
+          title: section.title.trim(),
+          content: section.content.trim(),
+          imageUrl: imageUrl || undefined
+        } as ClubSection;
+      }
+    }
+
+    // Add contact
+    const hasContact = Object.values(this.contact).some(v => v?.trim());
+    if (hasContact) {
+      clubData.contact = Object.fromEntries(
+        Object.entries(this.contact).filter(([_, v]) => v?.trim())
+      ) as ClubContact;
+    }
+
+    return clubData;
   }
 
-  getDefaultImageForSection(key: string): string {
-    return (DEFAULT_IMAGES as any)[key] || DEFAULT_IMAGES.about;
+  private async uploadIfNeeded(file: File | null, url: string): Promise<string> {
+    if (file) {
+      return await this.clubsService.uploadImage(file) || '';
+    }
+    return url;
   }
 }

@@ -1,0 +1,18 @@
+/* Club Preview Container */
+.club-preview {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.empty-preview {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  
+  p {
+    font-size: 1rem;
+    font-style: italic;
+  }
+}

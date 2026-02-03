@@ -1,43 +1,56 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { TokenService } from './auth/token';
-import { 
-  UserProfile, 
-  UpdateProfileRequest, 
-  UserDashboard, 
-  ProfileEvent, 
-  FollowedClub, 
-  UserRating 
+import {
+  UserProfile,
+  UpdateProfileRequest,
+  UserDashboard,
+  ProfileEvent,
+  FollowedClub,
+  UserRating
 } from '../models/profile.models';
 import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 
+/**
+ * UserService - Pure data service for user-related HTTP operations
+ *
+ * Responsibilities:
+ * - HTTP communication with user endpoints
+ * - Data transformation (dates, image URLs)
+ * - Authentication header management
+ *
+ * Does NOT manage:
+ * - UI state (loading, error)
+ * - Component state
+ * - Caching or persistence
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private readonly apiUrl = getApiUrl();
   private readonly tokenService = inject(TokenService);
+  private readonly http = inject(HttpClient);
 
-  // Signals for state management
-  profile = signal<UserProfile | null>(null);
-  dashboard = signal<UserDashboard | null>(null);
-  upcomingEvents = signal<ProfileEvent[]>([]);
-  pastEvents = signal<ProfileEvent[]>([]);
-  followedClubs = signal<FollowedClub[]>([]);
-  userRatings = signal<UserRating[]>([]);
-  loading = signal(false);
-  error = signal<string | null>(null);
-
-  private getAuthHeaders(): HeadersInit {
+  /**
+   * Authentication header factory - ensures secure API communication
+   */
+  private getAuthHeaders(): HttpHeaders {
     const token = this.tokenService.getAccessToken();
     if (!token) {
       throw new Error('Not authenticated');
     }
-    return {
+    return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
-    };
+    });
   }
 
+  /**
+   * Data transformation helpers - convert API responses to typed frontend models
+   */
   private resolveProfileImages(profile: any): UserProfile {
     return {
       ...profile,
@@ -68,8 +81,12 @@ export class UserService {
     };
   }
 
-  // Get public user profile (no auth required)
-  async getPublicProfile(userId: number): Promise<{
+  // Public API methods - HTTP operations that return data without side effects
+
+  /**
+   * Fetches public user profile - no authentication required
+   */
+  getPublicProfile(userId: number): Observable<{
     id: number;
     fullName: string;
     avatarUrl: string | null;
@@ -80,12 +97,9 @@ export class UserService {
     managedClubs: { id: number; name: string; logoUrl: string | null; shortDescription: string }[];
     upcomingEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
     pastEvents: { id: number; title: string; photoUrl: string | null; startTime: Date; clubName: string; status: string }[];
-  } | null> {
-    try {
-      const response = await fetch(`${this.apiUrl}/users/${userId}/profile`);
-      if (!response.ok) throw new Error('Failed to fetch user profile');
-      const data = await response.json();
-      return {
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/users/${userId}/profile`).pipe(
+      map(data => ({
         ...data,
         avatarUrl: resolveImageUrl(data.avatarUrl),
         createdAt: new Date(data.createdAt),
@@ -107,235 +121,138 @@ export class UserService {
           photoUrl: resolveImageUrl(e.photoUrl),
           startTime: new Date(e.startTime),
         })),
-      };
-    } catch (err: any) {
-      console.error('Error fetching public profile:', err);
-      return null;
-    }
+      }))
+    );
   }
 
-  // Get current user's profile
-  async getProfile(): Promise<UserProfile | null> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch profile');
-      const data = await response.json();
-      const resolved = this.resolveProfileImages(data);
-      this.profile.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return null;
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Fetches current authenticated user's profile
+   */
+  getProfile(): Observable<UserProfile> {
+    return this.http.get<any>(`${this.apiUrl}/users/me`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => this.resolveProfileImages(data))
+    );
   }
 
-  // Update current user's profile
-  async updateProfile(updates: UpdateProfileRequest): Promise<UserProfile | null> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(updates),
-      });
-      if (!response.ok) throw new Error('Failed to update profile');
-      const data = await response.json();
-      const resolved = this.resolveProfileImages(data);
-      this.profile.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return null;
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Updates current user's profile with provided data
+   */
+  updateProfile(updates: UpdateProfileRequest): Observable<UserProfile> {
+    return this.http.put<any>(`${this.apiUrl}/users/me`, updates, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => this.resolveProfileImages(data))
+    );
   }
 
-  // Get complete dashboard data
-  async getDashboard(): Promise<UserDashboard | null> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/dashboard`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch dashboard');
-      const data = await response.json();
-      
-      const resolved: UserDashboard = {
+  /**
+   * Fetches complete dashboard data with all user information
+   */
+  getDashboard(): Observable<UserDashboard> {
+    return this.http.get<any>(`${this.apiUrl}/users/me/dashboard`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => ({
         profile: this.resolveProfileImages(data.profile),
         stats: data.stats,
         upcomingEvents: data.upcomingEvents.map((e: any) => this.resolveEventImages(e)),
         recentEvents: data.recentEvents.map((e: any) => this.resolveEventImages(e)),
         followedClubs: data.followedClubs.map((c: any) => this.resolveClubImages(c)),
-      };
-      
-      this.dashboard.set(resolved);
-      this.profile.set(resolved.profile);
-      this.upcomingEvents.set(resolved.upcomingEvents);
-      this.pastEvents.set(resolved.recentEvents);
-      this.followedClubs.set(resolved.followedClubs);
-      
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return null;
-    } finally {
-      this.loading.set(false);
-    }
+      }))
+    );
   }
 
-  // Get user's upcoming events
-  async getUpcomingEvents(): Promise<ProfileEvent[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/events/upcoming`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch upcoming events');
-      const data = await response.json();
-      const resolved = data.map((e: any) => this.resolveEventImages(e));
-      this.upcomingEvents.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Fetches user's upcoming events only
+   */
+  getUpcomingEvents(): Observable<ProfileEvent[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/upcoming`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => data.map((e: any) => this.resolveEventImages(e)))
+    );
   }
 
-  // Get user's past events
-  async getPastEvents(): Promise<ProfileEvent[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/events/past`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch past events');
-      const data = await response.json();
-      const resolved = data.map((e: any) => this.resolveEventImages(e));
-      this.pastEvents.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Fetches user's past events only
+   */
+  getPastEvents(): Observable<ProfileEvent[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/past`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => data.map((e: any) => this.resolveEventImages(e)))
+    );
   }
 
-  // Get user's followed clubs
-  async getFollowedClubs(): Promise<FollowedClub[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/clubs`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch followed clubs');
-      const data = await response.json();
-      const resolved = data.map((c: any) => this.resolveClubImages(c));
-      this.followedClubs.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+  /**
+   * Fetches clubs that the user follows
+   */
+  getFollowedClubs(): Observable<FollowedClub[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/clubs`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => data.map((c: any) => this.resolveClubImages(c)))
+    );
   }
 
-  // Follow a club
-  async followClub(clubId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to follow club');
-      // Refresh followed clubs
-      await this.getFollowedClubs();
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
+  /**
+   * Follows a club - returns success status
+   */
+  followClub(clubId: number): Observable<boolean> {
+    return this.http.post(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {}, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(() => true)
+    );
   }
 
-  // Unfollow a club
-  async unfollowClub(clubId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok && response.status !== 204) throw new Error('Failed to unfollow club');
-      // Update local state
-      this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
+  /**
+   * Unfollows a club - returns success status
+   */
+  unfollowClub(clubId: number): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(() => true)
+    );
   }
 
-  // Check if following a club
-  async isFollowingClub(clubId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/clubs/${clubId}/following`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to check follow status');
-      const data = await response.json();
-      return data.isFollowing;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
+  /**
+   * Checks if user is currently following a specific club
+   */
+  isFollowingClub(clubId: number): Observable<boolean> {
+    return this.http.get<{ isFollowing: boolean }>(`${this.apiUrl}/users/me/clubs/${clubId}/following`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => data.isFollowing)
+    );
   }
 
-  // Get user's ratings
-  async getUserRatings(): Promise<UserRating[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/users/me/ratings`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch ratings');
-      const data = await response.json();
-      const resolved = data.map((r: any) => ({
+  /**
+   * Fetches all ratings given by the user
+   */
+  getUserRatings(): Observable<UserRating[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/ratings`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(data => data.map((r: any) => ({
         ...r,
         createdAt: new Date(r.createdAt),
-      }));
-      this.userRatings.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+      })))
+    );
   }
 
-  // Clear all user data (on logout)
-  clearUserData(): void {
-    this.profile.set(null);
-    this.dashboard.set(null);
-    this.upcomingEvents.set([]);
-    this.pastEvents.set([]);
-    this.followedClubs.set([]);
-    this.userRatings.set([]);
-    this.error.set(null);
+  /**
+   * Fetches public ratings given by a specific user
+   */
+  getPublicUserRatings(userId: number): Observable<UserRating[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/users/${userId}/ratings`).pipe(
+      map(data => data.map((r: any) => ({
+        ...r,
+        createdAt: new Date(r.createdAt),
+      })))
+    );
   }
 }

@@ -1,0 +1,22 @@
+@if (hasContact) {
+  <section class="contact-section" [class.is-preview]="isPreview">
+    <h2>Get in Touch</h2>
+    <div class="contact-links">
+      @for (link of contactLinks; track link.key) {
+        @if (isPreview) {
+          <span class="contact-item">
+            <span class="contact-label">{{ link.value }}</span>
+          </span>
+        } @else {
+          <a
+            [href]="link.href"
+            class="contact-item"
+            [target]="link.key === 'email' || link.key === 'phone' ? '_self' : '_blank'"
+            [rel]="link.key !== 'email' && link.key !== 'phone' ? 'noopener' : null">
+            <span class="contact-label">{{ link.label }}</span>
+          </a>
+        }
+      }
+    </div>
+  </section>
+}

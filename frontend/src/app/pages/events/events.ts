@@ -7,6 +7,7 @@ import { EventsService } from '../../services/events.service';
 import { AuthStateService } from '../../services/auth/auth-state';
 import { UserService } from '../../services/user.service';
 import { EventSummary, RegistrationStatus } from '../../models/event.model';
+import { FollowedClub } from '../../models/profile.models';
 import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeUntilEventEnds, formatRemainingTime } from '../../utils/time.utils';
 
 type FilterType = 'all' | 'my-clubs' | 'live' | 'upcoming' | 'ended';
@@ -86,13 +87,15 @@ export class EventsComponent implements OnInit {
     }
   }
 
-  async loadFollowedClubs() {
-    try {
-      const clubs = await this.userService.getFollowedClubs();
-      this.followedClubIds.set(clubs.map(c => c.id));
-    } catch (err) {
-      console.error('Failed to load followed clubs:', err);
-    }
+  loadFollowedClubs() {
+    this.userService.getFollowedClubs().subscribe({
+      next: (clubs: FollowedClub[]) => {
+        this.followedClubIds.set(clubs.map(c => c.id));
+      },
+      error: (err) => {
+        console.error('Failed to load followed clubs:', err);
+      }
+    });
   }
 
   // Apply filter

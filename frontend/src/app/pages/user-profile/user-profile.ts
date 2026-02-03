@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Subject, forkJoin, takeUntil, finalize } from 'rxjs';
 import { UserService } from '../../services/user.service';
 import { EventsService } from '../../services/events.service';
 import { fadeSlideIn } from '../../animations';
@@ -59,25 +60,29 @@ type EventSortType = 'date-asc' | 'date-desc';
     ])
   ]
 })
-export class UserProfileComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private userService = inject(UserService);
-  private eventsService = inject(EventsService);
+export class UserProfileComponent implements OnInit, OnDestroy {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly userService = inject(UserService);
+  private readonly eventsService = inject(EventsService);
+  private readonly destroy$ = new Subject<void>();
 
-  loading = signal(true);
-  error = signal<string | null>(null);
-  profile = signal<PublicUserProfile | null>(null);
-  userRatings = signal<PublicUserRating[]>([]);
-  ratingsLoading = signal(false);
-  showAllRatings = signal(false);
+  // UI state signals - for local component state and user interactions
+  loading = signal(true); // Loading state for async operations
+  error = signal<string | null>(null); // Error message display
+  ratingsLoading = signal(false); // Loading state specifically for ratings
+  showAllRatings = signal(false); // Toggle for showing all vs limited ratings
 
-  // Filter and sort
-  searchQuery = signal('');
-  selectedFilter = signal<EventFilterType>('all');
-  selectedSort = signal<EventSortType>('date-asc');
-  showFilterDropdown = signal(false);
-  showSortDropdown = signal(false);
+  // Data signals - for storing fetched data from services
+  profile = signal<PublicUserProfile | null>(null); // User profile data
+  userRatings = signal<PublicUserRating[]>([]); // User's public ratings
+
+  // Filter UI state - for event filtering and sorting
+  searchQuery = signal(''); // Search input value
+  selectedFilter = signal<EventFilterType>('all'); // Current filter selection
+  selectedSort = signal<EventSortType>('date-asc'); // Current sort selection
+  showFilterDropdown = signal(false); // Filter dropdown visibility
+  showSortDropdown = signal(false); // Sort dropdown visibility
 
   filterOptions = [
     { value: 'all' as EventFilterType, label: 'All Events'},
@@ -95,6 +100,9 @@ export class UserProfileComponent implements OnInit {
     { value: 'date-desc' as EventSortType, label: 'Furthest First', icon: '📅↓' }
   ];
 
+  // Computed signals - automatically recalculate when dependencies change
+  // Used for derived UI state that depends on other signals
+
   allEvents = computed(() => {
     const p = this.profile();
     if (!p) return [];
@@ -105,7 +113,7 @@ export class UserProfileComponent implements OnInit {
     let filtered = this.allEvents();
     const query = this.searchQuery().toLowerCase();
 
-    // Apply search
+    // Apply search filter
     if (query) {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(query) ||
@@ -113,7 +121,7 @@ export class UserProfileComponent implements OnInit {
       );
     }
 
-    // Apply filter
+    // Apply status/type filter
     switch (this.selectedFilter()) {
       case 'live':
         filtered = filtered.filter(e => isEventLive(e.startTime, e.endTime));
@@ -139,7 +147,7 @@ export class UserProfileComponent implements OnInit {
         break;
     }
 
-    // Apply sort
+    // Apply sorting
     const sorted = [...filtered];
     sorted.sort((a, b) => {
       const dateA = new Date(a.startTime).getTime();
@@ -167,27 +175,39 @@ export class UserProfileComponent implements OnInit {
     };
   });
 
-  async ngOnInit() {
+  ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
-      await this.loadProfile(id);
+      this.loadProfile(id);
     } else {
       this.error.set('User not found');
       this.loading.set(false);
     }
   }
 
-  async loadProfile(userId: number) {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Loads user profile and ratings using observables from services
+   * Services handle HTTP operations, component manages UI state
+   */
+  private loadProfile(userId: number) {
     this.loading.set(true);
     this.error.set(null);
 
-    try {
-      const [profile, ratings] = await Promise.all([
-        this.userService.getPublicProfile(userId),
-        this.loadUserRatings(userId)
-      ]);
-
-      if (profile) {
+    // Use forkJoin to combine multiple observables - parallel data loading
+    forkJoin({
+      profile: this.userService.getPublicProfile(userId),
+      ratings: this.userService.getPublicUserRatings(userId)
+    }).pipe(
+      takeUntil(this.destroy$), // Cleanup subscription on component destroy
+      finalize(() => this.loading.set(false)) // Always stop loading, regardless of success/error
+    ).subscribe({
+      next: ({ profile, ratings }) => {
+        // Transform profile data to match component interface
         this.profile.set({
           ...profile,
           upcomingEvents: profile.upcomingEvents.map((e: any) => ({
@@ -201,33 +221,17 @@ export class UserProfileComponent implements OnInit {
             registrationStatus: e.status
           }))
         });
-      } else {
-        this.error.set('User not found');
+
+        // Set ratings data
+        this.userRatings.set(ratings as PublicUserRating[]);
+      },
+      error: (err) => {
+        this.error.set(err?.message || 'Failed to load user profile');
       }
-    } catch (err: any) {
-      this.error.set(err?.message || 'Failed to load user profile');
-    } finally {
-      this.loading.set(false);
-    }
+    });
   }
 
-  async loadUserRatings(userId: number): Promise<void> {
-    this.ratingsLoading.set(true);
-    try {
-      const response = await fetch(`http://localhost:3000/users/${userId}/ratings`);
-      if (response.ok) {
-        const data = await response.json();
-        this.userRatings.set(data.map((r: any) => ({
-          ...r,
-          createdAt: new Date(r.createdAt)
-        })));
-      }
-    } catch (err) {
-      console.error('Failed to load ratings:', err);
-    } finally {
-      this.ratingsLoading.set(false);
-    }
-  }
+  // UI interaction methods - handle user actions and update signals
 
   applyFilter(filter: EventFilterType) {
     this.selectedFilter.set(filter);

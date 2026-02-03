@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, forkJoin, takeUntil, finalize } from 'rxjs';
 import { ProfileHeader } from '../components/profile-header/profile-header';
 import { EventSection } from '../components/event-section/event-section';
 import { ClubList } from '../components/club-list/club-list';
@@ -19,7 +20,6 @@ import {
   FollowedClub,
   UserRating,
   UserStats,
-  UserRole,
 } from '../../../models/profile.models';
 import { ManagedClub, ClubStatus } from '../../../models/club.model';
 import { RegistrationStatus } from '../../../models/event.model';
@@ -63,41 +63,45 @@ type EventSortType = 'date-asc' | 'date-desc';
     ])
   ]
 })
-export class ProfilePage implements OnInit {
-  private userService = inject(UserService);
-  private clubsService = inject(ClubsService);
-  private authState = inject(AuthStateService);
+export class ProfilePage implements OnInit, OnDestroy {
+  private readonly userService = inject(UserService);
+  private readonly clubsService = inject(ClubsService);
+  private readonly authState = inject(AuthStateService);
+  private readonly destroy$ = new Subject<void>();
 
+  // Read-only constants for template
   readonly userRole = this.authState.userRole;
   readonly Role = Role;
   readonly ClubStatus = ClubStatus;
 
-  loading = signal(true);
-  error = signal<string | null>(null);
-  showJoinClubPopup = signal(false);
+  // UI state signals - for local component state and user interactions
+  loading = signal(true); // Loading state for async operations
+  error = signal<string | null>(null); // Error message display
+  showJoinClubPopup = signal(false); // Modal visibility control
+  isEditing = signal(false); // Profile edit mode toggle
 
-  profile = signal<UserProfile | null>(null);
-  stats = signal<UserStats>({
+  // Data signals - for storing fetched data from services
+  profile = signal<UserProfile | null>(null); // User profile information
+  stats = signal<UserStats>({ // User statistics
     eventsAttended: 0,
     eventsUpcoming: 0,
     clubsFollowed: 0,
     ratingsGiven: 0,
   });
-  upcomingEvents = signal<ProfileEvent[]>([]);
-  followedClubs = signal<FollowedClub[]>([]);
-  userRatings = signal<UserRating[]>([]);
-  managedClubs = signal<ManagedClub[]>([]);
+  upcomingEvents = signal<ProfileEvent[]>([]); // Future events user registered for
+  followedClubs = signal<FollowedClub[]>([]); // Clubs user follows
+  userRatings = signal<UserRating[]>([]); // Ratings given by user
+  managedClubs = signal<ManagedClub[]>([]); // Clubs managed by user
+  allRegisteredEvents = signal<ProfileEvent[]>([]); // All events for filtering
 
-  // All registered events (including past)
-  allRegisteredEvents = signal<ProfileEvent[]>([]);
+  // Filter UI state - for event filtering and sorting
+  searchQuery = signal(''); // Search input value
+  selectedFilter = signal<EventFilterType>('all'); // Current filter selection
+  selectedSort = signal<EventSortType>('date-asc'); // Current sort selection
+  showFilterDropdown = signal(false); // Filter dropdown visibility
+  showSortDropdown = signal(false); // Sort dropdown visibility
 
-  // Filter and sort for upcoming events
-  searchQuery = signal('');
-  selectedFilter = signal<EventFilterType>('all');
-  selectedSort = signal<EventSortType>('date-asc');
-  showFilterDropdown = signal(false);
-  showSortDropdown = signal(false);
-
+  // Static configuration - filter and sort options for UI
   filterOptions = [
     { value: 'all' as EventFilterType, label: 'All Events'},
     { value: 'live' as EventFilterType, label: 'Live Now'},
@@ -114,11 +118,13 @@ export class ProfilePage implements OnInit {
     { value: 'date-desc' as EventSortType, label: 'Furthest First', icon: '📅↓' }
   ];
 
+  // Computed signal - automatically recalculates when dependencies change
+  // Used here because filtering/sorting is derived UI state based on user input
   filteredEvents = computed(() => {
     let filtered = this.allRegisteredEvents();
     const query = this.searchQuery().toLowerCase();
 
-    // Apply search
+    // Apply search filter
     if (query) {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(query) ||
@@ -126,7 +132,7 @@ export class ProfilePage implements OnInit {
       );
     }
 
-    // Apply filter by registration status or live status
+    // Apply status/type filter
     switch (this.selectedFilter()) {
       case 'live':
         filtered = filtered.filter(e => isEventLive(e.startTime, e.endTime));
@@ -144,7 +150,6 @@ export class ProfilePage implements OnInit {
         filtered = filtered.filter(e => e.registrationStatus === RegistrationStatus.ATTENDED);
         break;
       case 'past':
-        // Show all past events (events that have ended)
         const now = new Date();
         filtered = filtered.filter(e => new Date(e.endTime) < now);
         break;
@@ -153,69 +158,80 @@ export class ProfilePage implements OnInit {
         break;
     }
 
-    // Apply sort
+    // Apply sorting
     const sorted = [...filtered];
-    const now = new Date().getTime();
-
     sorted.sort((a, b) => {
       const dateA = new Date(a.startTime).getTime();
       const dateB = new Date(b.startTime).getTime();
 
-      if (this.selectedSort() === 'date-asc') {
-        return dateA - dateB; // Closest first
-      } else {
-        return dateB - dateA; // Furthest first
-      }
+      return this.selectedSort() === 'date-asc' ? dateA - dateB : dateB - dateA;
     });
 
     return sorted;
   });
 
-  // Edit mode
-  isEditing = signal(false);
-
-  async ngOnInit() {
-    await this.loadDashboard();
+  ngOnInit() {
+    this.loadDashboard();
   }
 
-  async loadDashboard() {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Loads all dashboard data using observables from services
+   * Services handle async operations, component manages UI state
+   */
+  loadDashboard() {
     this.loading.set(true);
     this.error.set(null);
 
-    try {
-      const [dashboard, ratings, managed] = await Promise.all([
-        this.userService.getDashboard(),
-        this.userService.getUserRatings(),
-        this.clubsService.getManagedClubs(),
-      ]);
-
-      if (dashboard) {
-        this.profile.set(dashboard.profile);
-        this.upcomingEvents.set(dashboard.upcomingEvents);
-        this.followedClubs.set(dashboard.followedClubs);
-
-        // Combine for filtering/searching UI
-        this.allRegisteredEvents.set([...dashboard.upcomingEvents, ...dashboard.recentEvents]);
-
-        // Adjust upcoming count to exclude live events
-        const upcomingCount = dashboard.upcomingEvents.filter(e =>
-          !isEventLive(e.startTime, e.endTime)
-        ).length;
-
-        this.stats.set({
-          ...dashboard.stats,
-          eventsUpcoming: upcomingCount
-        });
+    // Use forkJoin to combine multiple observables - parallel data loading
+    forkJoin({
+      dashboard: this.userService.getDashboard(),
+      ratings: this.userService.getUserRatings(),
+      managed: this.clubsService.getManagedClubs()
+    }).pipe(
+      takeUntil(this.destroy$), // Cleanup subscription on component destroy
+      finalize(() => this.loading.set(false)) // Always stop loading, regardless of success/error
+    ).subscribe({
+      next: ({ dashboard, ratings, managed }) => {
+        this.updateDashboardData(dashboard, ratings, managed);
+      },
+      error: (err) => {
+        this.error.set(err?.message || 'Failed to load profile');
       }
-
-      this.userRatings.set(ratings);
-      this.managedClubs.set(managed as ManagedClub[]);
-    } catch (err: any) {
-      this.error.set(err?.message || 'Failed to load profile');
-    } finally {
-      this.loading.set(false);
-    }
+    });
   }
+
+  /**
+   * Updates component state signals with fetched data
+   * Pure function that transforms service data into UI state
+   */
+  private updateDashboardData(dashboard: UserDashboard, ratings: UserRating[], managed: any[]) {
+    if (dashboard) {
+      this.profile.set(dashboard.profile);
+      this.upcomingEvents.set(dashboard.upcomingEvents);
+      this.followedClubs.set(dashboard.followedClubs);
+      this.allRegisteredEvents.set([...dashboard.upcomingEvents, ...dashboard.recentEvents]);
+
+      // Calculate stats excluding live events from upcoming count
+      const upcomingCount = dashboard.upcomingEvents.filter(e =>
+        !isEventLive(e.startTime, e.endTime)
+      ).length;
+
+      this.stats.set({
+        ...dashboard.stats,
+        eventsUpcoming: upcomingCount
+      });
+    }
+
+    this.userRatings.set(ratings);
+    this.managedClubs.set(managed as ManagedClub[]);
+  }
+
+  // UI interaction methods - handle user actions and update signals
 
   toggleEditMode() {
     this.isEditing.update(v => !v);
@@ -231,6 +247,15 @@ export class ProfilePage implements OnInit {
     this.showSortDropdown.set(false);
   }
 
+  openJoinClubPopup() {
+    this.showJoinClubPopup.set(true);
+  }
+
+  closeJoinClubPopup() {
+    this.showJoinClubPopup.set(false);
+  }
+
+  // Computed getters for template display - derive UI labels from current state
   get currentFilterLabel(): string {
     return this.filterOptions.find(opt => opt.value === this.selectedFilter())?.label || 'Filter';
   }
@@ -239,25 +264,29 @@ export class ProfilePage implements OnInit {
     return this.sortOptions.find(opt => opt.value === this.selectedSort())?.label || 'Sort';
   }
 
-  async onProfileUpdated() {
+  // Async actions that trigger service calls and update UI state
+
+  onProfileUpdated() {
     this.isEditing.set(false);
-    await this.loadDashboard();
+    this.loadDashboard(); // Reload fresh data after profile update
   }
 
-  async unfollowClub(clubId: number) {
-    const success = await this.userService.unfollowClub(clubId);
-    if (success) {
-      // Update local state without reloading
-      this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
-      this.stats.update(s => ({ ...s, clubsFollowed: Math.max(0, s.clubsFollowed - 1) }));
-    }
-  }
-
-  openJoinClubPopup() {
-    this.showJoinClubPopup.set(true);
-  }
-
-  closeJoinClubPopup() {
-    this.showJoinClubPopup.set(false);
+  unfollowClub(clubId: number) {
+    // Use observable pattern for async operation
+    this.userService.unfollowClub(clubId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (success) => {
+        if (success) {
+          // Optimistic UI update - update local state immediately
+          this.followedClubs.update(clubs => clubs.filter(c => c.id !== clubId));
+          this.stats.update(s => ({ ...s, clubsFollowed: Math.max(0, s.clubsFollowed - 1) }));
+        }
+      },
+      error: (err) => {
+        // Handle error silently or show notification
+        console.error('Failed to unfollow club:', err);
+      }
+    });
   }
 }
