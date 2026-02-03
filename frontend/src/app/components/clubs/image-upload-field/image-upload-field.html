@@ -1,0 +1,28 @@
+<div class="image-upload-group" [class.compact]="size === 'small'">
+  @if (label) {
+    <label>{{ label }}{{ required ? ' *' : '' }}</label>
+  }
+  <div class="upload-row">
+    <div class="file-upload" [class.wide]="size === 'wide'" [class.small]="size === 'small'">
+      <input
+        type="file"
+        accept="image/*"
+        (change)="onFileChange($event)"
+        [id]="inputId + 'File'">
+      <label [for]="inputId + 'File'" [class]="uploadBtnClass">
+        @if (preview) {
+          <img [src]="preview" alt="Preview" [class]="thumbClass">
+        } @else {
+          <span>+</span>
+        }
+      </label>
+    </div>
+    <span class="or-divider">or</span>
+    <input
+      type="url"
+      [ngModel]="url"
+      (ngModelChange)="onUrlChange($event)"
+      [placeholder]="placeholder"
+      class="url-input">
+  </div>
+</div>

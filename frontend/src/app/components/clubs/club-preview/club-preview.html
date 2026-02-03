@@ -1,0 +1,46 @@
+<div class="club-preview">
+  <!-- Hero Section -->
+  <app-club-hero
+    [name]="name"
+    [tagline]="tagline"
+    [logoUrl]="previewLogo"
+    [coverUrl]="previewCover"
+    [isPreview]="true">
+  </app-club-hero>
+
+  <!-- About Section -->
+  <app-club-section-row
+    title="About Us"
+    [content]="about"
+    [imageUrl]="previewAboutImage"
+    [defaultImage]="defaultImages.about"
+    [showPlaceholder]="!about"
+    [isPreview]="true">
+  </app-club-section-row>
+
+  <!-- Dynamic Sections -->
+  @for (section of sections; track section.key; let i = $index) {
+    <app-club-section-row
+      [title]="section.title"
+      [content]="section.content"
+      [imageUrl]="getSectionImage(section)"
+      [defaultImage]="getDefaultImageForSection(section.key)"
+      [showPlaceholder]="!section.content"
+      [reversed]="i % 2 === 0"
+      [isPreview]="true">
+    </app-club-section-row>
+  }
+
+  <!-- Contact Section -->
+  <app-club-contact-section
+    [contact]="contact"
+    [isPreview]="true">
+  </app-club-contact-section>
+
+  <!-- Empty State -->
+  @if (!hasAnyContent) {
+    <div class="empty-preview">
+      <p>Start filling the form to see your club page come to life!</p>
+    </div>
+  }
+</div>

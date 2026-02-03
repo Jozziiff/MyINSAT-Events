@@ -1,0 +1,11 @@
+<section class="club-section" [class.is-preview]="isPreview">
+  <div class="section-row" [class.reversed]="reversed">
+    <div class="section-image">
+      <img [src]="displayImage" [alt]="displayTitle">
+    </div>
+    <div class="section-content">
+      <h2>{{ displayTitle }}</h2>
+      <p [class.placeholder]="!hasContent || showPlaceholder">{{ displayContent }}</p>
+    </div>
+  </div>
+</section>

@@ -22,92 +22,25 @@
       </div>
     }
 
-    <!-- Hero Section with Cover Image (no animation on wrapper) -->
-    <header class="club-hero" [style.backgroundImage]="'url(' + clubData.coverImageUrl + ')'">
-      <div class="hero-overlay"></div>
-      <div class="container hero-content" @fadeSlideIn>
-        <div class="hero-nav">
-          <a routerLink="/clubs" class="btn-back">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Back to Clubs
-          </a>
-          @if (canEdit()) {
-            <a [routerLink]="['/clubs', clubData.id, 'edit']" class="btn-edit">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Edit Club
-            </a>
-          }
-        </div>
-        <div class="club-identity">
-          <img [src]="clubData.logoUrl" [alt]="clubData.name + ' logo'" class="club-logo">
-          <div class="club-title">
-            <h1>{{ clubData.name }}</h1>
-            <p class="tagline">{{ clubData.shortDescription }}</p>
-
-            <!-- Follower Stats & Follow Button -->
-            <div class="club-stats-actions">
-              <button class="follower-count" (click)="openFollowersPopup()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                {{ followerCount() }} {{ followerCount() === 1 ? 'follower' : 'followers' }}
-              </button>
-
-              @if (clubData.foundedYear) {
-                <span class="founded-year">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                  Founded {{ clubData.foundedYear }}
-                </span>
-              }
-
-              @if (isLoggedIn()) {
-                <button
-                  class="follow-btn"
-                  [class.following]="isFollowing()"
-                  [disabled]="followLoading()"
-                  (click)="toggleFollow()">
-                  @if (followLoading()) {
-                    <span class="btn-spinner"></span>
-                  } @else if (isFollowing()) {
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Following
-                  } @else {
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Follow
-                  }
-                </button>
-              } @else {
-                <a routerLink="/login" class="follow-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                  Follow
-                </a>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <!-- Hero Section -->
+    <app-club-hero
+      [name]="clubData.name"
+      [tagline]="clubData.shortDescription"
+      [logoUrl]="clubData.logoUrl"
+      [coverUrl]="clubData.coverImageUrl || ''"
+      [foundedYear]="clubData.foundedYear || null"
+      [showBackButton]="true"
+      [showEditButton]="canEdit()"
+      [editLink]="['/clubs', clubData.id, 'edit']"
+      [showFollowButton]="true"
+      [showFollowerCount]="true"
+      [isLoggedIn]="isLoggedIn()"
+      [isFollowing]="isFollowing()"
+      [followLoading]="followLoading()"
+      [followerCount]="followerCount()"
+      (followClick)="toggleFollow()"
+      (followerCountClick)="openFollowersPopup()">
+    </app-club-hero>
 
     <!-- View Events CTA Button -->
     <div class="cta-button-top" @fadeInRight>
@@ -117,71 +50,32 @@
     </div>
 
     <!-- About Section -->
-    <section class="about-section container" @fadeSlideIn>
-      <div class="section-row">
-        <div class="section-image">
-          <img [src]="clubData.aboutImageUrl" [alt]="clubData.name + ' about'">
-        </div>
-        <div class="section-content">
-          <h2>About Us</h2>
-          <p>{{ clubData.about }}</p>
-        </div>
-      </div>
-    </section>
+    <div class="container" @fadeSlideIn>
+      <app-club-section-row
+        title="About Us"
+        [content]="clubData.about"
+        [imageUrl]="clubData.aboutImageUrl || ''">
+      </app-club-section-row>
+    </div>
 
     <!-- Dynamic Sections (alternating layout) -->
     @for (item of sections(); track item.key) {
-      <section class="detail-section container" @fadeSlideIn>
-        <div class="section-row" [class.reversed]="!item.imageLeft">
-          <div class="section-image">
-            <img [src]="item.section.imageUrl" [alt]="item.section.title">
-          </div>
-          <div class="section-content">
-            <h2>{{ item.section.title }}</h2>
-            <p>{{ item.section.content }}</p>
-          </div>
-        </div>
-      </section>
+      <div class="container" @fadeSlideIn>
+        <app-club-section-row
+          [title]="item.section.title"
+          [content]="item.section.content"
+          [imageUrl]="item.section.imageUrl || ''"
+          [reversed]="!item.imageLeft">
+        </app-club-section-row>
+      </div>
     }
 
     <!-- Contact Section -->
-    @if (hasContact(clubData)) {
-      <section class="contact-section container" @fadeSlideIn>
-        <h2>Get in Touch</h2>
-        <div class="contact-links">
-          @if (clubData.contact?.email) {
-            <a [href]="'mailto:' + clubData.contact!.email" class="contact-item">
-              <span class="contact-label">Email</span>
-            </a>
-          }
-          @if (clubData.contact?.phone) {
-            <a [href]="'tel:' + clubData.contact!.phone" class="contact-item">
-              <span class="contact-label">Phone</span>
-            </a>
-          }
-          @if (clubData.contact?.website) {
-            <a [href]="clubData.contact!.website" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-label">Website</span>
-            </a>
-          }
-          @if (clubData.contact?.facebook) {
-            <a [href]="clubData.contact!.facebook" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-label">Facebook</span>
-            </a>
-          }
-          @if (clubData.contact?.instagram) {
-            <a [href]="clubData.contact!.instagram" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-label">Instagram</span>
-            </a>
-          }
-          @if (clubData.contact?.linkedin) {
-            <a [href]="clubData.contact!.linkedin" target="_blank" rel="noopener" class="contact-item">
-              <span class="contact-label">LinkedIn</span>
-            </a>
-          }
-        </div>
-      </section>
-    }
+    <div class="container" @fadeSlideIn>
+      <app-club-contact-section
+        [contact]="clubData.contact || null">
+      </app-club-contact-section>
+    </div>
   </div>
 
   <!-- Followers Popup -->

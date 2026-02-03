@@ -100,95 +100,38 @@
         <section class="form-section">
           <h2>Club Images</h2>
 
-          <!-- Logo -->
-          <div class="image-upload-group">
-            <label>Club Logo *</label>
-            <div class="upload-row">
-              <div class="file-upload">
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileSelected($event, 'logo')"
-                  id="logoFile"
-                >
-                <label for="logoFile" class="upload-btn">
-                  @if (logoPreview) {
-                    <img [src]="logoPreview" alt="Logo preview" class="preview-thumb">
-                  } @else {
-                    <span>+</span>
-                  }
-                </label>
-              </div>
-              <span class="or-divider">or</span>
-              <input
-                type="url"
-                [(ngModel)]="logoUrl"
-                name="logoUrl"
-                placeholder="https://example.com/logo.png"
-                class="url-input"
-              >
-            </div>
-          </div>
+          <app-image-upload-field
+            label="Club Logo"
+            inputId="logo"
+            placeholder="https://example.com/logo.png"
+            [preview]="logoPreview"
+            [(ngModel)]="logoUrl"
+            [ngModelOptions]="{standalone: true}"
+            (fileSelected)="onImageFileSelected($event, 'logo')"
+            [required]="true">
+          </app-image-upload-field>
 
-          <!-- Cover Image -->
-          <div class="image-upload-group">
-            <label>Cover Image *</label>
-            <div class="upload-row">
-              <div class="file-upload wide">
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileSelected($event, 'cover')"
-                  id="coverFile"
-                >
-                <label for="coverFile" class="upload-btn wide">
-                  @if (coverPreview) {
-                    <img [src]="coverPreview" alt="Cover preview" class="preview-thumb wide">
-                  } @else {
-                    <span>+</span>
-                  }
-                </label>
-              </div>
-              <span class="or-divider">or</span>
-              <input
-                type="url"
-                [(ngModel)]="coverUrl"
-                name="coverUrl"
-                placeholder="https://example.com/cover.jpg"
-                class="url-input"
-              >
-            </div>
-          </div>
+          <app-image-upload-field
+            label="Cover Image"
+            inputId="cover"
+            placeholder="https://example.com/cover.jpg"
+            [preview]="coverPreview"
+            [(ngModel)]="coverUrl"
+            [ngModelOptions]="{standalone: true}"
+            (fileSelected)="onImageFileSelected($event, 'cover')"
+            size="wide"
+            [required]="true">
+          </app-image-upload-field>
 
-          <!-- About Section Image -->
-          <div class="image-upload-group">
-            <label>About Section Image</label>
-            <div class="upload-row">
-              <div class="file-upload">
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileSelected($event, 'about')"
-                  id="aboutFile"
-                >
-                <label for="aboutFile" class="upload-btn">
-                  @if (aboutImagePreview) {
-                    <img [src]="aboutImagePreview" alt="About preview" class="preview-thumb">
-                  } @else {
-                    <span>+</span>
-                  }
-                </label>
-              </div>
-              <span class="or-divider">or</span>
-              <input
-                type="url"
-                [(ngModel)]="aboutImageUrl"
-                name="aboutImageUrl"
-                placeholder="https://example.com/about.jpg"
-                class="url-input"
-              >
-            </div>
-          </div>
+          <app-image-upload-field
+            label="About Section Image"
+            inputId="aboutImage"
+            placeholder="https://example.com/about.jpg"
+            [preview]="aboutImagePreview"
+            [(ngModel)]="aboutImageUrl"
+            [ngModelOptions]="{standalone: true}"
+            (fileSelected)="onImageFileSelected($event, 'about')">
+          </app-image-upload-field>
         </section>
 
         <!-- Optional Sections -->
@@ -228,34 +171,16 @@
                     ></textarea>
                   </div>
 
-                  <div class="image-upload-group compact">
-                    <label>Image (optional)</label>
-                    <div class="upload-row">
-                      <div class="file-upload small">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          (change)="onFileSelected($event, key)"
-                          [id]="key + 'File'"
-                        >
-                        <label [for]="key + 'File'" class="upload-btn small">
-                          @if (sections[key].imagePreview) {
-                            <img [src]="sections[key].imagePreview" alt="Preview" class="preview-thumb small">
-                          } @else {
-                            <span>+</span>
-                          }
-                        </label>
-                      </div>
-                      <span class="or-divider">or</span>
-                      <input
-                        type="url"
-                        [(ngModel)]="sections[key].imageUrl"
-                        [name]="key + 'ImageUrl'"
-                        placeholder="Image URL"
-                        class="url-input"
-                      >
-                    </div>
-                  </div>
+                  <app-image-upload-field
+                    label="Image (optional)"
+                    [inputId]="key"
+                    placeholder="Image URL"
+                    [preview]="sections[key].imagePreview"
+                    [(ngModel)]="sections[key].imageUrl"
+                    [ngModelOptions]="{standalone: true}"
+                    (fileSelected)="onImageFileSelected($event, key)"
+                    size="small">
+                  </app-image-upload-field>
                 </div>
               }
             </div>
@@ -361,112 +286,18 @@
       Live Preview
     </div>
 
-    <div class="club-preview">
-      <!-- Hero Section -->
-      <header
-        class="preview-hero"
-        [style.backgroundImage]="getPreviewCover() ? 'url(' + getPreviewCover() + ')' : 'none'"
-        [class.has-cover]="getPreviewCover()"
-      >
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-          <div class="club-identity">
-            <div class="club-logo-wrapper">
-              @if (getPreviewLogo()) {
-                <img [src]="getPreviewLogo()" alt="Club logo" class="club-logo">
-              } @else {
-                <div class="logo-placeholder">
-                  <span>Logo</span>
-                </div>
-              }
-            </div>
-            <div class="club-title">
-              <h1>{{ name || 'Your Club Name' }}</h1>
-              <p class="tagline">{{ shortDescription || 'Your tagline will appear here' }}</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- About Section -->
-      <section class="preview-section about-section">
-        <div class="section-row">
-          <div class="section-image">
-            <img [src]="getPreviewAboutImage() || defaultImages.about" alt="About">
-          </div>
-          <div class="section-content">
-            <h2>About Us</h2>
-            <p class="preview-text" [class.placeholder]="!about">
-              {{ about || 'Tell people about your club. What makes it special? What do you do?' }}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Dynamic Sections -->
-      @for (item of getEnabledSections(); track item.key; let i = $index) {
-        <section class="preview-section">
-          <div class="section-row" [class.reversed]="i % 2 === 0">
-            <div class="section-image">
-              <img [src]="item.imagePreview || item.imageUrl || getDefaultImageForSection(item.key)" [alt]="item.title">
-            </div>
-            <div class="section-content">
-              <h2>{{ item.title || getSectionLabel(item.key) }}</h2>
-              <p class="preview-text" [class.placeholder]="!item.content">
-                {{ item.content || 'Content for this section will appear here...' }}
-              </p>
-            </div>
-          </div>
-        </section>
-      }
-
-      <!-- Contact Section -->
-      @if (hasAnyContact()) {
-        <section class="preview-section contact-section">
-          <h2>Get in Touch</h2>
-          <div class="contact-links">
-            @if (contact.email) {
-              <span class="contact-item">
-                <span class="contact-icon">📧</span>
-                <span>{{ contact.email }}</span>
-              </span>
-            }
-            @if (contact.phone) {
-              <span class="contact-item">
-                <span class="contact-icon">📞</span>
-                <span>{{ contact.phone }}</span>
-              </span>
-            }
-            @if (contact.website) {
-              <span class="contact-item">
-                <span>Website</span>
-              </span>
-            }
-            @if (contact.facebook) {
-              <span class="contact-item">
-                <span>Facebook</span>
-              </span>
-            }
-            @if (contact.instagram) {
-              <span class="contact-item">
-                <span>Instagram</span>
-              </span>
-            }
-            @if (contact.linkedin) {
-              <span class="contact-item">
-                <span>LinkedIn</span>
-              </span>
-            }
-          </div>
-        </section>
-      }
-
-      <!-- Empty State -->
-      @if (!hasAnyContent()) {
-        <div class="empty-preview">
-          <p>Start filling the form to see your club page come to life!</p>
-        </div>
-      }
-    </div>
+    <app-club-preview
+      [name]="name"
+      [tagline]="shortDescription"
+      [about]="about"
+      [logoUrl]="logoUrl"
+      [logoPreview]="logoPreview"
+      [coverUrl]="coverUrl"
+      [coverPreview]="coverPreview"
+      [aboutImageUrl]="aboutImageUrl"
+      [aboutImagePreview]="aboutImagePreview"
+      [sections]="getEnabledSections()"
+      [contact]="contact">
+    </app-club-preview>
   </main>
 </div>

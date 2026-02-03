@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ClubsService } from '../../services/clubs.service';
 import { CreateClubDto, ClubSection, ClubContact, Club } from '../../models/club.model';
 import { fadeSlideIn } from '../../animations';
+import { ImageUploadFieldComponent, ClubPreviewComponent, PreviewSection, DEFAULT_SECTION_IMAGES } from '../../components/clubs';
 
 interface SectionForm {
   enabled: boolean;
@@ -14,30 +15,16 @@ interface SectionForm {
   imagePreview: string;
 }
 
-interface EnabledSection extends SectionForm {
-  key: string;
-}
-
-// Default placeholder images for preview
-const DEFAULT_IMAGES = {
-  about: 'https://picsum.photos/seed/about/800/600',
-  history: 'https://picsum.photos/seed/history/800/600',
-  mission: 'https://picsum.photos/seed/mission/800/600',
-  activities: 'https://picsum.photos/seed/activities/800/600',
-  achievements: 'https://picsum.photos/seed/achievements/800/600',
-  joinUs: 'https://picsum.photos/seed/joinus/800/600',
-};
-
 @Component({
   selector: 'app-club-form',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ImageUploadFieldComponent, ClubPreviewComponent],
   templateUrl: './club-form.html',
   styleUrl: './club-form.css',
   animations: [fadeSlideIn]
 })
 export class ClubFormComponent implements OnInit {
   // Default images for preview
-  defaultImages = DEFAULT_IMAGES;
+  defaultImages = DEFAULT_SECTION_IMAGES;
 
   // Current year for founded year validation
   currentYear = new Date().getFullYear();
@@ -177,10 +164,16 @@ export class ClubFormComponent implements OnInit {
     return this.aboutImagePreview || this.aboutImageUrl;
   }
 
-  getEnabledSections(): EnabledSection[] {
+  getEnabledSections(): PreviewSection[] {
     return Object.entries(this.sections)
       .filter(([_, section]) => section.enabled)
-      .map(([key, section]) => ({ ...section, key }));
+      .map(([key, section]) => ({
+        key,
+        title: section.title,
+        content: section.content,
+        imageUrl: section.imageUrl,
+        imagePreview: section.imagePreview
+      }));
   }
 
   hasAnyContact(): boolean {
@@ -199,12 +192,8 @@ export class ClubFormComponent implements OnInit {
     );
   }
 
-  // Handle file selection
-  onFileSelected(event: Event, target: string) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const file = input.files[0];
+  // Handle file selection from ImageUploadFieldComponent
+  onImageFileSelected(file: File, target: string) {
     const reader = new FileReader();
 
     reader.onload = (e) => {
@@ -341,9 +330,5 @@ export class ClubFormComponent implements OnInit {
       joinUs: 'Join Us',
     };
     return labels[key] || key;
-  }
-
-  getDefaultImageForSection(key: string): string {
-    return (DEFAULT_IMAGES as any)[key] || DEFAULT_IMAGES.about;
   }
 }
