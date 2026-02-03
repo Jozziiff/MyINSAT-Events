@@ -15,7 +15,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
@@ -40,21 +39,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
 
-  @Public()
+  
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
   }
 
-  @Public()
+  
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
 
-  @Public()
+  
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtRefreshGuard)
@@ -68,14 +67,14 @@ export class AuthController {
     );
   }
 
-  @Public()
+  
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto): Promise<{ message: string }> {
     return this.authService.verifyEmail(verifyEmailDto.token);
   }
 
-  @Public()
+  
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
@@ -83,7 +82,7 @@ export class AuthController {
     return { message: 'If the email exists, a password reset link has been sent' };
   }
 
-  @Public()
+  
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
