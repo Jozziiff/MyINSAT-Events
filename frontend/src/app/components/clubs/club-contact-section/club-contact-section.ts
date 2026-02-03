@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ClubContact } from '../../../models/club.model';
 
 interface ContactLink {
@@ -12,7 +12,8 @@ interface ContactLink {
   selector: 'app-club-contact-section',
   standalone: true,
   templateUrl: './club-contact-section.html',
-  styleUrl: './club-contact-section.css'
+  styleUrl: './club-contact-section.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClubContactSectionComponent {
   @Input() contact: ClubContact | null = null;

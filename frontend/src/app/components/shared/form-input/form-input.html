@@ -1,0 +1,29 @@
+<div class="form-group" [class.has-char-count]="maxLength">
+  <label [for]="inputId">{{ label }}{{ required ? ' *' : '' }}</label>
+  @if (type === 'textarea') {
+    <textarea
+      [id]="inputId"
+      [ngModel]="value"
+      (ngModelChange)="onValueChange($event)"
+      [placeholder]="placeholder"
+      [rows]="rows"
+      [required]="required"
+    ></textarea>
+  } @else {
+    <input
+      [type]="type"
+      [id]="inputId"
+      [ngModel]="value"
+      (ngModelChange)="onValueChange($event)"
+      [placeholder]="placeholder"
+      [maxlength]="maxLength ?? null"
+      [required]="required"
+    >
+  }
+  @if (maxLength) {
+    <span class="char-count">{{ value.length }}/{{ maxLength }}</span>
+  }
+  @if (hint) {
+    <span class="field-hint">{{ hint }}</span>
+  }
+</div>

@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-club-section-row',
   standalone: true,
   templateUrl: './club-section-row.html',
-  styleUrl: './club-section-row.css'
+  styleUrl: './club-section-row.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClubSectionRowComponent {
   @Input() title = '';

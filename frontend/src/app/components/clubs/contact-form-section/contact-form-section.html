@@ -1,0 +1,12 @@
+<div class="contact-grid">
+  @for (field of contactFields; track field.key) {
+    <app-form-input
+      [label]="field.label"
+      [inputId]="field.key"
+      [type]="field.type"
+      [placeholder]="field.placeholder"
+      [ngModel]="contact[field.key] || ''"
+      (ngModelChange)="onFieldChange(field.key, $event)">
+    </app-form-input>
+  }
+</div>

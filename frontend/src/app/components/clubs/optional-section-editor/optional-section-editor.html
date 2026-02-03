@@ -1,0 +1,47 @@
+<div class="optional-section" [class.enabled]="section.enabled">
+  <div class="section-toggle">
+    <label class="toggle-switch">
+      <input
+        type="checkbox"
+        [ngModel]="section.enabled"
+        (ngModelChange)="onToggle($event)">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">{{ config.label }}</span>
+  </div>
+
+  @if (section.enabled) {
+    <div class="section-fields" @fadeSlideIn>
+      <div class="form-group">
+        <label>Title</label>
+        <input
+          type="text"
+          [ngModel]="section.title"
+          (ngModelChange)="onTitleChange($event)"
+          [placeholder]="'e.g., ' + config.label"
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Content</label>
+        <textarea
+          [ngModel]="section.content"
+          (ngModelChange)="onContentChange($event)"
+          placeholder="Write about this section..."
+          rows="3"
+        ></textarea>
+      </div>
+
+      <app-image-upload-field
+        label="Image (optional)"
+        [inputId]="config.key"
+        placeholder="Image URL"
+        [preview]="section.imagePreview"
+        [ngModel]="section.imageUrl"
+        (ngModelChange)="onImageUrlChange($event)"
+        (fileSelected)="onFileSelected($event)"
+        size="small">
+      </app-image-upload-field>
+    </div>
+  }
+</div>

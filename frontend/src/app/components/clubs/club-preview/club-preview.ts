@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ClubContact, ClubSection } from '../../../models/club.model';
 import { ClubHeroComponent } from '../club-hero/club-hero';
 import { ClubSectionRowComponent } from '../club-section-row/club-section-row';
@@ -27,7 +27,8 @@ export interface PreviewSection {
   standalone: true,
   imports: [ClubHeroComponent, ClubSectionRowComponent, ClubContactSectionComponent],
   templateUrl: './club-preview.html',
-  styleUrl: './club-preview.css'
+  styleUrl: './club-preview.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClubPreviewComponent {
   @Input() name = '';
