@@ -1,7 +1,24 @@
 import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, EMPTY, of } from 'rxjs';
+import { map, tap, catchError, finalize } from 'rxjs/operators';
 import { Event, EventSummary, RateEventRequest, EventRating, RegistrationStatus } from '../models/event.model';
 import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 import { TokenService } from './auth/token';
+
+/**
+ * EventsService - Pure data service for event-related HTTP operations
+ *
+ * Responsibilities:
+ * - HTTP communication with event endpoints
+ * - Data transformation (dates, image URLs, safe defaults)
+ * - State management via signals
+ *
+ * Does NOT handle:
+ * - UI formatting (moved to components/pipes)
+ * - Business logic beyond data fetching
+ * - Direct DOM manipulation
+ */
 
 @Injectable({
   providedIn: 'root'
@@ -9,213 +26,235 @@ import { TokenService } from './auth/token';
 export class EventsService {
   private readonly apiUrl = getApiUrl();
   private readonly tokenService = inject(TokenService);
+  private readonly http = inject(HttpClient);
 
+  // Signals for state management - reactive UI state
   events = signal<EventSummary[]>([]);
   trendingEvents = signal<EventSummary[]>([]);
   selectedEvent = signal<Event | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
 
-  private getAuthHeaders(): HeadersInit {
+  /**
+   * HTTP headers factory - centralized header management
+   * Handles authentication and content type consistently
+   */
+  private getHttpHeaders(): HttpHeaders {
     const token = this.tokenService.getAccessToken();
+    const headers: { [key: string]: string } = {
+      'Content-Type': 'application/json'
+    };
+
     if (token) {
-      return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    return { 'Content-Type': 'application/json' };
+
+    return new HttpHeaders(headers);
   }
 
-  private resolveEventImages(event: any): EventSummary {
+  /**
+   * Data transformation helpers - convert API DTOs to frontend models
+   * Ensures consistent data structure and safe defaults
+   */
+  private mapEventSummary(dto: any): EventSummary {
     return {
-      ...event,
-      photoUrl: resolveImageUrl(event.photoUrl),
-      startTime: new Date(event.startTime),
-      endTime: new Date(event.endTime),
-      club: event.club ? {
-        ...event.club,
-        logoUrl: resolveImageUrl(event.club.logoUrl),
+      ...dto,
+      photoUrl: resolveImageUrl(dto.photoUrl),
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.endTime),
+      club: dto.club ? {
+        ...dto.club,
+        logoUrl: resolveImageUrl(dto.club.logoUrl),
       } : null,
-      stats: event.stats || {
+      stats: dto.stats || {
         interestedCount: 0,
         confirmedCount: 0,
         attendedCount: 0,
         averageRating: 0,
         ratingCount: 0,
       },
-      userInteraction: event.userInteraction,
+      userInteraction: dto.userInteraction || null,
     };
   }
 
-  private resolveFullEventImages(event: any): Event {
+  private mapFullEvent(dto: any): Event {
     return {
-      ...event,
-      photoUrl: resolveImageUrl(event.photoUrl),
-      startTime: new Date(event.startTime),
-      endTime: new Date(event.endTime),
-      createdAt: new Date(event.createdAt),
-      updatedAt: new Date(event.updatedAt),
-      sections: event.sections?.map((section: any) => ({
+      ...dto,
+      photoUrl: resolveImageUrl(dto.photoUrl),
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.endTime),
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.updatedAt),
+      sections: dto.sections?.map((section: any) => ({
         ...section,
         imageUrl: resolveImageUrl(section.imageUrl),
-      })),
-      club: event.club ? {
-        ...event.club,
-        logoUrl: resolveImageUrl(event.club.logoUrl),
+      })) || [],
+      club: dto.club ? {
+        ...dto.club,
+        logoUrl: resolveImageUrl(dto.club.logoUrl),
       } : null,
-      stats: event.stats || {
+      stats: dto.stats || {
         interestedCount: 0,
         confirmedCount: 0,
         attendedCount: 0,
         averageRating: 0,
         ratingCount: 0,
       },
-      userInteraction: event.userInteraction,
+      userInteraction: dto.userInteraction || null,
     };
   }
 
-  async getAllEvents(): Promise<EventSummary[]> {
+  // Public API methods - HTTP operations that return Observables
+
+  /**
+   * Fetches all events and updates events signal
+   */
+  getAllEvents(): Observable<EventSummary[]> {
     this.loading.set(true);
     this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/events`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch events');
-      const data = await response.json();
-      const resolved = data.map((event: any) => this.resolveEventImages(event));
-      this.events.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/events`, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      map(data => data.map(dto => this.mapEventSummary(dto))),
+      tap(events => this.events.set(events)),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to fetch events');
+        return of([]);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  async getUpcomingEvents(): Promise<EventSummary[]> {
+  /**
+   * Fetches upcoming events and updates events signal
+   */
+  getUpcomingEvents(): Observable<EventSummary[]> {
     this.loading.set(true);
     this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/events/upcoming`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch upcoming events');
-      const data = await response.json();
-      const resolved = data.map((event: any) => this.resolveEventImages(event));
-      this.events.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/events/upcoming`, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      map(data => data.map(dto => this.mapEventSummary(dto))),
+      tap(events => this.events.set(events)),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to fetch upcoming events');
+        return of([]);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  async getTrendingEvents(limit: number = 10): Promise<EventSummary[]> {
+  /**
+   * Fetches trending events and updates trendingEvents signal
+   */
+  getTrendingEvents(limit: number = 10): Observable<EventSummary[]> {
     this.loading.set(true);
     this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/events/trending?limit=${limit}`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch trending events');
-      const data = await response.json();
-      const resolved = data.map((event: any) => this.resolveEventImages(event));
-      this.trendingEvents.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    } finally {
-      this.loading.set(false);
-    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/events/trending`, {
+      headers: this.getHttpHeaders(),
+      params: { limit: limit.toString() }
+    }).pipe(
+      map(data => data.map(dto => this.mapEventSummary(dto))),
+      tap(events => this.trendingEvents.set(events)),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to fetch trending events');
+        return of([]);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  async getEventById(id: number): Promise<Event | null> {
+  /**
+   * Fetches event details by ID and updates selectedEvent signal
+   */
+  getEventById(id: number): Observable<Event | null> {
     this.loading.set(true);
     this.error.set(null);
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${id}`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch event details');
-      const data = await response.json();
-      const resolved = this.resolveFullEventImages(data);
-      this.selectedEvent.set(resolved);
-      return resolved;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return null;
-    } finally {
-      this.loading.set(false);
-    }
+
+    return this.http.get<any>(`${this.apiUrl}/events/${id}`, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      map(dto => this.mapFullEvent(dto)),
+      tap(event => this.selectedEvent.set(event)),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to fetch event details');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  async rateEvent(eventId: number, request: RateEventRequest): Promise<EventRating | null> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/rate`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(request),
-      });
-      if (!response.ok) throw new Error('Failed to rate event');
-      return await response.json();
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return null;
-    }
+  /**
+   * Submits event rating
+   */
+  rateEvent(eventId: number, request: RateEventRequest): Observable<EventRating | null> {
+    return this.http.post<EventRating>(`${this.apiUrl}/events/${eventId}/rate`, request, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to rate event');
+        return of(null);
+      })
+    );
   }
 
-  async getEventRatings(eventId: number): Promise<EventRating[]> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/ratings`);
-      if (!response.ok) throw new Error('Failed to fetch ratings');
-      return await response.json();
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return [];
-    }
+  /**
+   * Fetches ratings for a specific event
+   */
+  getEventRatings(eventId: number): Observable<EventRating[]> {
+    return this.http.get<EventRating[]>(`${this.apiUrl}/events/${eventId}/ratings`, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to fetch ratings');
+        return of([]);
+      })
+    );
   }
 
-  // Register for an event with a specific status
-  async registerForEvent(eventId: number, status: RegistrationStatus): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/register`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error('Failed to register for event');
-
-      this.updateEventInteraction(eventId, status);
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
+  /**
+   * Registers for an event with specified status
+   */
+  registerForEvent(eventId: number, status: RegistrationStatus): Observable<boolean> {
+    return this.http.post(`${this.apiUrl}/events/${eventId}/register`, { status }, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      map(() => {
+        this.updateEventInteraction(eventId, status);
+        return true;
+      }),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to register for event');
+        return of(false);
+      })
+    );
   }
 
-  // Cancel registration for an event
-  async cancelRegistration(eventId: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiUrl}/events/${eventId}/register`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok && response.status !== 204) throw new Error('Failed to cancel registration');
-
-      this.updateEventInteraction(eventId, RegistrationStatus.CANCELLED);
-      return true;
-    } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
-      return false;
-    }
+  /**
+   * Cancels registration for an event
+   */
+  cancelRegistration(eventId: number): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl}/events/${eventId}/register`, {
+      headers: this.getHttpHeaders()
+    }).pipe(
+      map(() => {
+        this.updateEventInteraction(eventId, RegistrationStatus.CANCELLED);
+        return true;
+      }),
+      catchError(err => {
+        this.error.set(err?.message || 'Failed to cancel registration');
+        return of(false);
+      })
+    );
   }
 
+  /**
+   * Updates event interaction state across all signals
+   * Maintains consistency between events, trending, and selected event
+   */
   private updateEventInteraction(eventId: number, status: RegistrationStatus | null) {
     // Update in events list
     const currentEvents = this.events();
@@ -283,27 +322,37 @@ export class EventsService {
     }
   }
 
-  // Format date for display (e.g., "Oct 20")
+  // Formatting helper methods - for backward compatibility with components
+  // TODO: Consider moving these to pipes or component methods in future refactoring
+
+  /**
+   * Format date for display (e.g., "Oct 20")
+   */
   formatDate(date: Date): string {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-  // Format price for display
+  /**
+   * Format price for display
+   */
   formatPrice(price?: number): string {
     if (!price || price === 0) return 'Free';
     return `${price} TND`;
   }
 
-  // Get status label for display
+  /**
+   * Get status label for display
+   */
   getStatusLabel(event: EventSummary): string {
     if (event.capacity) {
-      // If capacity is defined, we could show remaining spots
       return 'Open';
     }
     return 'Open';
   }
 
-  // Format rating for display
+  /**
+   * Format rating for display
+   */
   formatRating(rating: number): string {
     return rating.toFixed(1);
   }

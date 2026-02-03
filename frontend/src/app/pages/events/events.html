@@ -107,7 +107,7 @@
   <!-- Events Grid -->
   @if (!loading() && !error()) {
     <div class="event-grid">
-      @for (event of filteredEvents; track event.id) {
+      @for (event of filteredEvents(); track event.id) {
         <div class="event-card" [class.event-ended]="isEventEnded(event)" [class.event-live]="isEventLive(event)" (click)="navigateToEvent(event.id)">
           <!-- Event Image -->
           @if (event.photoUrl) {

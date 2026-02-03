@@ -1,13 +1,31 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { fadeSlideIn } from '../../animations';
 import { EventsService } from '../../services/events.service';
 import { ClubsService } from '../../services/clubs.service';
-import { Event, RegistrationStatus, EventRating } from '../../models/event.model';
+import { AuthStateService } from '../../services/auth/auth-state';
 import { TokenService } from '../../services/auth/token';
+import { Event, RegistrationStatus, EventRating } from '../../models/event.model';
 import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeUntilEventEnds, formatRemainingTime, TimeUntil } from '../../utils/time.utils';
+
+/**
+ * EventDetailComponent - Single event view with interaction capabilities
+ *
+ * Architecture:
+ * - Uses EventsService.selectedEvent as single source of truth
+ * - Subscribes to Observables for side effects
+ * - Manages only UI-specific state (modals, processing)
+ *
+ * Responsibilities:
+ * - Event detail display
+ * - Registration/interest management
+ * - Rating submission
+ * - Club follow/unfollow
+ * - Time/date formatting
+ */
 
 @Component({
     selector: 'app-event-detail',
@@ -16,16 +34,19 @@ import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeU
     styleUrl: './event-detail.css',
     animations: [fadeSlideIn]
 })
-export class EventDetailComponent implements OnInit {
+export class EventDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private eventsService = inject(EventsService);
     private clubsService = inject(ClubsService);
+    private authState = inject(AuthStateService);
     private tokenService = inject(TokenService);
+    private destroy$ = new Subject<void>();
 
-    event = signal<Event | null>(null);
-    loading = signal(true);
-    error = signal('');
+    // Data state - read from service (single source of truth)
+    event = this.eventsService.selectedEvent;
+    loading = this.eventsService.loading;
+    error = this.eventsService.error;
     sections = computed(() => this.event()?.sections ?? []);
 
     // Follow state
@@ -80,41 +101,61 @@ export class EventDetailComponent implements OnInit {
         return this.showAllRatings() ? ratings : ratings.slice(0, 3);
     });
 
-    async ngOnInit() {
+    ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
-            await this.loadEvent(+id);
+            this.loadEvent(+id);
         }
     }
 
-    async loadEvent(id: number) {
-        this.loading.set(true);
-        this.error.set('');
-
-        const event = await this.eventsService.getEventById(id);
-
-        if (event) {
-            this.event.set(event);
-            // Check if following the club
-            if (event.club && this.isLoggedIn()) {
-                this.isFollowingClub.set(await this.clubsService.isFollowing(event.club.id));
-            }
-            // Load ratings if event has ended
-            if (new Date(event.endTime) < new Date()) {
-                await this.loadEventRatings(id);
-            }
-        } else {
-            this.error.set(this.eventsService.error() || 'Event not found');
-        }
-
-        this.loading.set(false);
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
-    async loadEventRatings(eventId: number) {
+    /**
+     * Load event details - service handles loading/error state automatically
+     */
+    private loadEvent(id: number) {
+        this.eventsService.getEventById(id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (event) => {
+                    if (event) {
+                        // Check if following the club
+                        if (event.club && this.isLoggedIn()) {
+                            this.clubsService.isFollowing(event.club.id).then(following => {
+                                this.isFollowingClub.set(following);
+                            });
+                        }
+                        // Load ratings if event has ended
+                        if (new Date(event.endTime) < new Date()) {
+                            this.loadEventRatings(id);
+                        }
+                    }
+                    // Service handles loading/error states via signals
+                },
+                error: (err) => {
+                    console.error('Failed to load event:', err);
+                    // Service handles error state via signal
+                }
+            });
+    }
+
+    loadEventRatings(eventId: number) {
         this.ratingsLoading.set(true);
-        const ratings = await this.eventsService.getEventRatings(eventId);
-        this.eventRatings.set(ratings);
-        this.ratingsLoading.set(false);
+        this.eventsService.getEventRatings(eventId).pipe(
+            takeUntil(this.destroy$)
+        ).subscribe({
+            next: (ratings) => {
+                this.eventRatings.set(ratings);
+                this.ratingsLoading.set(false);
+            },
+            error: (err) => {
+                console.error('Failed to load ratings:', err);
+                this.ratingsLoading.set(false);
+            }
+        });
     }
 
     toggleShowAllRatings() {
@@ -139,81 +180,45 @@ export class EventDetailComponent implements OnInit {
     }
 
     /**
-     * Update local event state without reloading from server
-     * Improves UX by providing instant feedback
+     * Toggle user interest in event
+     * Service handles state updates automatically via updateEventInteraction
      */
-    private updateEventState(newStatus: RegistrationStatus | null, previousStatus?: RegistrationStatus | null) {
-        const evt = this.event();
-        if (!evt) return;
-
-        const updated = { ...evt };
-
-        // Update user interaction status
-        if (!updated.userInteraction) {
-            updated.userInteraction = { status: newStatus, hasRated: false };
-        } else {
-            updated.userInteraction = { ...updated.userInteraction, status: newStatus };
-        }
-
-        // Update stats based on status changes
-        if (updated.stats) {
-            const stats = { ...updated.stats };
-
-            // Decrement previous status count
-            if (previousStatus === RegistrationStatus.INTERESTED) {
-                stats.interestedCount = Math.max(0, stats.interestedCount - 1);
-            } else if (previousStatus === RegistrationStatus.CONFIRMED) {
-                stats.confirmedCount = Math.max(0, stats.confirmedCount - 1);
-            }
-
-            // Increment new status count
-            if (newStatus === RegistrationStatus.INTERESTED) {
-                stats.interestedCount = stats.interestedCount + 1;
-            } else if (newStatus === RegistrationStatus.CONFIRMED) {
-                stats.confirmedCount = stats.confirmedCount + 1;
-            }
-
-            updated.stats = stats;
-        }
-
-        this.event.set(updated);
-    }
-
-    async toggleInterest() {
+    toggleInterest() {
         const evt = this.event();
         if (!evt || !this.isLoggedIn()) return;
 
         this.registrationLoading.set(true);
+        const currentStatus = this.userStatus();
 
-        try {
-            const currentStatus = this.userStatus();
+        const operation$ = currentStatus === RegistrationStatus.INTERESTED
+            ? this.eventsService.cancelRegistration(evt.id)
+            : this.eventsService.registerForEvent(evt.id, RegistrationStatus.INTERESTED);
 
-            if (currentStatus === RegistrationStatus.INTERESTED) {
-                // Remove interest
-                const success = await this.eventsService.cancelRegistration(evt.id);
-                if (success) {
-                    this.updateEventState(null, RegistrationStatus.INTERESTED);
+        operation$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (success) => {
+                    if (!success) {
+                        console.error('Failed to toggle interest');
+                    }
+                    // Service automatically updates selectedEvent signal
+                },
+                error: (err) => {
+                    console.error('Failed to toggle interest:', err);
+                },
+                complete: () => {
+                    this.registrationLoading.set(false);
                 }
-            } else {
-                // Add interest
-                const success = await this.eventsService.registerForEvent(evt.id, RegistrationStatus.INTERESTED);
-                if (success) {
-                    this.updateEventState(RegistrationStatus.INTERESTED, currentStatus);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to toggle interest:', error);
-            this.error.set('Failed to update interest. Please try again.');
-        } finally {
-            this.registrationLoading.set(false);
-        }
+            });
     }
 
-    async confirmAttendance() {
+    /**
+     * Confirm attendance for event
+     */
+    confirmAttendance() {
         const evt = this.event();
         if (!evt || !this.isLoggedIn()) return;
 
-        // Show confirmation dialog
         const userConfirmed = confirm(
             'Confirm your attendance for this event?\n\n'
             + 'Note: For paid events or events requiring approval, '
@@ -224,23 +229,29 @@ export class EventDetailComponent implements OnInit {
 
         this.registrationLoading.set(true);
 
-        try {
-            const currentStatus = this.userStatus();
-            const success = await this.eventsService.registerForEvent(evt.id, RegistrationStatus.PENDING_PAYMENT);
-
-            if (success) {
-                this.updateEventState(RegistrationStatus.PENDING_PAYMENT, currentStatus);
-                alert('✓ Registration confirmed! Please contact the club manager for payment details.');
-            }
-        } catch (error) {
-            console.error('Failed to confirm attendance:', error);
-            this.error.set('Failed to confirm attendance. Please try again.');
-        } finally {
-            this.registrationLoading.set(false);
-        }
+        this.eventsService.registerForEvent(evt.id, RegistrationStatus.PENDING_PAYMENT)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (success) => {
+                    if (success) {
+                        alert('✓ Registration confirmed! Please contact the club manager for payment details.');
+                    } else {
+                        console.error('Failed to confirm attendance');
+                    }
+                },
+                error: (err) => {
+                    console.error('Failed to confirm attendance:', err);
+                },
+                complete: () => {
+                    this.registrationLoading.set(false);
+                }
+            });
     }
 
-    async cancelRegistration() {
+    /**
+     * Cancel event registration
+     */
+    cancelRegistration() {
         const evt = this.event();
         if (!evt || !this.isLoggedIn()) return;
 
@@ -249,19 +260,22 @@ export class EventDetailComponent implements OnInit {
 
         this.registrationLoading.set(true);
 
-        try {
-            const previousStatus = this.userStatus();
-            const success = await this.eventsService.cancelRegistration(evt.id);
-
-            if (success) {
-                this.updateEventState(RegistrationStatus.CANCELLED, previousStatus);
-            }
-        } catch (error) {
-            console.error('Failed to cancel registration:', error);
-            this.error.set('Failed to cancel registration. Please try again.');
-        } finally {
-            this.registrationLoading.set(false);
-        }
+        this.eventsService.cancelRegistration(evt.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (success) => {
+                    if (!success) {
+                        console.error('Failed to cancel registration');
+                    }
+                    // Service automatically updates selectedEvent signal
+                },
+                error: (err) => {
+                    console.error('Failed to cancel registration:', err);
+                },
+                complete: () => {
+                    this.registrationLoading.set(false);
+                }
+            });
     }
 
     formatDate(date: Date): string {
@@ -339,38 +353,36 @@ export class EventDetailComponent implements OnInit {
         this.hoverRating.set(rating);
     }
 
-    async submitRating() {
+    /**
+     * Submit event rating
+     * Service handles data updates, component handles UI flow
+     */
+    submitRating() {
         const evt = this.event();
         if (!evt || this.selectedRating() === 0) return;
 
         this.ratingLoading.set(true);
 
-        try {
-            const result = await this.eventsService.rateEvent(evt.id, {
-                rating: this.selectedRating(),
-                comment: this.ratingComment() || undefined
-            });
-
-            if (result) {
-                // Update local event with new rating
-                const updated = { ...evt };
-                if (updated.userInteraction) {
-                    updated.userInteraction = {
-                        ...updated.userInteraction,
-                        hasRated: true,
-                        userRating: this.selectedRating()
-                    };
+        this.eventsService.rateEvent(evt.id, {
+            rating: this.selectedRating(),
+            comment: this.ratingComment() || undefined
+        })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+            next: (result) => {
+                if (result) {
+                    this.closeRatingModal();
+                    // Reload event to get updated rating data
+                    this.loadEvent(evt.id);
                 }
-                this.event.set(updated);
-                this.closeRatingModal();
-                // Reload to get updated average rating
-                await this.loadEvent(evt.id);
+            },
+            error: (err) => {
+                console.error('Failed to submit rating:', err);
+            },
+            complete: () => {
+                this.ratingLoading.set(false);
             }
-        } catch (error) {
-            console.error('Failed to submit rating:', error);
-        } finally {
-            this.ratingLoading.set(false);
-        }
+        });
     }
 
     goBack() {

@@ -1,4 +1,5 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { fadeSlideIn } from '../../animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +14,21 @@ import { getTimeUntilEvent, formatCountdown, isEventLive, isEventEnded, getTimeU
 type FilterType = 'all' | 'my-clubs' | 'live' | 'upcoming' | 'ended';
 type SortType = 'date-asc' | 'date-desc' | 'interested' | 'confirmed' | 'rating';
 
+/**
+ * EventsComponent - Event discovery and management UI
+ *
+ * Architecture:
+ * - Uses EventsService as single source of truth for events data
+ * - Reads events directly from service.events signal (no local copy)
+ * - Subscribes to Observables for side effects
+ * - Manages only UI-specific state (filters, dropdowns)
+ *
+ * Responsibilities:
+ * - Event filtering and sorting logic
+ * - UI state management (dropdowns, processing states)
+ * - Event interaction orchestration (calls service methods)
+ * - Time/date formatting for display
+ */
 @Component({
   selector: 'app-events',
   imports: [CommonModule, FormsModule, RouterModule],
@@ -20,26 +36,26 @@ type SortType = 'date-asc' | 'date-desc' | 'interested' | 'confirmed' | 'rating'
   styleUrl: './events.css',
   animations: [fadeSlideIn]
 })
-export class EventsComponent implements OnInit {
+export class EventsComponent implements OnInit, OnDestroy {
   private eventsService = inject(EventsService);
   private authState = inject(AuthStateService);
   private userService = inject(UserService);
   private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
+  // UI-specific state - managed by component
   searchQuery = signal('');
   selectedFilter = signal<FilterType>('upcoming');
   selectedSort = signal<SortType>('date-asc');
   showSortDropdown = signal(false);
   showFilterDropdown = signal(false);
-
-  // Events from the service
-  events = signal<EventSummary[]>([]);
   followedClubIds = signal<number[]>([]);
-  loading = signal(false);
-  error = signal<string | null>(null);
-
-  // Track which events are being processed
   processingEvents = signal<Set<number>>(new Set());
+
+  // Data state - read from service (single source of truth)
+  events = this.eventsService.events;
+  loading = this.eventsService.loading;
+  error = this.eventsService.error;
   isAuthenticated = this.authState.isAuthenticated;
 
   // Filter options
@@ -67,35 +83,47 @@ export class EventsComponent implements OnInit {
     { value: 'rating' as SortType, label: 'Highest Rated', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' }
   ];
 
-  async ngOnInit() {
-    await this.loadEvents();
+  ngOnInit() {
+    // Load events - service handles loading/error state via signals
+    this.loadEvents();
+
+    // Load user's followed clubs if authenticated
     if (this.isAuthenticated()) {
-      await this.loadFollowedClubs();
+      this.loadFollowedClubs();
     }
   }
 
-  async loadEvents() {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const data = await this.eventsService.getAllEvents();
-      this.events.set(data);
-    } catch (err: any) {
-      this.error.set(err?.message || 'Failed to load events');
-    } finally {
-      this.loading.set(false);
-    }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  loadFollowedClubs() {
-    this.userService.getFollowedClubs().subscribe({
-      next: (clubs: FollowedClub[]) => {
-        this.followedClubIds.set(clubs.map(c => c.id));
-      },
-      error: (err) => {
-        console.error('Failed to load followed clubs:', err);
-      }
-    });
+  /**
+   * Triggers event loading - service updates its signals automatically
+   * No local state management needed, service handles loading/error/data
+   * Public method for template access (retry functionality)
+   */
+  loadEvents() {
+    this.eventsService.getAllEvents()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  /**
+   * Loads user's followed clubs for filtering
+   * This is UI-specific state, not managed by EventsService
+   */
+  private loadFollowedClubs() {
+    this.userService.getFollowedClubs()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (clubs: FollowedClub[]) => {
+          this.followedClubIds.set(clubs.map(c => c.id));
+        },
+        error: (err) => {
+          console.error('Failed to load followed clubs:', err);
+        }
+      });
   }
 
   // Apply filter
@@ -120,12 +148,16 @@ export class EventsComponent implements OnInit {
     return this.sortOptions.find(opt => opt.value === this.selectedSort())?.label || 'Sort';
   }
 
-  // Get filtered and sorted events
-  get filteredEvents(): EventSummary[] {
+  /**
+   * Reactive computed property for filtered and sorted events
+   * Automatically updates when events, search, filter, or sort changes
+   * Reads directly from service.events signal
+   */
+  filteredEvents = computed(() => {
     let filtered = this.events();
     const query = this.searchQuery().toLowerCase();
 
-    // Apply search
+    // Apply search filter
     if (query) {
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(query) ||
@@ -134,7 +166,7 @@ export class EventsComponent implements OnInit {
       );
     }
 
-    // Apply filter
+    // Apply category filter
     const filter = this.selectedFilter();
     if (filter === 'my-clubs') {
       const clubIds = this.followedClubIds();
@@ -147,7 +179,7 @@ export class EventsComponent implements OnInit {
       filtered = filtered.filter(event => this.isEventEnded(event));
     }
 
-    // Apply sort - create a copy to avoid mutating the filtered array
+    // Apply sorting - create copy to avoid mutation
     const sorted = [...filtered];
     const sort = this.selectedSort();
     if (sort === 'date-asc') {
@@ -173,7 +205,7 @@ export class EventsComponent implements OnInit {
     }
 
     return sorted;
-  }
+  });
 
   // Format date for display
   formatDate(date: Date): string {
@@ -275,8 +307,12 @@ export class EventsComponent implements OnInit {
     return formatRemainingTime(timeUntil);
   }
 
-  // Toggle interest in event
-  async toggleInterest(event: EventSummary, e: MouseEvent) {
+  /**
+   * Toggle user interest in event
+   * Uses Observable pattern and lets service handle state updates
+   * Component only manages UI processing state
+   */
+  toggleInterest(event: EventSummary, e: MouseEvent) {
     e.stopPropagation();
 
     if (!this.isAuthenticated()) {
@@ -286,59 +322,35 @@ export class EventsComponent implements OnInit {
 
     if (this.isProcessing(event.id)) return;
 
-    // Add to processing
+    // Add to processing set for UI feedback
     const processing = new Set(this.processingEvents());
     processing.add(event.id);
     this.processingEvents.set(processing);
 
-    try {
-      const wasInterested = this.isInterested(event);
+    const wasInterested = this.isInterested(event);
+    const operation$ = wasInterested
+      ? this.eventsService.cancelRegistration(event.id)
+      : this.eventsService.registerForEvent(event.id, RegistrationStatus.INTERESTED);
 
-      if (wasInterested) {
-        // User is already interested, so cancel/remove the registration
-        await this.eventsService.cancelRegistration(event.id);
-      } else {
-        // User is not interested, so register with INTERESTED status
-        await this.eventsService.registerForEvent(event.id, RegistrationStatus.INTERESTED);
-      }
-
-      // Update local state without reloading
-      const currentEvents = this.events();
-      const updatedEvents = currentEvents.map(e => {
-        if (e.id === event.id) {
-          const updatedEvent = { ...e };
-
-          // Update user interaction
-          if (wasInterested) {
-            updatedEvent.userInteraction = undefined;
-            // Decrement interested count
-            updatedEvent.stats = {
-              ...updatedEvent.stats,
-              interestedCount: Math.max(0, updatedEvent.stats.interestedCount - 1)
-            };
-          } else {
-            updatedEvent.userInteraction = {
-              status: RegistrationStatus.INTERESTED,
-              hasRated: false
-            };
-            // Increment interested count
-            updatedEvent.stats = {
-              ...updatedEvent.stats,
-              interestedCount: updatedEvent.stats.interestedCount + 1
-            };
+    operation$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (success) => {
+          if (!success) {
+            console.error('Failed to update interest status');
           }
-
-          return updatedEvent;
+          // Service automatically updates events signal via updateEventInteraction
+          // No manual state updates needed here
+        },
+        error: (err) => {
+          console.error('Error toggling interest:', err);
+        },
+        complete: () => {
+          // Remove from processing set
+          const updated = new Set(this.processingEvents());
+          updated.delete(event.id);
+          this.processingEvents.set(updated);
         }
-        return e;
       });
-
-      this.events.set(updatedEvents);
-    } finally {
-      // Remove from processing
-      const updated = new Set(this.processingEvents());
-      updated.delete(event.id);
-      this.processingEvents.set(updated);
-    }
   }
 }
