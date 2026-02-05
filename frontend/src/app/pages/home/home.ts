@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { fadeSlideIn } from '../../animations';
 import { EventsService } from '../../services/events.service';
 import { AuthStateService } from '../../services/auth/auth-state';
@@ -31,7 +32,11 @@ export class HomeComponent implements OnInit {
   }
 
   async loadTrendingEvents() {
-    await this.eventsService.getTrendingEvents(3);
+    try {
+      await firstValueFrom(this.eventsService.getTrendingEvents(3));
+    } catch (err) {
+      console.error('Failed to load trending events:', err);
+    }
   }
 
   navigateToEvents() {
@@ -81,11 +86,13 @@ export class HomeComponent implements OnInit {
     try {
       if (this.isInterested(event)) {
         // User is already interested, so cancel/remove the registration
-        await this.eventsService.cancelRegistration(event.id);
+        await firstValueFrom(this.eventsService.cancelRegistration(event.id));
       } else {
         // User is not interested, so register with INTERESTED status
-        await this.eventsService.registerForEvent(event.id, RegistrationStatus.INTERESTED);
+        await firstValueFrom(this.eventsService.registerForEvent(event.id, RegistrationStatus.INTERESTED));
       }
+    } catch (err) {
+      console.error('Failed to toggle interest:', err);
     } finally {
       // Remove from processing
       const updated = new Set(this.processingEvents());

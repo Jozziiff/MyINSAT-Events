@@ -1,31 +1,18 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, EMPTY, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { map, tap, catchError, finalize } from 'rxjs/operators';
 import { Event, EventSummary, RateEventRequest, EventRating, RegistrationStatus } from '../models/event.model';
 import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
-import { TokenService } from './auth/token';
 
 /**
  * EventsService - Pure data service for event-related HTTP operations
- *
- * Responsibilities:
- * - HTTP communication with event endpoints
- * - Data transformation (dates, image URLs, safe defaults)
- * - State management via signals
- *
- * Does NOT handle:
- * - UI formatting (moved to components/pipes)
- * - Business logic beyond data fetching
- * - Direct DOM manipulation
  */
-
 @Injectable({
   providedIn: 'root'
 })
 export class EventsService {
   private readonly apiUrl = getApiUrl();
-  private readonly tokenService = inject(TokenService);
   private readonly http = inject(HttpClient);
 
   // Signals for state management - reactive UI state
@@ -36,25 +23,7 @@ export class EventsService {
   error = signal<string | null>(null);
 
   /**
-   * HTTP headers factory - centralized header management
-   * Handles authentication and content type consistently
-   */
-  private getHttpHeaders(): HttpHeaders {
-    const token = this.tokenService.getAccessToken();
-    const headers: { [key: string]: string } = {
-      'Content-Type': 'application/json'
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    return new HttpHeaders(headers);
-  }
-
-  /**
    * Data transformation helpers - convert API DTOs to frontend models
-   * Ensures consistent data structure and safe defaults
    */
   private mapEventSummary(dto: any): EventSummary {
     return {
@@ -113,9 +82,7 @@ export class EventsService {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.get<any[]>(`${this.apiUrl}/events`, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/events`).pipe(
       map(data => data.map(dto => this.mapEventSummary(dto))),
       tap(events => this.events.set(events)),
       catchError(err => {
@@ -133,9 +100,7 @@ export class EventsService {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.get<any[]>(`${this.apiUrl}/events/upcoming`, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/events/upcoming`).pipe(
       map(data => data.map(dto => this.mapEventSummary(dto))),
       tap(events => this.events.set(events)),
       catchError(err => {
@@ -154,7 +119,6 @@ export class EventsService {
     this.error.set(null);
 
     return this.http.get<any[]>(`${this.apiUrl}/events/trending`, {
-      headers: this.getHttpHeaders(),
       params: { limit: limit.toString() }
     }).pipe(
       map(data => data.map(dto => this.mapEventSummary(dto))),
@@ -174,9 +138,7 @@ export class EventsService {
     this.loading.set(true);
     this.error.set(null);
 
-    return this.http.get<any>(`${this.apiUrl}/events/${id}`, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/events/${id}`).pipe(
       map(dto => this.mapFullEvent(dto)),
       tap(event => this.selectedEvent.set(event)),
       catchError(err => {
@@ -191,9 +153,7 @@ export class EventsService {
    * Submits event rating
    */
   rateEvent(eventId: number, request: RateEventRequest): Observable<EventRating | null> {
-    return this.http.post<EventRating>(`${this.apiUrl}/events/${eventId}/rate`, request, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.post<EventRating>(`${this.apiUrl}/events/${eventId}/rate`, request).pipe(
       catchError(err => {
         this.error.set(err?.message || 'Failed to rate event');
         return of(null);
@@ -205,9 +165,7 @@ export class EventsService {
    * Fetches ratings for a specific event
    */
   getEventRatings(eventId: number): Observable<EventRating[]> {
-    return this.http.get<EventRating[]>(`${this.apiUrl}/events/${eventId}/ratings`, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.get<EventRating[]>(`${this.apiUrl}/events/${eventId}/ratings`).pipe(
       catchError(err => {
         this.error.set(err?.message || 'Failed to fetch ratings');
         return of([]);
@@ -219,9 +177,7 @@ export class EventsService {
    * Registers for an event with specified status
    */
   registerForEvent(eventId: number, status: RegistrationStatus): Observable<boolean> {
-    return this.http.post(`${this.apiUrl}/events/${eventId}/register`, { status }, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.post(`${this.apiUrl}/events/${eventId}/register`, { status }).pipe(
       map(() => {
         this.updateEventInteraction(eventId, status);
         return true;
@@ -237,9 +193,7 @@ export class EventsService {
    * Cancels registration for an event
    */
   cancelRegistration(eventId: number): Observable<boolean> {
-    return this.http.delete(`${this.apiUrl}/events/${eventId}/register`, {
-      headers: this.getHttpHeaders()
-    }).pipe(
+    return this.http.delete(`${this.apiUrl}/events/${eventId}/register`).pipe(
       map(() => {
         this.updateEventInteraction(eventId, RegistrationStatus.CANCELLED);
         return true;
@@ -253,10 +207,8 @@ export class EventsService {
 
   /**
    * Updates event interaction state across all signals
-   * Maintains consistency between events, trending, and selected event
    */
   private updateEventInteraction(eventId: number, status: RegistrationStatus | null) {
-    // Update in events list
     const currentEvents = this.events();
     const updatedEvents = currentEvents.map(event => {
       if (event.id === eventId) {
@@ -279,7 +231,6 @@ export class EventsService {
     });
     this.events.set(updatedEvents);
 
-    // Update in trending events
     const currentTrending = this.trendingEvents();
     const updatedTrending = currentTrending.map(event => {
       if (event.id === eventId) {
@@ -302,7 +253,6 @@ export class EventsService {
     });
     this.trendingEvents.set(updatedTrending);
 
-    // Update selected event if it matches
     const selectedEvent = this.selectedEvent();
     if (selectedEvent && selectedEvent.id === eventId) {
       this.selectedEvent.set({
@@ -322,37 +272,19 @@ export class EventsService {
     }
   }
 
-  // Formatting helper methods - for backward compatibility with components
-  // TODO: Consider moving these to pipes or component methods in future refactoring
-
-  /**
-   * Format date for display (e.g., "Oct 20")
-   */
   formatDate(date: Date): string {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-  /**
-   * Format price for display
-   */
   formatPrice(price?: number): string {
     if (!price || price === 0) return 'Free';
     return `${price} TND`;
   }
 
-  /**
-   * Get status label for display
-   */
   getStatusLabel(event: EventSummary): string {
-    if (event.capacity) {
-      return 'Open';
-    }
     return 'Open';
   }
 
-  /**
-   * Format rating for display
-   */
   formatRating(rating: number): string {
     return rating.toFixed(1);
   }

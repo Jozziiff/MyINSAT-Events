@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TokenService } from './auth/token';
 import {
   UserProfile,
   UpdateProfileRequest,
@@ -15,41 +14,16 @@ import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 
 /**
  * UserService - Pure data service for user-related HTTP operations
- *
- * Responsibilities:
- * - HTTP communication with user endpoints
- * - Data transformation (dates, image URLs)
- * - Authentication header management
- *
- * Does NOT manage:
- * - UI state (loading, error)
- * - Component state
- * - Caching or persistence
  */
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private readonly apiUrl = getApiUrl();
-  private readonly tokenService = inject(TokenService);
   private readonly http = inject(HttpClient);
 
   /**
-   * Authentication header factory - ensures secure API communication
-   */
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.tokenService.getAccessToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    });
-  }
-
-  /**
-   * Data transformation helpers - convert API responses to typed frontend models
+   * Data transformation helpers
    */
   private resolveProfileImages(profile: any): UserProfile {
     return {
@@ -81,11 +55,6 @@ export class UserService {
     };
   }
 
-  // Public API methods - HTTP operations that return data without side effects
-
-  /**
-   * Fetches public user profile - no authentication required
-   */
   getPublicProfile(userId: number): Observable<{
     id: number;
     fullName: string;
@@ -125,35 +94,20 @@ export class UserService {
     );
   }
 
-  /**
-   * Fetches current authenticated user's profile
-   */
   getProfile(): Observable<UserProfile> {
-    return this.http.get<any>(`${this.apiUrl}/users/me`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/users/me`).pipe(
       map(data => this.resolveProfileImages(data))
     );
   }
 
-  /**
-   * Updates current user's profile with provided data
-   */
   updateProfile(updates: UpdateProfileRequest): Observable<UserProfile> {
-    return this.http.put<any>(`${this.apiUrl}/users/me`, updates, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.put<any>(`${this.apiUrl}/users/me`, updates).pipe(
       map(data => this.resolveProfileImages(data))
     );
   }
 
-  /**
-   * Fetches complete dashboard data with all user information
-   */
   getDashboard(): Observable<UserDashboard> {
-    return this.http.get<any>(`${this.apiUrl}/users/me/dashboard`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/users/me/dashboard`).pipe(
       map(data => ({
         profile: this.resolveProfileImages(data.profile),
         stats: data.stats,
@@ -164,79 +118,44 @@ export class UserService {
     );
   }
 
-  /**
-   * Fetches user's upcoming events only
-   */
   getUpcomingEvents(): Observable<ProfileEvent[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/upcoming`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/upcoming`).pipe(
       map(data => data.map((e: any) => this.resolveEventImages(e)))
     );
   }
 
-  /**
-   * Fetches user's past events only
-   */
   getPastEvents(): Observable<ProfileEvent[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/past`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/events/past`).pipe(
       map(data => data.map((e: any) => this.resolveEventImages(e)))
     );
   }
 
-  /**
-   * Fetches clubs that the user follows
-   */
   getFollowedClubs(): Observable<FollowedClub[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/me/clubs`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/clubs`).pipe(
       map(data => data.map((c: any) => this.resolveClubImages(c)))
     );
   }
 
-  /**
-   * Follows a club - returns success status
-   */
   followClub(clubId: number): Observable<boolean> {
-    return this.http.post(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {}, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.post(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {}).pipe(
       map(() => true)
     );
   }
 
-  /**
-   * Unfollows a club - returns success status
-   */
   unfollowClub(clubId: number): Observable<boolean> {
-    return this.http.delete(`${this.apiUrl}/users/me/clubs/${clubId}/follow`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.delete(`${this.apiUrl}/users/me/clubs/${clubId}/follow`).pipe(
       map(() => true)
     );
   }
 
-  /**
-   * Checks if user is currently following a specific club
-   */
   isFollowingClub(clubId: number): Observable<boolean> {
-    return this.http.get<{ isFollowing: boolean }>(`${this.apiUrl}/users/me/clubs/${clubId}/following`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<{ isFollowing: boolean }>(`${this.apiUrl}/users/me/clubs/${clubId}/following`).pipe(
       map(data => data.isFollowing)
     );
   }
 
-  /**
-   * Fetches all ratings given by the user
-   */
   getUserRatings(): Observable<UserRating[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/users/me/ratings`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/users/me/ratings`).pipe(
       map(data => data.map((r: any) => ({
         ...r,
         createdAt: new Date(r.createdAt),
@@ -244,9 +163,6 @@ export class UserService {
     );
   }
 
-  /**
-   * Fetches public ratings given by a specific user
-   */
   getPublicUserRatings(userId: number): Observable<UserRating[]> {
     return this.http.get<any[]>(`${this.apiUrl}/users/${userId}/ratings`).pipe(
       map(data => data.map((r: any) => ({

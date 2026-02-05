@@ -1,41 +1,24 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Club, ClubSection, ClubSummary, CreateClubDto, ClubWithStats, ClubFollower, ClubWithJoinStatus, JoinRequest, JoinRequestStatus, ManagedClub, ClubStatus } from '../models/club.model';
-import { TokenService } from './auth/token';
-import { getApiUrl } from '../utils/image.utils';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { Club, ClubSection, ClubSummary, CreateClubDto, ClubWithStats, ClubFollower, ClubWithJoinStatus, JoinRequest, ManagedClub } from '../models/club.model';
+import { resolveImageUrl, getApiUrl } from '../utils/image.utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClubsService {
   private readonly apiUrl = getApiUrl();
-  private readonly tokenService = inject(TokenService);
+  private readonly http = inject(HttpClient);
 
   clubs = signal<ClubSummary[]>([]);
   selectedClub = signal<ClubWithStats | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
 
-  private getAuthHeaders(): HeadersInit {
-    const token = this.tokenService.getAccessToken();
-    if (token) {
-      return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
-    }
-    return { 'Content-Type': 'application/json' };
-  }
-
-  private resolveImageUrl(url?: string): string | undefined {
-    if (!url) return undefined;
-    return url.startsWith('http://') || url.startsWith('https://')
-      ? url
-      : `${this.apiUrl}${url}`;
-  }
-
   // Normalize single image field
   private resolveField(url?: string): string {
-    return this.resolveImageUrl(url) || '';
+    return resolveImageUrl(url) || '';
   }
 
   // Normalize section objects with imageUrl
@@ -44,7 +27,7 @@ export class ClubsService {
 
     return {
       ...section,
-      imageUrl: this.resolveImageUrl(section.imageUrl),
+      imageUrl: resolveImageUrl(section.imageUrl),
     };
   }
 
@@ -52,9 +35,9 @@ export class ClubsService {
   private resolveClubImages(club: Club): Club {
     return {
       ...club,
-      logoUrl: this.resolveImageUrl(club.logoUrl) || '',
-      coverImageUrl: this.resolveImageUrl(club.coverImageUrl) || '',
-      aboutImageUrl: this.resolveImageUrl(club.aboutImageUrl) || '',
+      logoUrl: resolveImageUrl(club.logoUrl) || '',
+      coverImageUrl: resolveImageUrl(club.coverImageUrl) || '',
+      aboutImageUrl: resolveImageUrl(club.aboutImageUrl) || '',
       history: this.resolveSection(club.history),
       mission: this.resolveSection(club.mission),
       activities: this.resolveSection(club.activities),
@@ -67,7 +50,7 @@ export class ClubsService {
     return {
       ...club,
       logoUrl: this.resolveField(club.logoUrl),
-      coverImageUrl: this.resolveImageUrl(club.coverImageUrl),
+      coverImageUrl: resolveImageUrl(club.coverImageUrl),
     };
   }
 
@@ -75,14 +58,12 @@ export class ClubsService {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const response = await fetch(`${this.apiUrl}/clubs`);
-      if (!response.ok) throw new Error('Failed to fetch clubs');
-      const data: ClubSummary[] = await response.json();
+      const data = await firstValueFrom(this.http.get<ClubSummary[]>(`${this.apiUrl}/clubs`));
       const resolved = data.map(this.resolveClubSummaryImages.bind(this));
       this.clubs.set(resolved);
       return resolved;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return [];
     } finally {
       this.loading.set(false);
@@ -93,11 +74,7 @@ export class ClubsService {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${id}`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch club details');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any>(`${this.apiUrl}/clubs/${id}`));
       const resolved = {
         ...this.resolveClubImages(data),
         followerCount: data.followerCount || 0,
@@ -107,7 +84,7 @@ export class ClubsService {
       this.selectedClub.set(resolved);
       return resolved;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return null;
     } finally {
       this.loading.set(false);
@@ -118,21 +95,12 @@ export class ClubsService {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const response = await fetch(`${this.apiUrl}/clubs`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(clubData),
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to create club');
-      }
-      const data: Club = await response.json();
+      const data = await firstValueFrom(this.http.post<Club>(`${this.apiUrl}/clubs`, clubData));
       const resolved = this.resolveClubImages(data);
       await this.getAllClubs();
       return resolved;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Failed to create club');
       return null;
     } finally {
       this.loading.set(false);
@@ -143,21 +111,12 @@ export class ClubsService {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${id}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(clubData),
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to update club');
-      }
-      const data: Club = await response.json();
+      const data = await firstValueFrom(this.http.put<Club>(`${this.apiUrl}/clubs/${id}`, clubData));
       const resolved = this.resolveClubImages(data);
       await this.getAllClubs();
       return resolved;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Failed to update club');
       return null;
     } finally {
       this.loading.set(false);
@@ -169,45 +128,31 @@ export class ClubsService {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('context', 'clubs');
-      const response = await fetch(`${this.apiUrl}/upload/image`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('Failed to upload image');
-      const data = await response.json();
-      return this.resolveImageUrl(data.url) || null;
+      const data = await firstValueFrom(this.http.post<{ url: string }>(`${this.apiUrl}/upload/image`, formData));
+      return resolveImageUrl(data.url) || null;
     } catch (err) {
       this.error.set('Failed to upload image');
       return null;
     }
   }
 
-  // Get club events with statistics
   async getClubEvents(clubId: number): Promise<any> {
     try {
       this.loading.set(true);
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/events`);
-      if (!response.ok) throw new Error('Failed to fetch club events');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any>(`${this.apiUrl}/clubs/${clubId}/events`));
       return data;
     } catch (err: any) {
-      this.error.set(err?.message || 'Failed to load events');
+      this.error.set(err?.error?.message || err?.message || 'Failed to load events');
       return null;
     } finally {
       this.loading.set(false);
     }
   }
 
-  // Follow a club
   async followClub(clubId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/follow`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to follow club');
+      await firstValueFrom(this.http.post(`${this.apiUrl}/clubs/${clubId}/follow`, {}));
 
-      // Update local state
       this.selectedClub.update(club => {
         if (club && club.id === clubId) {
           return {
@@ -221,21 +166,15 @@ export class ClubsService {
 
       return true;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return false;
     }
   }
 
-  // Unfollow a club
   async unfollowClub(clubId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/follow`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok && response.status !== 204) throw new Error('Failed to unfollow club');
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/clubs/${clubId}/follow`));
 
-      // Update local state
       this.selectedClub.update(club => {
         if (club && club.id === clubId) {
           return {
@@ -249,152 +188,102 @@ export class ClubsService {
 
       return true;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return false;
     }
   }
 
-  // Check if following a club
   async isFollowing(clubId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/following`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) return false;
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<{ isFollowing: boolean }>(`${this.apiUrl}/clubs/${clubId}/following`));
       return data.isFollowing;
     } catch (err) {
       return false;
     }
   }
 
-  // Get club followers list
   async getFollowers(clubId: number): Promise<ClubFollower[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/followers`);
-      if (!response.ok) throw new Error('Failed to fetch followers');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/clubs/${clubId}/followers`));
       return data.map((f: any) => ({
         ...f,
-        avatarUrl: this.resolveImageUrl(f.avatarUrl),
+        avatarUrl: resolveImageUrl(f.avatarUrl),
       }));
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return [];
     }
   }
 
-  // ============ JOIN REQUEST METHODS ============
-
-  // Get all clubs with join status for current user
   async getAllClubsWithJoinStatus(): Promise<ClubWithJoinStatus[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/join/status`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch clubs');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/clubs/join/status`));
       return data.map((c: any) => ({
         ...c,
-        logoUrl: this.resolveImageUrl(c.logoUrl) || '',
+        logoUrl: resolveImageUrl(c.logoUrl) || '',
       }));
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return [];
     }
   }
 
-  // Submit a join request to a club
   async submitJoinRequest(clubId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/join`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to submit join request');
-      }
+      await firstValueFrom(this.http.post(`${this.apiUrl}/clubs/${clubId}/join`, {}));
       return true;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return false;
     }
   }
 
-  // Get pending join requests for a club (for managers)
   async getClubJoinRequests(clubId: number): Promise<JoinRequest[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/${clubId}/join-requests`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch join requests');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/clubs/${clubId}/join-requests`));
       return data.map((r: any) => ({
         ...r,
         user: {
           ...r.user,
-          avatarUrl: this.resolveImageUrl(r.user.avatarUrl),
+          avatarUrl: resolveImageUrl(r.user.avatarUrl),
         },
       }));
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return [];
     }
   }
 
-  // Approve a join request
   async approveJoinRequest(requestId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/join-requests/${requestId}/approve`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to approve request');
+      await firstValueFrom(this.http.post(`${this.apiUrl}/clubs/join-requests/${requestId}/approve`, {}));
       return true;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return false;
     }
   }
 
-  // Reject a join request
   async rejectJoinRequest(requestId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/join-requests/${requestId}/reject`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to reject request');
+      await firstValueFrom(this.http.post(`${this.apiUrl}/clubs/join-requests/${requestId}/reject`, {}));
       return true;
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return false;
     }
   }
 
-  // Get current user's managed clubs with status
-  async getManagedClubs(): Promise<{
-    id: number;
-    name: string;
-    shortDescription: string;
-    logoUrl: string;
-    status: string;
-    createdAt: Date;
-  }[]> {
+  async getManagedClubs(): Promise<ManagedClub[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/clubs/managed/me`, {
-        headers: this.getAuthHeaders(),
-      });
-      if (!response.ok) throw new Error('Failed to fetch managed clubs');
-      const data = await response.json();
+      const data = await firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/clubs/managed/me`));
       return data.map((c: any) => ({
         ...c,
-        logoUrl: this.resolveImageUrl(c.logoUrl) || '',
+        logoUrl: resolveImageUrl(c.logoUrl) || '',
         createdAt: new Date(c.createdAt),
       }));
     } catch (err: any) {
-      this.error.set(err?.message || 'Unknown error');
+      this.error.set(err?.error?.message || err?.message || 'Unknown error');
       return [];
     }
   }
